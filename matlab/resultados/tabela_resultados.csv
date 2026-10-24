@@ -1,0 +1,5 @@
+canal,PAM,abertura_V,tau_us,kstar,t_kstar_us,Ne_amostra,BER_amostra,Ne_filtro,BER_filtro,Ns_amostra,SER_amostra,Ns_filtro,SER_filtro
+Dupont_direto,2,3.2331,NaN,5,34.37,0,0,0,0,0,0,0,0
+Dupont_direto,4,1.0307,NaN,2,15.62,0,0,0,0,0,0,0,0
+Dupont_RC_16n8,2,3.2742,7.100,7,46.87,0,0,0,0,0,0,0,0
+Dupont_RC_16n8,4,1.0766,7.100,7,46.87,0,0,0,0,0,0,0,0

@@ -1,0 +1,133 @@
+==== PREVISÃO NUMÉRICA DO ENLACE PAM (Rs = 20 ksym/s, fa = 160 kHz) ====
+
+---- Canal: Dupont direto ----
+tau (conta do enunciado, (330+R2)*C2) = 0.13 us ; fc = 1236.6 kHz
+tau dominante do modelo de 2 polos (com 390 pF e Rgpio=30 Ω) = 0.14 us
+
+  PAM-2:
+    degrau 0->A em TP3: V0=0.000 V, Vf=3.300 V, tau(63,2%)=0.20 us, t10-90=0.31 us (=> tau=0.14 us)
+    b_c = 0.61 ; E_c = 1.341e+08
+    p_c[k] = [4093.4 4093.6 4094 4093.7 4093.9 4093.5 4094.1 4094.1]
+    ISI no 1o zero depois de A (códigos) = [0 -0.2 -0.3 -0.2 -0.1 0.3 0 -0.2]
+    separação por k (códigos) = [4088 4087 4088 4087 4088 4088 4088 4087]
+    k* = 0 -> t = 3.12 us ; menor separação = 4088 códigos = 3294.4 mV
+    centros u = [0.5 4094.6] ; limiares u = 2047.5
+    centros z = [0 1] ; limiares z = 0.5
+    margem u = 4088 códigos (3294.4 mV), par 0-1 ; margem z = 0.9995, par 0-1
+    sincronismo: erros no início u=0 z=0 -> 1
+    amostra única: Ne=0 BER=0 Ns=0 SER=0
+    filtro casado: Ne=0 BER=0 Ns=0 SER=0
+    PSD: S(5 kHz)=0.000281 V^2/Hz (média 5 bins 0.000211; teoria 0.000221)
+         S(10 kHz)=0.000164 V^2/Hz (média 5 bins 0.000107; teoria 0.000112)
+         15 blocos de 1024, df=156.25 Hz, registro=51.2 ms, potência AC=2.721 V^2
+
+  PAM-4:
+    degrau 0->A em TP3: V0=0.000 V, Vf=3.300 V, tau(63,2%)=0.20 us, t10-90=0.31 us (=> tau=0.14 us)
+    b_c = 0.69 ; E_c = 1.341e+08
+    p_c[k] = [4093.3 4093.7 4093.4 4093.8 4093.8 4093.9 4094.1 4093.5]
+    ISI no 1o zero depois de A (códigos) = [0 0 0.4 -0.2 -0.2 -0.1 -0.1 -0.3]
+    separação por k (códigos) = [1358 1357 1357 1357 1356 1357 1357 1358]
+    k* = 0 -> t = 3.12 us ; menor separação = 1358 códigos = 1094.4 mV
+    centros u = [0.4 1365.4 2730 4094.4] ; limiares u = [682.9 2047.7 3412.2]
+    centros z = [0 0.3333 0.6667 1] ; limiares z = [0.1666 0.5 0.8334]
+    margem u = 1358 códigos (1094.4 mV), par 1-2 ; margem z = 0.3328, par 1-2
+    sincronismo: erros no início u=0 z=0 -> 1
+    amostra única: Ne=0 BER=0 Ns=0 SER=0
+    filtro casado: Ne=0 BER=0 Ns=0 SER=0
+    PSD: S(5 kHz)=0.000155 V^2/Hz (média 5 bins 0.000117; teoria 0.000123)
+         S(10 kHz)=1.93e-05 V^2/Hz (média 5 bins 1.68e-05; teoria 1.24e-05)
+         15 blocos de 1024, df=156.25 Hz, registro=51.2 ms, potência AC=1.446 V^2
+
+---- Canal: Dupont + RC (56 Ω, 16,8 nF) ----
+tau (conta do enunciado, (330+R2)*C2) = 6.48 us ; fc = 24.5 kHz
+tau dominante do modelo de 2 polos (com 390 pF e Rgpio=30 Ω) = 7.11 us
+
+  PAM-2:
+    degrau 0->A em TP3: V0=0.000 V, Vf=3.297 V, tau(63,2%)=7.17 us, t10-90=15.57 us (=> tau=7.08 us)
+    b_c = 0.61 ; E_c = 1.048e+08
+    p_c[k] = [1351.5 2955.5 3621.9 3898.1 4013.4 4060.2 4080.7 4089.4]
+    ISI no 1o zero depois de A (códigos) = [2739.1 1137 471.3 195.3 80.2 33.6 13.3 5]
+    separação por k (códigos) = [-1396 1811 3143 3694 3924 4020 4060 4075]
+    k* = 7 -> t = 46.87 us ; menor separação = 4075 códigos = 3283.9 mV
+    centros u = [4.3 4090.6] ; limiares u = 2047.4
+    centros z = [0.0713 1.024] ; limiares z = 0.5476
+    margem u = 4075 códigos (3283.9 mV), par 0-1 ; margem z = 0.9032, par 0-1
+    sincronismo: erros no início u=0 z=0 -> 1
+    amostra única: Ne=0 BER=0 Ns=0 SER=0
+    filtro casado: Ne=0 BER=0 Ns=0 SER=0
+    PSD: S(5 kHz)=0.000266 V^2/Hz (média 5 bins 0.000199; teoria 0.000211)
+         S(10 kHz)=0.000133 V^2/Hz (média 5 bins 8.66e-05; teoria 9.32e-05)
+         15 blocos de 1024, df=156.25 Hz, registro=51.2 ms, potência AC=2.314 V^2
+
+  PAM-4:
+    degrau 0->A em TP3: V0=0.000 V, Vf=3.297 V, tau(63,2%)=7.17 us, t10-90=15.57 us (=> tau=7.08 us)
+    b_c = 0.69 ; E_c = 1.048e+08
+    p_c[k] = [1351.4 2955.6 3621.3 3898.1 4012.8 4060.7 4080.6 4088.3]
+    ISI no 1o zero depois de A (códigos) = [2739 1137 472.6 195.5 80.9 32.7 13.3 4.8]
+    separação por k (códigos) = [-2294 -157 730 1097 1251 1313 1337 1350]
+    k* = 7 -> t = 46.87 us ; menor separação = 1350 códigos = 1087.9 mV
+    centros u = [2.9 1366 2730.2 4090.7] ; limiares u = [684.4 2048.1 3410.5]
+    centros z = [0.0469 0.3814 0.7308 1.0321] ; limiares z = [0.2142 0.5561 0.8815]
+    margem u = 1350 códigos (1087.9 mV), par 2-3 ; margem z = 0.2366, par 2-3
+    sincronismo: erros no início u=0 z=0 -> 1
+    amostra única: Ne=0 BER=0 Ns=0 SER=0
+    filtro casado: Ne=0 BER=0 Ns=0 SER=0
+    PSD: S(5 kHz)=0.000146 V^2/Hz (média 5 bins 0.00011; teoria 0.000117)
+         S(10 kHz)=1.57e-05 V^2/Hz (média 5 bins 1.36e-05; teoria 1.04e-05)
+         15 blocos de 1024, df=156.25 Hz, registro=51.2 ms, potência AC=1.228 V^2
+
+---- Canal: Dupont + RC (56 Ω, 33 nF) ----
+tau (conta do enunciado, (330+R2)*C2) = 12.74 us ; fc = 12.5 kHz
+tau dominante do modelo de 2 polos (com 390 pF e Rgpio=30 Ω) = 13.85 us
+
+  PAM-2:
+    degrau 0->A em TP3: V0=0.000 V, Vf=3.209 V, tau(63,2%)=13.27 us, t10-90=27.39 us (=> tau=12.47 us)
+    b_c = 0.61 ; E_c = 7.968e+07
+    p_c[k] = [760.6 1971.5 2743 3233.6 3546.6 3744.8 3872.5 3953.7]
+    ISI no 1o zero depois de A (códigos) = [3242.3 2064.4 1314.2 836.8 532 339.4 215.6 137]
+    separação por k (códigos) = [-2572 -151 1389 2367 2992 3391 3645 3806]
+    k* = 7 -> t = 46.87 us ; menor separação = 3806 códigos = 3067.1 mV
+    centros u = [103.9 3989.9] ; limiares u = 2046.9
+    centros z = [0.1649 1.0575] ; limiares z = 0.6112
+    margem u = 3806 códigos (3067.1 mV), par 0-1 ; margem z = 0.7754, par 0-1
+    sincronismo: erros no início u=0 z=0 -> 1
+    amostra única: Ne=0 BER=0 Ns=0 SER=0
+    filtro casado: Ne=0 BER=0 Ns=0 SER=0
+    PSD: S(5 kHz)=0.000235 V^2/Hz (média 5 bins 0.000176; teoria 0.000186)
+         S(10 kHz)=9.1e-05 V^2/Hz (média 5 bins 5.91e-05; teoria 6.36e-05)
+         15 blocos de 1024, df=156.25 Hz, registro=51.2 ms, potência AC=1.980 V^2
+
+  PAM-4:
+    degrau 0->A em TP3: V0=0.000 V, Vf=3.209 V, tau(63,2%)=13.27 us, t10-90=27.39 us (=> tau=12.47 us)
+    b_c = 0.69 ; E_c = 7.967e+07
+    p_c[k] = [760.6 1971.7 2742.5 3233.7 3546.3 3745.4 3872.4 3952.5]
+    ISI no 1o zero depois de A (códigos) = [3242.2 2064.6 1315.4 837 532.8 338.7 215.7 136.8]
+    separação por k (códigos) = [-2966 -1394 -394 241 648 905 1068 1174]
+    k* = 7 -> t = 46.87 us ; menor separação = 1174 códigos = 946.1 mV
+    centros u = [68.1 1389.2 2729.5 4001.4] ; limiares u = [728.7 2059.3 3365.4]
+    centros z = [0.1078 0.4464 0.8152 1.0767] ; limiares z = [0.2771 0.6308 0.946]
+    margem u = 1174 códigos (946.1 mV), par 2-3 ; margem z = 0.1162, par 2-3
+    sincronismo: erros no início u=0 z=0 -> 1
+    amostra única: Ne=0 BER=0 Ns=0 SER=0
+    filtro casado: Ne=0 BER=0 Ns=0 SER=0
+    PSD: S(5 kHz)=0.000129 V^2/Hz (média 5 bins 9.71e-05; teoria 0.000103)
+         S(10 kHz)=1.07e-05 V^2/Hz (média 5 bins 9.31e-06; teoria 7.07e-06)
+         15 blocos de 1024, df=156.25 Hz, registro=51.2 ms, potência AC=1.049 V^2
+
+---- Razões de PSD (canal RC / Dupont) em 5 e 10 kHz ----
+  PAM-2, f =  5.0 kHz: RC16,8n/Dupont = 0.946 (-0.24 dB) [teoria |H|^2 = 0.952] ; RC33n/Dupont = 0.834 (-0.79 dB) [teoria 0.841]
+  PAM-2, f = 10.0 kHz: RC16,8n/Dupont = 0.813 (-0.90 dB) [teoria |H|^2 = 0.834] ; RC33n/Dupont = 0.555 (-2.56 dB) [teoria 0.569]
+  PAM-4, f =  5.0 kHz: RC16,8n/Dupont = 0.945 (-0.25 dB) [teoria |H|^2 = 0.952] ; RC33n/Dupont = 0.832 (-0.80 dB) [teoria 0.841]
+  PAM-4, f = 10.0 kHz: RC16,8n/Dupont = 0.813 (-0.90 dB) [teoria |H|^2 = 0.834] ; RC33n/Dupont = 0.555 (-2.56 dB) [teoria 0.569]
+
+---- BER x ruído no canal Dupont (ruído gaussiano somado no ADC) ----
+  PAM-2 sigma=150 LSB (121 mV): BER amostra=0.00e+00  BER filtro=0.00e+00
+  PAM-2 sigma=250 LSB (201 mV): BER amostra=0.00e+00  BER filtro=0.00e+00
+  PAM-2 sigma=350 LSB (282 mV): BER amostra=0.00e+00  BER filtro=0.00e+00
+  PAM-2 sigma=450 LSB (363 mV): BER amostra=0.00e+00  BER filtro=0.00e+00
+  PAM-2 sigma=550 LSB (443 mV): BER amostra=5.00e-05  BER filtro=0.00e+00
+  PAM-4 sigma=150 LSB (121 mV): BER amostra=0.00e+00  BER filtro=0.00e+00
+  PAM-4 sigma=250 LSB (201 mV): BER amostra=2.67e-03  BER filtro=0.00e+00
+  PAM-4 sigma=350 LSB (282 mV): BER amostra=2.05e-02  BER filtro=0.00e+00
+  PAM-4 sigma=450 LSB (363 mV): BER amostra=5.05e-02  BER filtro=6.00e-05
+  PAM-4 sigma=550 LSB (443 mV): BER amostra=8.44e-02  BER filtro=4.50e-04

@@ -1,0 +1,10 @@
+# builds e caches
+firmware/teste_host/sim_host
+firmware/build_referencia/ext/
+*.map
+*.o
+slprj/
+*.slxc
+*.asv
+*.autosave
+# logs reais da bancada ficam (matlab/logs/) — remova esta linha se não quiser versioná-los
