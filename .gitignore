@@ -8,3 +8,26 @@ slprj/
 *.asv
 *.autosave
 # logs reais da bancada ficam (matlab/logs/) — remova esta linha se não quiser versioná-los
+
+# Python
+__pycache__/
+*.pyc
+python/.venv/
+.venv/
+
+# STM32CubeIDE: workspace, builds e HAL gerada (o CubeMX regenera Drivers/ a partir do .ioc)
+firmware/fir_tx/.metadata/
+firmware/fir_tx/*/Debug/
+firmware/fir_tx/*/Release/
+firmware/fir_tx/*/Drivers/
+
+# material da disciplina (direitos do professor/da instituição) e pacotes duplicados
+relatorio/Projeto_BB_2026S2.pdf
+relatorio/Telecom_LAB2/
+relatorio/*.zip
+
+# rascunhos pessoais e versões antigas
+fotos/
+docs/estudo_defesa/index_v1_antigo.html
+divulgacao/
+relatorio/Relatorio_Projeto_PAM/*_com_RA.pdf

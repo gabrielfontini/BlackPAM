@@ -1,7 +1,8 @@
 function arquivo = captura_serial(porta, rotulo, canal_cmd, mod_cmd)
 %CAPTURA_SERIAL  Arma o RX pela serial, espera o quadro e grava o log.
-%   arquivo = captura_serial('/dev/ttyUSB0', 'PAM4_RC_ensaio1', 'c', '4')
-%   porta     : '/dev/ttyUSB0' (Linux) ou 'COM5' (Windows) — veja serialportlist
+%   arquivo = captura_serial('/dev/ttyACM1', 'PAM4_RC_ensaio1', 'c', '4')
+%   porta     : '/dev/ttyACM1' (Pico com pico-uart-bridge, UART1 = GP4/GP5)
+%               ou 'COM5' (Windows) — veja serialportlist
 %   rotulo    : nome do arquivo (sem extensão) dentro de ./logs/
 %   canal_cmd : 'd' Dupont, 'c' RC 16,8 nF, 'x' RC 33 nF, 'm' cabo manga
 %   mod_cmd   : '2' ou '4'
@@ -17,6 +18,7 @@ arquivo = fullfile(od, [rotulo '_' datestr(now, 'yyyymmdd_HHMMSS') '.txt']); %#o
 
 s = serialport(porta, 460800, 'Timeout', 30);
 configureTerminator(s, "CR/LF");
+setDTR(s, true);   % ponte USB do Pico (TinyUSB) só repassa com a porta "aberta" (DTR)
 flush(s);
 write(s, uint8(mod_cmd), 'uint8'); pause(0.2);
 write(s, uint8(canal_cmd), 'uint8'); pause(0.2);

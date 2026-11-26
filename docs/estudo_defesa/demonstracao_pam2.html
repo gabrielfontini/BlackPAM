@@ -1,0 +1,1305 @@
+<title>Demonstração PAM-2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: caderno de bancada. Índice fixo à esquerda, coluna de leitura de ~68ch e, no meio do texto,
+   painéis escuros de instrumento com os guias para repetir cada medida. CH1 amarelo / CH2 ciano = cores do TDS2002B. */
+:root{
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--n0:#6250d6;--n1:#e34948;
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#151a21; --muted:#596270; --rule:#d8dde4;
+  --accent:#0d5c78; --accent-soft:#e3eff4;
+  --ch1:#a87400; --ch1-soft:#fff3cf; --ch2:#00808a; --ch2-soft:#d9f3f4;
+  --good:#1d7a3e; --good-soft:#e2f3e7; --warn:#9a5b00; --warn-soft:#fbefd9; --bad:#b4233a; --bad-soft:#fbe4e8;
+  --g-bg:#13212b; --g-panel:#1b2d39; --g-ink:#e9f0f4; --g-muted:#a3b6c2; --g-rule:#334a59; --g-ch1:#f5c542; --g-ch2:#4fd8e0; --g-acc:#86d5f2; --g-good:#7fe0a0; --g-warn:#f2bb66;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--n0:#9085e9;--n1:#e66767;
+  --bg:#0f1317; --surface:#161b21; --ink:#e5e9ee; --muted:#9aa4b1; --rule:#2a323c;
+  --accent:#6cc4e3; --accent-soft:#132a33;
+  --ch1:#f2c14b; --ch1-soft:#2b2410; --ch2:#4fd2da; --ch2-soft:#0f2a2c;
+  --good:#5fcf86; --good-soft:#12291a; --warn:#f0b357; --warn-soft:#2c220f; --bad:#ff7b8f; --bad-soft:#2e141a;
+  --g-bg:#18262f; --g-panel:#21333f; --g-rule:#3a5262;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--n0:#9085e9;--n1:#e66767;
+  --bg:#0f1317; --surface:#161b21; --ink:#e5e9ee; --muted:#9aa4b1; --rule:#2a323c;
+  --accent:#6cc4e3; --accent-soft:#132a33;
+  --ch1:#f2c14b; --ch1-soft:#2b2410; --ch2:#4fd2da; --ch2-soft:#0f2a2c;
+  --good:#5fcf86; --good-soft:#12291a; --warn:#f0b357; --warn-soft:#2c220f; --bad:#ff7b8f; --bad-soft:#2e141a;
+  --g-bg:#18262f; --g-panel:#21333f; --g-rule:#3a5262;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.62;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.shell{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:238px minmax(0,1fr);gap:44px}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow:auto;padding-block:28px 24px;font-family:var(--f-display);font-size:16px}
+nav.toc .tt{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px;color:var(--muted);margin:14px 0 6px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{color:var(--ink);text-decoration:none;display:block;padding:2px 8px;border-left:2px solid transparent}
+nav.toc a:hover,nav.toc a:focus-visible{border-left-color:var(--accent);color:var(--accent);outline:none}
+nav.toc .pts{color:var(--muted);font-size:13px}
+main{min-width:0;padding-block:28px 0}
+.read{max-width:70ch}
+header.hero{padding-bottom:24px;margin-bottom:24px}
+.eyebrow{font-family:var(--f-display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:14px;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1.02;margin:.25em 0 .3em;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:33px;line-height:1.1;margin:0 0 .35em;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.15;margin:1.5em 0 .3em;text-wrap:balance}
+h4{font-family:var(--f-display);font-weight:600;font-size:18px;letter-spacing:.03em;margin:1.1em 0 .2em}
+p{margin:.55em 0}
+a{color:var(--accent)}
+section.blk{padding-block:40px 12px;border-top:1px solid var(--rule);scroll-margin-top:16px}
+.blk-tag{display:inline-flex;gap:8px;align-items:center;font-family:var(--f-display);font-weight:600;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.blk-tag b{color:var(--accent)}
+.lead{font-size:19px}
+.muted{color:var(--muted)}
+.num,code,.mono{font-family:var(--f-mono);font-size:.86em;font-variant-numeric:tabular-nums}
+code{background:var(--accent-soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+.ch1{color:var(--ch1);font-weight:600}.ch2{color:var(--ch2);font-weight:600}
+.pill{display:inline-block;font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.05em;padding:1px 8px;border-radius:999px;vertical-align:1px}
+.pill.ok{background:var(--good-soft);color:var(--good)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* termo clicável */
+a.t{color:inherit;text-decoration:underline dotted var(--accent) 2px;text-underline-offset:3px;cursor:help}
+a.t:hover,a.t:focus-visible{color:var(--accent);outline:none}
+
+/* blocos de explicação */
+.simples{background:var(--accent-soft);padding:14px 18px;margin:14px 0;font-size:18px}
+.rot{display:block;font-family:var(--f-display);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:12.5px;color:var(--accent);margin-bottom:3px}
+.acontece{background:var(--surface);border:1px solid var(--rule);padding:12px 18px;margin:14px 0}
+.acontece .rot{color:var(--muted)}
+.medido{background:var(--ch1-soft);padding:12px 18px;margin:14px 0}
+.medido .rot{color:var(--ch1)}
+.atencao{background:var(--warn-soft);padding:12px 18px;margin:14px 0}
+.atencao .rot{color:var(--warn)}
+.say{background:var(--surface);border:1px solid var(--accent);padding:12px 18px;margin:16px 0}
+.say::before{content:"Fale assim na defesa";display:block;font-family:var(--f-display);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:12.5px;color:var(--accent);margin-bottom:4px}
+.formula{font-family:var(--f-mono);font-size:15px;background:var(--surface);border:1px solid var(--rule);padding:12px 16px;margin:12px 0;overflow-x:auto;line-height:1.75}
+.formula .c{color:var(--muted)}
+.tw{overflow-x:auto;margin:14px 0;max-width:100%}
+table{border-collapse:collapse;font-size:15px;min-width:100%}
+th,td{border-bottom:1px solid var(--rule);padding:6px 10px;text-align:left;vertical-align:top}
+th{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.03em;color:var(--muted);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.neg{color:var(--bad)}
+tr.hl td{background:var(--ch1-soft)}
+figure{margin:20px 0;max-width:100%}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--rule);background:#fff}
+figure.osc{max-width:620px}
+figcaption{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.45}
+figcaption b{color:var(--ink)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:16px 0}
+.grid2 figure{margin:0}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.stat{background:var(--surface);border:1px solid var(--rule);padding:10px 12px}
+.stat .k{font-family:var(--f-display);font-size:14px;letter-spacing:.03em;color:var(--muted)}
+.stat .v{font-family:var(--f-mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat .s{font-size:14px;color:var(--muted);line-height:1.35}
+ol.steps{padding-left:22px}ol.steps li{margin:5px 0}
+ul{padding-left:22px}ul li{margin:4px 0}
+button{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.04em;color:var(--accent);background:var(--surface);border:1px solid var(--accent);padding:4px 12px;border-radius:3px;cursor:pointer}
+button:hover{background:var(--accent-soft)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.acoes{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+details.q{background:var(--surface);border:1px solid var(--rule);margin:8px 0}
+details.q summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none;display:flex;gap:10px}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);flex:0 0 auto}
+details.q[open] summary::before{content:"–"}
+details.q .a{padding:0 16px 12px 36px}
+
+/* quadro */
+.quadro{display:flex;min-height:62px;margin:14px 0 4px;font-family:var(--f-display);font-size:14px;line-height:1.15}
+.quadro div{padding:8px 6px;border:1px solid var(--rule);min-width:0;overflow-wrap:anywhere}
+.quadro b{display:block;font-size:15px}
+.q1{flex:0 0 17%;background:var(--ch2-soft)}.q2{flex:0 0 19%;background:var(--ch1-soft)}.q3{flex:0 0 13%;background:var(--warn-soft)}.q4{flex:1 1 0;background:var(--good-soft)}
+
+/* tela anotada */
+.tela{position:relative;max-width:640px;margin:18px 0 8px}
+.tela img{display:block;width:100%;height:auto;border:1px solid var(--rule);background:#fff}
+.pin{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--bad);color:#fff;font:600 13px/24px var(--f-mono);text-align:center;box-shadow:0 0 0 2px #fff}
+
+/* circuito */
+.svgbox{overflow-x:auto;margin:16px 0;background:var(--surface);border:1px solid var(--rule);padding:8px}
+.svgbox svg{display:block;min-width:720px;width:100%;height:auto}
+svg .fio{stroke:var(--ink);stroke-width:2;fill:none}
+svg .clk{stroke:var(--ch2);stroke-width:2;fill:none}
+svg .gnd{stroke:var(--muted);stroke-width:2;fill:none}
+svg .caixa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+svg .comp{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+svg .tp{fill:var(--bad);stroke:none}
+svg .txt{fill:var(--ink);font:500 14px var(--f-display)}
+svg .pq{fill:var(--muted);font:500 13px var(--f-display)}
+svg .tpt{fill:var(--bad);font:700 15px var(--f-display)}
+svg .tit{fill:var(--accent);font:700 18px var(--f-display)}
+svg .clkt{fill:var(--ch2);font:600 14px var(--f-display)}
+
+/* guia de bancada */
+.guia{background:var(--g-bg);color:var(--g-ink);margin:26px 0;padding:0;max-width:900px;font-size:16px;scroll-margin-top:12px}
+.guia a{color:var(--g-acc)}
+.g-top{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:14px 18px 10px;border-bottom:1px solid var(--g-rule)}
+.g-num{font-family:var(--f-display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:14px;color:var(--g-acc)}
+.g-tit{font-family:var(--f-display);font-weight:700;font-size:25px;line-height:1.1;flex:1 1 300px;min-width:0}
+.g-tempo{font-family:var(--f-mono);font-size:13px;color:var(--g-muted)}
+.g-corpo{padding:12px 18px 16px}
+.guia h4{color:var(--g-acc);font-size:15px;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 4px}
+.guia h4:first-child{margin-top:2px}
+.guia p{margin:.4em 0}
+.guia code{background:var(--g-panel);color:var(--g-ink)}
+.pontas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.ponta{flex:1 1 200px;min-width:0;background:var(--g-panel);padding:7px 12px;font-family:var(--f-display);font-size:17px;line-height:1.2}
+.ponta b{display:block;font-size:13px;letter-spacing:.08em}
+.ponta.c1 b{color:var(--g-ch1)}.ponta.c2 b{color:var(--g-ch2)}.ponta.c0 b{color:var(--g-acc)}
+.ajustes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));background:var(--g-panel);margin:8px 0;padding:2px 0}
+.ajustes div{padding:6px 10px;min-width:0;box-shadow:inset 0 -1px 0 var(--g-rule)}
+.ajustes span{display:block;font-family:var(--f-display);font-size:13px;letter-spacing:.05em;color:var(--g-muted);line-height:1.2}
+.ajustes b{font-family:var(--f-mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+ol.passos{list-style:none;margin:6px 0;padding:0;display:grid;gap:5px;counter-reset:p}
+ol.passos li{counter-increment:p;display:grid;grid-template-columns:22px 26px minmax(0,1fr);gap:4px;align-items:start;line-height:1.45}
+ol.passos li::before{content:counter(p);grid-column:2;grid-row:1;font-family:var(--f-mono);font-size:14px;color:var(--g-muted);text-align:center}
+ol.passos li input{grid-column:1;grid-row:1;margin:4px 0 0;width:17px;height:17px;accent-color:#2d9ccb}
+ol.passos li .txt{grid-column:3;grid-row:1;min-width:0}
+ol.passos li:has(input:checked) .txt{color:var(--g-muted);text-decoration:line-through}
+.btn{display:inline-block;font-family:var(--f-mono);font-size:12.5px;font-weight:600;padding:0 6px;border:1px solid var(--g-muted);border-radius:3px;background:var(--g-panel);white-space:nowrap}
+.menu{font-family:var(--f-display);font-size:16px;color:var(--g-acc)}
+.guia figure{margin:10px 0}
+.guia figure img{border-color:var(--g-rule)}
+.guia figcaption,.guia figcaption b{color:var(--g-muted)}
+.deve{background:var(--g-panel);padding:8px 14px;margin:6px 0}
+.deve b.ok{color:var(--g-good)}
+.senao{border:1px solid var(--g-rule);padding:8px 14px;margin:8px 0}
+.senao b{color:var(--g-warn)}
+.senao ul{margin:.2em 0;padding-left:18px}
+.fig-guia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.fig-guia>*{min-width:0}
+pre.cmd{position:relative;background:#091219;color:#d7e6ee;font:13.5px/1.5 var(--f-mono);padding:10px 72px 10px 12px;margin:6px 0;overflow-x:auto;white-space:pre}
+pre.cmd button{position:absolute;top:6px;right:6px;font-size:13px;padding:1px 8px;color:var(--g-acc);background:var(--g-panel);border-color:var(--g-rule)}
+.limpar{font-size:13px;color:var(--g-muted);background:transparent;border-color:var(--g-rule);margin-top:6px}
+.limpar:hover{background:var(--g-panel)}
+details.atalho{margin:8px 0;border:1px solid var(--g-rule)}
+details.atalho summary{cursor:pointer;padding:6px 12px;font-family:var(--f-display);font-weight:600;font-size:16px;color:var(--g-acc)}
+details.atalho>div{padding:2px 12px 10px}
+
+.guia .say::before{color:var(--g-acc)}
+.guia th,.guia td{border-color:var(--g-rule)}
+.guia td code{white-space:nowrap}
+
+/* laboratório de tau */
+.lab{background:var(--surface);border:1px solid var(--rule);padding:14px 16px;margin:20px 0;max-width:900px}
+.lab h3{margin-top:0}
+.lab-tela{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:10px 0}
+.lab-tela>div{min-width:0}
+.lab-tela canvas{display:block;width:100%;height:230px;background:var(--bg);border:1px solid var(--rule)}
+.lab-tela h4{margin:0 0 4px}
+.lab input[type=range]{width:100%;accent-color:#2d9ccb;margin:8px 0}
+.lab-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}
+.kbar{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;margin:8px 0;font-family:var(--f-mono);font-size:12px;text-align:center;font-variant-numeric:tabular-nums}
+.kbar div{padding:4px 0;min-width:0}
+.kbar .bom{background:var(--good-soft);color:var(--good)}
+.kbar .ruim{background:var(--bad-soft);color:var(--bad)}
+.kbar .melhor{outline:2px solid var(--good)}
+
+/* anotações */
+.anota input{width:100%;min-width:84px;font:14px var(--f-mono);padding:3px 6px;border:1px solid var(--rule);background:var(--bg);color:var(--ink)}
+
+/* dicionário */
+dl.dic{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:12px 0}
+dl.dic>div{padding:8px 0;border-bottom:1px solid var(--rule);min-width:0;scroll-margin-top:12px}
+dl.dic dt{font-family:var(--f-display);font-weight:700;font-size:18px;line-height:1.2}
+dl.dic dd{margin:2px 0 0;font-size:15.5px;line-height:1.45}
+dl.dic>div:target{background:var(--ch1-soft)}
+
+/* janela de definição */
+#dica{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:3px solid var(--accent);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -8px 24px rgba(0,0,0,.22)}
+#dica .in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:start}
+#dica b{font-family:var(--f-display);font-size:20px;display:block;line-height:1.2}
+#dica p{margin:2px 0 0;font-size:16px;line-height:1.45}
+
+/* modo só guias */
+body.so-guias section.blk>*:not(.guia):not(.cab){display:none}
+body.so-guias section.blk:not(:has(.guia)){display:none}
+body.so-guias .so-teoria{display:none}
+.cab{max-width:70ch}
+
+@media (max-width:980px){.shell{grid-template-columns:minmax(0,1fr);gap:0}nav.toc{position:static;max-height:none;border-bottom:1px solid var(--rule);padding-block:18px}nav.toc ol{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}}
+@media (max-width:720px){.grid2,.fig-guia,.lab-tela{grid-template-columns:minmax(0,1fr)}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}dl.dic{grid-template-columns:minmax(0,1fr)}body{font-size:16px}.simples{font-size:17px}.quadro{font-size:12.5px}.quadro b{font-size:13px}.g-corpo{padding-inline:12px}.g-top{padding-inline:12px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* gráficos da demonstração */
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0;max-width:1000px}
+.grid3 figure{margin:0}
+.legenda{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--f-display);font-size:15px;margin:8px 0}
+.legenda span{display:inline-flex;align-items:center;gap:6px}
+.legenda i,.tip i{display:inline-block;width:12px;height:12px;border-radius:3px}
+.plot{overflow-x:auto;position:relative;margin:6px 0}
+.plot svg{display:block;width:100%;min-width:520px;height:auto}
+.plot.pequeno svg{min-width:280px}
+.plot .gr{stroke:var(--rule);stroke-width:1}
+.plot .ax{fill:var(--muted);font:12px var(--f-mono)}
+.plot .val{fill:var(--ink);font:600 12px var(--f-mono)}
+.plot .neg{fill:var(--bad);font:600 12px var(--f-mono)}
+.plot .rot-s{fill:var(--ink);font:600 14px var(--f-display);paint-order:stroke;stroke:var(--surface);stroke-width:4px}
+.plot .zero{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 4}
+.plot .marca{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 3}
+.plot .cruz{stroke:var(--ink);stroke-width:1}
+.plot .lim{stroke:var(--ink);stroke-width:1.6;stroke-dasharray:6 4}
+.plot .dest{fill:var(--accent-soft)}
+.tip{position:absolute;top:18px;left:0;width:170px;background:var(--surface);border:1px solid var(--rule);padding:6px 10px;font:12.5px/1.5 var(--f-mono);pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.tip div{display:flex;align-items:center;gap:6px}
+.campo{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-display);font-size:15px}
+.campo input{width:78px;font:14px var(--f-mono);padding:3px 6px;border:1px solid var(--rule);background:var(--bg);color:var(--ink)}
+.decis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}
+.decis>div{background:var(--bg);padding:10px 14px;min-width:0}
+.decis p{margin:.2em 0}
+.dois{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dois>div{min-width:0}
+pre.codigo{background:var(--surface);border:1px solid var(--rule);font:13.5px/1.55 var(--f-mono);padding:10px 14px;overflow-x:auto;margin:10px 0;color:var(--ink)}
+@media (max-width:720px){.grid3,.decis,.dois{grid-template-columns:minmax(0,1fr)}}
+</style>
+<div class="shell">
+<nav class="toc" aria-label="Índice">
+  <div class="acoes"><button type="button" id="modo" aria-pressed="false">Só os guias de bancada</button></div>
+  <div class="tt">Na ordem da demonstração</div>
+  <ol>
+    <li><a href="#montagem">Montagem separada</a></li>
+    <li><a href="#pam2">1 · PAM-2 correto</a></li>
+    <li><a href="#fft">2 · FFT e PSD</a></li>
+    <li><a href="#olho">3 · Diagrama de olho</a></li>
+    <li><a href="#amostras">4 · As 8 amostras</a></li>
+    <li><a href="#filtro">5 · Filtro casado</a></li>
+    <li><a href="#calibracao">6 · Calibração e limiar</a></li>
+    <li><a href="#tau">7 · Medir τ</a></li>
+  </ol>
+  <div class="tt">Consulta</div>
+  <ol>
+    <li><a href="#perguntas">Perguntas do professor</a></li>
+    <li><a href="#dicionario">Palavras difíceis</a></li>
+    <li><a href="detectores_pam2.html">Detectores passo a passo</a></li>
+    <li><a href="index.html">Material completo</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero read">
+  <div class="eyebrow">Defesa individual · Projeto PAM em banda base</div>
+  <h1>Demonstração PAM-2</h1>
+  <p class="lead">O roteiro do que você disse que o professor vai querer ver: PAM-2 funcionando, FFT, olho, as 8 amostras, o filtro casado, a calibração dos dois detectores e o τ. Cada item explica o que é e traz um guia para mostrar na bancada.</p>
+  <div class="acontece">
+    <span class="rot">Como foi montado</span>
+    <ul>
+      <li>Tudo em <b>PAM-2</b>, com o canal <b>RC de 16,8 nF</b> como exemplo principal. Os gráficos usam as amostras reais dos seus logs de 03/11/2026.</li>
+      <li>Recalculei separações, k*, centros, limiares e margens a partir das amostras do log, e tudo bateu com o que o firmware imprimiu.</li>
+      <li>Entendi "equipamento à parte" como uma montagem própria para esta demonstração, descrita logo abaixo.</li>
+      <li><b>O guia de FFT no osciloscópio ainda não foi testado na bancada</b>. Os demais ajustes vêm de capturas que já funcionaram. Treine antes do dia.</li>
+    </ul>
+  </div>
+  <div class="tw"><table>
+    <tr><th class="n">#</th><th>O que mostrar</th><th>Com o quê</th><th><span class="ch1">CH1</span></th><th><span class="ch2">CH2</span></th><th class="n">Tempo</th></tr>
+    <tr><td class="n">1</td><td><a href="#pam2">PAM-2 correto</a></td><td>Osciloscópio</td><td>TP2</td><td>CLK</td><td class="n">2 min</td></tr>
+    <tr><td class="n">2</td><td><a href="#fft">FFT e PSD</a></td><td>Osciloscópio e PC</td><td>TP3</td><td>CLK</td><td class="n">3 min</td></tr>
+    <tr><td class="n">3</td><td><a href="#olho">Olho</a></td><td>Osciloscópio</td><td>TP3</td><td>CLK</td><td class="n">2 min</td></tr>
+    <tr><td class="n">4</td><td><a href="#amostras">8 amostras</a></td><td>PC (log do RX)</td><td>—</td><td>—</td><td class="n">1 min</td></tr>
+    <tr><td class="n">5</td><td><a href="#filtro">Filtro casado</a></td><td>PC e conta à mão</td><td>—</td><td>—</td><td class="n">4 min</td></tr>
+    <tr><td class="n">6</td><td><a href="#calibracao">Calibração e limiar</a></td><td>PC (log do RX)</td><td>—</td><td>—</td><td class="n">3 min</td></tr>
+    <tr><td class="n">7</td><td><a href="#tau">Medir τ</a></td><td>Osciloscópio</td><td>TP2</td><td>TP3</td><td class="n">3 min</td></tr>
+  </table></div>
+  <p class="muted">A ordem deixa as pontas em TP3 e CLK durante três itens seguidos, e os itens 4 a 6 não precisam mudar nada. Assim você mexe menos no fio de CLK, que já falhou por contato.</p>
+</header>
+
+<!-- ================================================ MONTAGEM -->
+<section class="blk" id="montagem">
+<div class="cab">
+  <div class="blk-tag"><b>Antes de tudo</b> Montagem</div>
+  <h2>Montagem separada para a demonstração</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>Deixe uma bancada só para isso, já testada: <b>TX sem jumper</b>, canal RC montado e um terminal aberto. Assim você não precisa pensar em ligação durante a defesa.</div>
+</div>
+<div class="svgbox" role="img" aria-label="Esquema do enlace com o canal RC e os pontos de teste">
+<svg viewBox="0 0 900 290" xmlns="http://www.w3.org/2000/svg">
+  <rect class="caixa" x="14" y="24" width="96" height="226"/><text class="tit" x="46" y="50">TX</text>
+  <text class="pq" x="24" y="76">PB4</text><text class="pq" x="24" y="136">PA8</text><text class="pq" x="24" y="156">PWM</text>
+  <rect class="caixa" x="790" y="24" width="96" height="226"/><text class="tit" x="824" y="50">RX</text>
+  <text class="pq" x="842" y="76">PA0</text><text class="pq" x="842" y="136">PA1</text><text class="pq" x="842" y="156">ADC</text>
+
+  <path class="clk" d="M110 72H790"/><text class="clkt" x="300" y="62">fio de CLK, 20 kHz: marca o início de cada símbolo (PB4 → PA0)</text>
+  <path class="gnd" d="M110 256H790"/><text class="pq" x="400" y="276">GND comum entre TX e RX</text>
+
+  <path class="fio" d="M110 130H160"/><rect class="comp" x="160" y="118" width="58" height="24"/><text class="pq" x="170" y="135">330 Ω</text>
+  <path class="fio" d="M218 130H350"/><rect class="comp" x="350" y="118" width="54" height="24"/><text class="pq" x="363" y="135">56 Ω</text>
+  <path class="fio" d="M404 130H520"/><rect class="comp" x="520" y="118" width="54" height="24"/><text class="pq" x="534" y="135">1 kΩ</text>
+  <path class="fio" d="M574 130H790"/>
+  <text class="pq" x="262" y="122">fio de dados</text>
+
+  <circle class="tp" cx="134" cy="130" r="5"/><text class="tpt" x="122" y="112">TP1</text>
+  <circle class="tp" cx="250" cy="130" r="5"/><text class="tpt" x="238" y="112">TP2</text>
+  <path class="fio" d="M250 130V170"/><rect class="comp" x="228" y="170" width="44" height="26"/><text class="pq" x="231" y="188">400 pF</text><path class="fio" d="M250 196V256"/>
+
+  <circle class="tp" cx="450" cy="130" r="5"/><text class="tpt" x="438" y="112">TP3</text>
+  <path class="fio" d="M450 130V152"/><rect class="comp" x="428" y="152" width="44" height="24"/><text class="pq" x="434" y="169">33 nF</text>
+  <path class="fio" d="M450 176V192"/><circle cx="450" cy="192" r="4" fill="var(--ink)"/><text class="pq" x="430" y="197">N</text>
+  <rect class="comp" x="428" y="202" width="44" height="24"/><text class="pq" x="434" y="219">33 nF</text>
+  <path class="fio" d="M450 192V202M450 226V256"/>
+  <path class="clk" stroke-dasharray="5 4" d="M450 192H492V256"/><text class="clkt" x="498" y="230">jumper N→GND</text><text class="clkt" x="498" y="247">fica só 33 nF</text>
+
+  <circle class="tp" cx="630" cy="130" r="5"/><text class="tpt" x="618" y="112">TP4</text>
+  <path class="fio" d="M630 130V256"/><rect class="comp" x="610" y="178" width="40" height="24"/><text class="pq" x="620" y="195">D−</text>
+  <path class="fio" d="M690 130V98"/><rect class="comp" x="670" y="96" width="40" height="22"/><text class="pq" x="680" y="112">D+</text>
+  <text class="pq" x="716" y="104">para 3V3 do RX</text>
+</svg>
+</div>
+<div class="read">
+  <div class="tw"><table>
+    <tr><th>De</th><th>Para</th><th>Observação</th></tr>
+    <tr><td><b>PA8</b> (TX)</td><td>330 Ω → <b>TP2</b></td><td>TP2 com 4 × 100 pF em paralelo para o GND</td></tr>
+    <tr><td><b>TP2</b></td><td>Fio de dados → 56 Ω → <b>TP3</b></td><td>O fio de dados de 20 cm</td></tr>
+    <tr><td><b>TP3</b></td><td>33 nF → ponto <b>N</b> → 33 nF → GND</td><td>Dá 16,5 nF. Para 33 nF, um jumper de N ao GND.</td></tr>
+    <tr><td><b>TP3</b></td><td>1 kΩ → <b>TP4</b> → <b>PA1</b> (RX)</td><td>TP4 com D− (anodo no GND) e D+ (faixa no 3V3 do RX)</td></tr>
+    <tr><td><b>PB4</b> (TX)</td><td><b>PA0</b> (RX)</td><td>O CLK, longe do fio de dados. Em PA0, 10 kΩ para o GND.</td></tr>
+    <tr><td><b>GND</b> (TX)</td><td><b>GND</b> (RX e Pico)</td><td>Só os GND se ligam. Nunca os 3V3.</td></tr>
+    <tr><td><b>PA9, PA10</b> (RX)</td><td><b>GP5, GP4</b> (Pico)</td><td>Ligação cruzada. O Pico vira <code>/dev/ttyACM1</code>.</td></tr>
+    <tr class="hl"><td><b>PB0</b> (TX)</td><td><b>Solto</b></td><td><b>Solto = PAM-2.</b> No GND seria PAM-4.</td></tr>
+  </table></div>
+</div>
+
+<article class="guia" id="g-mont">
+  <div class="g-top"><span class="g-num">Guia M</span><span class="g-tit">Preparar a bancada e fazer o teste geral</span><span class="g-tempo">≈ 3 min</span></div>
+  <div class="g-corpo">
+    <h4>No hardware</h4>
+    <ol class="passos">
+      <li><span class="txt">Monte como na tabela, com <b>PB0 do TX solto</b> e sem o jumper de N.</span></li>
+      <li><span class="txt">Ligue TX, RX e Pico por USB, e o osciloscópio pelo USB traseiro.</span></li>
+      <li><span class="txt">Pontas com a chave em <b>×10</b> e a garra de GND no GND da protoboard. Em cada canal: <span class="mono">CH MENU</span> → ponta <b>10X</b>.</span></li>
+      <li><span class="txt">No scope: <span class="mono">UTILITY</span> → <span class="menu">Options → Rear USB Port → Computer</span>.</span></li>
+    </ol>
+    <h4>No terminal</h4>
+    <pre class="cmd">cd ~/Documents/EEL/8/Telecom/Projeto_PAM_BB
+lsusb | grep 0699
+sudo chmod 666 /dev/usbtmc*
+.venv/bin/python python/pam_app.py capturar --mod 2 --canal c --vref 3.297</pre>
+    <ol class="passos">
+      <li><span class="txt">Espere <code>#ARMADO PAM-2</code>. Aperte <b>RESET no TX</b> uma vez e não encoste em nada por 8 s.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> <code>0699:0364</code> no lsusb, <code>Modulação PAM-2 | canal: Dupont_RC_16n8 | aquisição válida = 1 | sincronismo = 1</code>, 100444 bordas, k* = 7, 0 erros e todas as linhas <code>[OK]</code>.</div>
+    <div class="senao"><b>Se não der certo</b>
+      <ul>
+        <li><code>0699:036b</code>: scope no modo USB errado. Refaça o <span class="menu">Rear USB Port</span> e reconecte o cabo.</li>
+        <li><code>perda_CLK = 1</code>: firme o fio de CLK nas duas pontas e repita.</li>
+        <li><code>calibracao_ok = 0</code>: jumper em PB0, ou GND solto.</li>
+      </ul>
+    </div>
+    <div class="atencao" style="background:var(--g-panel);color:var(--g-ink)"><b>Regra de ouro:</b> o TX só transmite por cerca de 5 s depois do RESET em PAM-2, depois de esperar 1 s. <b>Configure primeiro e aperte RESET depois.</b> Não aperte o botão KEY do RX e não aperte RESET no meio do quadro.</div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ PAM-2 -->
+<section class="blk" id="pam2">
+<div class="cab">
+  <div class="blk-tag"><b>Item 1</b> O sinal</div>
+  <h2>Mostrar que o PAM-2 está correto</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span><a class="t" href="#d-pam">PAM-2</a> tem só duas alturas de tensão. Baixo é bit 0, alto é bit 1. Cada altura dura um <a class="t" href="#d-simbolo">símbolo</a> de 50 µs. Dizer "está correto" significa provar cinco coisas com medidas.</div>
+  <div class="tw"><table>
+    <tr><th>O que provar</th><th>Esperado</th><th>Medido</th><th>Onde mostrar</th></tr>
+    <tr><td>Dois níveis</td><td class="n">0 e 3,3 V</td><td class="n">−0,021 e 3,380 V</td><td>TP2 no scope</td></tr>
+    <tr><td>Duração do símbolo</td><td class="n">50 µs, 20 kHz</td><td class="n">49,998 µs, 20,0008 kHz</td><td>CLK no scope</td></tr>
+    <tr><td>Sequência conhecida</td><td class="n">0,1,0,0,1,1,0,1,0,1</td><td class="n">igual</td><td>TP2, símbolos 140–149</td></tr>
+    <tr><td>Quadro completo</td><td class="n">100.444 símbolos, 5,02 s</td><td class="n">100.444 bordas</td><td>Log do RX</td></tr>
+    <tr><td>Bits certos</td><td class="n">poucos erros</td><td class="n">0 em 100.000</td><td>Log do RX</td></tr>
+  </table></div>
+  <div class="acontece"><span class="rot">Por que 3,38 V e não 3,30 V?</span>Com o PWM 100 % ligado, TP2 vai até o 3V3 do TX. Esse valor fica acima dos 3,297 V medidos no 3V3 do RX. Por isso o nível 1 lê 4095, o valor máximo do <a class="t" href="#d-adc">ADC</a>. Isso não causa erro, porque não há nenhum limiar acima do nível 1.</div>
+  <div class="acontece"><span class="rot">Taxa de bits</span>Em PAM-2 cada símbolo leva 1 bit. 20.000 símbolos/s × 1 bit = <b>20 kbit/s</b>. O quadro tem 100.444 símbolos: 140 de pulso + 256 de calibração + 48 de início + 100.000 de <a class="t" href="#d-payload">payload</a>.</div>
+</div>
+
+<article class="guia" id="g1">
+  <div class="g-top"><span class="g-num">Guia 1</span><span class="g-tit">Mostrar os 2 níveis, a sequência e o CLK</span><span class="g-tempo">≈ 2 min</span></div>
+  <div class="g-corpo">
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP2</div><div class="ponta c2"><b>CH2</b>CLK (PB4)</div><div class="ponta c0"><b>Jumper</b>PB0 do TX solto</div></div>
+    <div class="ajustes">
+      <div><span>CH1 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 POSITION</span><b>3,5 div abaixo</b></div>
+      <div><span>CH2 VOLTS/DIV</span><b>2 V</b></div><div><span>CH2 POSITION</span><b>1 div acima</b></div>
+      <div><span>SEC/DIV</span><b>50 µs</b></div><div><span>M Pos</span><b>7,225 ms</b></div>
+      <div><span>Disparo</span><b>Borda, CH2, Subida, Normal</b></div><div><span>Nível</span><b>1,6 V</b></div>
+    </div>
+    <div class="fig-guia">
+      <div>
+        <h4>Passos</h4>
+        <ol class="passos">
+          <li><span class="txt">Ajuste as escalas. Para chegar em 7,225 ms: ponha <span class="mono">SEC/DIV</span> em 1 ms, gire <span class="mono">HORIZONTAL POSITION</span> até cerca de 7,2 ms e volte a 50 µs para o ajuste fino.</span></li>
+          <li><span class="txt">Aperte <span class="mono">SINGLE SEQ</span> e espere <code>Ready</code>.</span></li>
+          <li><span class="txt">Aperte <b>RESET no TX</b>. Aparece <code>Acq Complete</code>.</span></li>
+          <li><span class="txt">Leia os degraus: cada quadradinho é um símbolo.</span></li>
+          <li><span class="txt"><span class="mono">MEASURE</span> → CH2 → <span class="menu">Freqüência</span>: 20 kHz.</span></li>
+        </ol>
+      </div>
+      <figure><img src="img/pam2_niveis.png" alt="Sequência PAM-2 em TP2, com o CLK acima" loading="lazy"><figcaption><b>Sua captura:</b> 0,1,0,0,1,1,0,1,0,1 em amarelo, com o CLK em ciano e um período de CLK por símbolo.</figcaption></figure>
+    </div>
+    <div class="acontece" style="background:var(--g-panel);border-color:var(--g-rule);color:var(--g-ink)"><b>Por que 7,225 ms?</b> O disparo pega a primeira borda do quadro. A calibração começa no símbolo 140: 140 × 50 µs = 7 ms. Os outros 0,225 ms centralizam o trecho na tela.</div>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> só <b>2 alturas</b>, separadas por quase 3,4 quadradinhos, na ordem <b>0, 1, 0, 0, 1, 1, 0, 1, 0, 1</b>.</div>
+    <div class="say" style="background:var(--g-panel);color:var(--g-ink);border-color:var(--g-rule)">"O jumper PB0 está solto, então o TX está em PAM-2. Em TP2 aparecem só dois níveis, 0 e 3,38 V, na sequência da calibração que o enunciado define. Cada degrau dura 50 µs, um período de CLK. Isso dá 20 mil símbolos por segundo e 1 bit por símbolo, ou 20 kbit/s."</div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul>
+        <li><b>4 alturas:</b> o jumper está em PB0. Tire e aperte RESET de novo.</li>
+        <li><b>Curvas em vez de degraus:</b> normal com o RC ligado, porque TP2 também sente o canal. Para um degrau reto, use o canal Dupont.</li>
+        <li><b>Nada na tela:</b> o scope não estava em <code>Ready</code> antes do RESET.</li>
+      </ul>
+    </div>
+    <details class="atalho"><summary>Atalho pelo terminal (configura, confere a ordem e mede os níveis)</summary><div>
+      <pre class="cmd">.venv/bin/python python/bancada.py osc niveis --canal c --mod 2 --sem-rx --nome demo_PAM2_niveis</pre></div></details>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ FFT -->
+<section class="blk" id="fft">
+<div class="cab">
+  <div class="blk-tag"><b>Item 2</b> Frequência</div>
+  <h2>FFT e PSD: de quais frequências o sinal é feito</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>A <a class="t" href="#d-fft">FFT</a> é a conta que separa um sinal nas frequências que o formam, como separar um acorde em notas. A <a class="t" href="#d-psd">PSD</a> usa a FFT para dizer quanta potência existe em cada frequência. Sinal no tempo e PSD são o mesmo sinal, vistos de dois jeitos.</div>
+  <div class="acontece"><span class="rot">O que acontece</span>O pulso é um retângulo de 50 µs. A transformada de um retângulo é um <a class="t" href="#d-sinc">sinc</a>, que tem <b>zeros em 20, 40 e 60 kHz</b>, os múltiplos de 1/50 µs. O canal RC corta as altas frequências, então a curva dele fica abaixo da curva do Dupont, e cada vez mais baixo conforme a frequência sobe.</div>
+</div>
+
+<div class="lab" id="labFft">
+  <h3 style="margin-top:0">PSD real dos seus três canais em PAM-2</h3>
+  <p>Calculada agora com as amostras dos logs oficiais. Passe o mouse para ler os valores.</p>
+  <div class="acoes" role="group" aria-label="Tipo de cálculo">
+    <button type="button" id="psdMed" aria-pressed="true">Média de 15 blocos (método oficial)</button>
+    <button type="button" id="psdUm" aria-pressed="false">Um bloco só (parecido com a FFT do scope)</button>
+  </div>
+  <div class="legenda" aria-hidden="true"><span><i style="background:var(--s1)"></i>Dupont</span><span><i style="background:var(--s2)"></i>RC 16,8 nF</span><span><i style="background:var(--s3)"></i>RC 33 nF</span></div>
+  <div class="plot" id="psdPlot"></div>
+  <p class="muted" style="font-size:14px;margin-bottom:0">Eixo vertical em dB: 10 dB a menos = 10 vezes menos potência. Com "um bloco só", a curva fica bem mais tremida, e é por isso que o método oficial faz a média.</p>
+</div>
+
+<div class="read" id="psd-oque">
+  <h3>O que a PSD mede</h3>
+  <p>A <a class="t" href="#d-psd">PSD</a> mostra <b>como a potência do sinal se espalha pelas frequências</b>. Ela responde: "dessa onda de degraus, quanto tem de 5 kHz, quanto tem de 10 kHz, quanto tem de 50 kHz?"</p>
+  <ul>
+    <li><b>Eixo horizontal:</b> frequência, em Hz.</li>
+    <li><b>Eixo vertical:</b> potência em cada fatia de 1 Hz, em V²/Hz. No gráfico acima está em dB: 10·log₁₀ do valor.</li>
+    <li><b>Área embaixo da curva = potência total do sinal.</b> No Dupont PAM-2, a área dá 2,71 V², igual à variância do sinal medido (2,71 V²). É uma boa conferência.</li>
+  </ul>
+  <div class="acontece"><span class="rot">Por que zeros em 20, 40 e 60 kHz</span>Cada símbolo é um nível parado por 50 µs. Uma senoide de 20 kHz completa <b>exatamente um ciclo</b> dentro de um símbolo. Comparada com um nível parado, a metade positiva cancela a negativa e sobra zero. O mesmo vale para 40 kHz (dois ciclos) e 60 kHz (três ciclos). Por isso aparecem os vales fundos nos múltiplos de 1/T<sub>s</sub> = 20 kHz.</div>
+  <div class="grid4">
+    <div class="stat"><div class="k">Amostras</div><div class="v">8.192</div><div class="s">copiadas do ADC durante o payload</div></div>
+    <div class="stat"><div class="k">Duração</div><div class="v">51,2 ms</div><div class="s">8.192 ÷ 160.000 por segundo</div></div>
+    <div class="stat"><div class="k">Blocos</div><div class="v">15</div><div class="s">de 1.024, com 50 % de sobreposição</div></div>
+    <div class="stat"><div class="k">Resolução</div><div class="v">156,25 Hz</div><div class="s">160.000 ÷ 1.024, entre pontos</div></div>
+  </div>
+
+  <h3 id="psd-passos">Como a PSD é feita, passo a passo</h3>
+  <div class="tw"><table>
+    <tr><th class="n">#</th><th>O que faz</th><th>Para quê</th></tr>
+    <tr><td class="n">1</td><td>O RX copia <b>8.192 amostras</b> seguidas do ADC durante o payload, a 160.000 amostras/s: <b>51,2 ms</b> de sinal.</td><td>Ter o sinal como o RX viu, na entrada do ADC.</td></tr>
+    <tr><td class="n">2</td><td>Converte cada código para volts: <span class="mono">V = código × 3,297 / 4095</span>.</td><td>Trabalhar em volts, com o Vref medido.</td></tr>
+    <tr><td class="n">3</td><td><b>Tira a média</b> do sinal (cerca de 1,65 V).</td><td>Sem isso, aparece um pico enorme em 0 Hz que vaza para as frequências vizinhas.</td></tr>
+    <tr><td class="n">4</td><td>Corta em <b>blocos de 1.024 amostras</b> (6,4 ms cada). Cada bloco começa na metade do anterior: <b>50 % de sobreposição</b>, o que dá <b>15 blocos</b>.</td><td>Um bloco só dá uma curva tremida. Vários blocos permitem fazer média.</td></tr>
+    <tr><td class="n">5</td><td>Multiplica cada bloco pela <a class="t" href="#d-janela">janela de Hann</a>, explicada logo abaixo.</td><td>Evitar o <b>vazamento</b>: frequências falsas criadas pelo corte seco do bloco.</td></tr>
+    <tr><td class="n">6</td><td>Faz a <a class="t" href="#d-fft">FFT</a> de cada bloco, eleva ao quadrado e ajusta a escala: <span class="mono">S = 2·|FFT|² / (f<sub>a</sub>·Σw²)</span>.</td><td>Passar do tempo para a frequência, em V²/Hz.</td></tr>
+    <tr><td class="n">7</td><td>Faz a <b>média dos 15 blocos</b>.</td><td>Deixar a curva lisa e confiável. Esse método se chama <a class="t" href="#d-welch">Welch</a>.</td></tr>
+  </table></div>
+  <p class="muted">Para ler "o valor em 5 kHz", faz-se a média dos 5 pontos em volta de 5 kHz (±312,5 Hz). A FFT do osciloscópio é como usar um bloco só, sem média. Por isso ela fica tremida e serve apenas como apoio visual.</p>
+</div>
+
+<div class="lab" id="labHann">
+  <h3 style="margin-top:0">A janela de Hann</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span>A FFT faz a conta como se o bloco de 1.024 amostras <b>se repetisse para sempre</b>, colado nele mesmo. Se o fim do bloco não bate com o começo, a colagem cria um <b>salto</b>. Um salto é feito de todas as frequências ao mesmo tempo, então aparece energia em frequências que o sinal não tem. Isso é o <b>vazamento</b> (ou espalhamento, o mesmo <i>leakage</i> do Laboratório 1). A janela de Hann é uma curva em forma de sino que vale <b>0 nas pontas e 1 no meio</b>. Multiplicando o bloco por ela, as duas pontas descem suavemente até zero, e a colagem deixa de ter salto.</div>
+  <div class="formula">w[n] = 0,5 − 0,5·cos(2π·n / 1024),   n = 0 … 1023<br><span class="c">n = 0 → w = 0 ·  n = 512 (meio) → w = 1 ·  n = 1023 → w ≈ 0</span></div>
+
+  <h4>No tempo: como a FFT enxerga o bloco</h4>
+  <div class="acoes" role="group" aria-label="Janela usada">
+    <button type="button" id="hannSem" aria-pressed="true">Sem janela (corte seco)</button>
+    <button type="button" id="hannCom" aria-pressed="false">Com janela de Hann</button>
+  </div>
+  <div class="plot" id="hannTempo"></div>
+  <p class="muted" style="font-size:14px">Ilustração com um sinal PAM-2 simulado passando por um RC de τ = 7,3 µs, já sem a média. São duas cópias do mesmo bloco, lado a lado, como a FFT supõe. A linha vertical marca a colagem.</p>
+  <p id="hannSalto" class="mono" style="margin:4px 0 0"></p>
+
+  <h4>Na frequência: o que o salto faz</h4>
+  <div class="legenda" aria-hidden="true"><span><i style="background:var(--s2)"></i>Sem janela</span><span><i style="background:var(--s1)"></i>Com Hann</span></div>
+  <div class="plot" id="hannFreq"></div>
+  <p class="muted" style="font-size:14px">Teste com uma senoide pura de 5,078 kHz, que cai entre dois pontos da FFT. O sinal só tem 5,078 kHz. Tudo o que aparece longe dali é vazamento.</p>
+  <div class="tw"><table>
+    <tr><th>Nível em relação ao pico</th><th class="n">6 kHz</th><th class="n">10 kHz</th><th class="n">20 kHz</th></tr>
+    <tr><td>Sem janela</td><td class="n">−20 dB</td><td class="n">−34 dB</td><td class="n">−41 dB</td></tr>
+    <tr><td>Com Hann</td><td class="n">−53 dB</td><td class="n">−98 dB</td><td class="n">−126 dB</td></tr>
+  </table></div>
+</div>
+
+<div class="read">
+  <div class="medido"><span class="rot">No seu sinal real (PAM-2, média de 15 blocos)</span>Sem a janela, o vazamento enche os vales da PSD. No RC 16,8 nF, o vale de 20 kHz fica em <b>−83,7 dB com Hann</b> e em <b>−72,3 dB sem janela</b>: cerca de 11 dB de "sujeira" vinda das frequências vizinhas. No RC 33 nF: −69,4 dB com Hann e −65,3 dB sem janela. Com a janela, os zeros em 20, 40 e 60 kHz aparecem como a teoria prevê.</div>
+  <div class="acontece"><span class="rot">O preço da janela, e por que 50 % de sobreposição</span>
+    <ul>
+      <li><b>A janela "apaga" um pouco do sinal.</b> As amostras das pontas são multiplicadas por quase zero. A divisão por Σw² no passo 6 corrige a escala, para a potência continuar em V²/Hz.</li>
+      <li><b>Os picos ficam um pouco mais largos</b>, cerca de 2 pontos em vez de 1. Para um sinal PAM, que já é espalhado, isso não atrapalha.</li>
+      <li><b>A sobreposição de 50 % recupera as pontas.</b> O que fica perto de zero na ponta de um bloco está no meio do bloco seguinte. Assim nenhuma amostra é desperdiçada e sobram 15 blocos para a média, em vez de 8.</li>
+    </ul>
+  </div>
+  <div class="say">"A FFT supõe que o bloco se repete. Se o fim não bate com o começo, a emenda vira um salto, que espalha energia para frequências que o sinal não tem. Isso é vazamento. A janela de Hann vale zero nas pontas e um no meio. Multiplicando o bloco por ela, as pontas descem suavemente e o salto some. No RC 16,8 nF, sem janela o vale de 20 kHz sobe de −84 para −72 dB. O custo é perder um pouco das pontas, e por isso uso 50 % de sobreposição."</div>
+</div>
+
+<div class="read">
+  <h3>Esperado × medido em PAM-2</h3>
+  <p>A teoria dá a conta: S(f) = 2σ²·T<sub>s</sub>·sinc²(π f T<sub>s</sub>). Com níveis de 0 e 3,297 V, σ² = (3,297/2)² = 2,717 V². Então 2σ²T<sub>s</sub> = 2,717·10⁻⁴ V²/Hz.</p>
+  <div class="tw"><table>
+    <tr><th>Frequência</th><th class="n">sinc²</th><th class="n">Teoria, sem canal</th><th class="n">Dupont</th><th class="n">RC 16,8 nF</th><th class="n">RC 33 nF</th></tr>
+    <tr><td><b>5 kHz</b></td><td class="n">0,811</td><td class="n">2,20·10⁻⁴</td><td class="n">2,10·10⁻⁴</td><td class="n">1,98·10⁻⁴</td><td class="n">1,72·10⁻⁴</td></tr>
+    <tr><td><b>10 kHz</b></td><td class="n">0,405</td><td class="n">1,10·10⁻⁴</td><td class="n">1,06·10⁻⁴</td><td class="n">8,62·10⁻⁵</td><td class="n">5,75·10⁻⁵</td></tr>
+    <tr><td><b>20 kHz</b></td><td class="n">0</td><td class="n">zero</td><td colspan="3" class="n">vale fundo nos três</td></tr>
+  </table></div>
+  <div class="tw"><table>
+    <tr><th>Razão canal ÷ Dupont</th><th class="n">5 kHz, medida</th><th class="n">5 kHz, conta</th><th class="n">10 kHz, medida</th><th class="n">10 kHz, conta</th></tr>
+    <tr><td>RC 16,8 nF</td><td class="n">0,944</td><td class="n">0,952</td><td class="n"><b>0,812</b></td><td class="n">0,834</td></tr>
+    <tr><td>RC 33 nF</td><td class="n">0,821</td><td class="n">0,841</td><td class="n"><b>0,542</b></td><td class="n">0,569</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">Como explicar</span>O Dupont ficou de 4 a 5 % abaixo da teoria, dentro da variação de uma estimativa com 15 médias. A razão elimina essa variação, porque os bits são os mesmos nos dois canais. Pela teoria de sistemas lineares, S<sub>saída</sub> = |H|² · S<sub>entrada</sub>, então <b>a razão mede o |H|² do canal</b>. Em 10 kHz, o RC 16,8 nF tira 19 % da potência, e o de 33 nF tira 46 %.</div>
+  <h3>A FFT do scope e a PSD do RX são diferentes</h3>
+  <div class="tw"><table>
+    <tr><th></th><th>FFT no osciloscópio</th><th>PSD pelo RX (oficial)</th></tr>
+    <tr><td><b>Mede onde</b></td><td>TP3, pela ponta</td><td>TP4, pelo ADC do RX</td></tr>
+    <tr><td><b>Dados</b></td><td>Uma captura, cerca de 8 ms</td><td>8.192 amostras, 51,2 ms</td></tr>
+    <tr><td><b>Média</b></td><td>Nenhuma: curva tremida</td><td>15 blocos: curva estável</td></tr>
+    <tr><td><b>Unidade</b></td><td>dB</td><td>V²/Hz</td></tr>
+    <tr><td><b>Serve para</b></td><td>Mostrar os zeros e a forma na hora</td><td>Dar os números de 5 e 10 kHz</td></tr>
+  </table></div>
+  <div class="acontece"><span class="rot">Conferência com o τ medido</span>Para um RC, |H|² = 1 / (1 + (2π·f·τ)²). Com τ = 7,30 µs em 10 kHz: 2π · 10.000 · 0,0000073 = 0,459. Ao quadrado dá 0,21, e 1 / 1,21 = <b>0,826</b>. A razão medida foi <b>0,812</b>, uma diferença de 2 %. A PSD e o degrau no osciloscópio dão o mesmo canal.</div>
+  <div class="acontece"><span class="rot">Três jeitos de ver a mesma coisa</span>Um canal com τ maior dá:
+    <ul>
+      <li><b>No tempo:</b> subida mais lenta. O tempo de subida vai de 16 para 27 µs.</li>
+      <li><b>Na frequência:</b> menos potência em frequência alta. Em 10 kHz passa 81 % com 16,8 nF e 54 % com 33 nF.</li>
+      <li><b>No olho:</b> mais <a class="t" href="#d-isi">ISI</a>, porque um símbolo ainda carrega a cauda do anterior. A abertura PAM-4 vai de 0,98 para 0,84 V.</li>
+    </ul>
+  </div>
+  <div class="say">"A PSD mostra como a potência do sinal se distribui em frequência. Usei 8.192 amostras do ADC a 160 kHz, ou seja, 51,2 ms. Tirei a média e dividi em blocos de 1.024 com 50 % de sobreposição. Apliquei janela de Hann, fiz a FFT e a média dos 15 blocos, com resolução de 156,25 Hz. A PSD tem zeros em 20, 40 e 60 kHz porque o pulso é um retângulo de 50 µs. No Dupont, 5 kHz dá 2,10·10⁻⁴ V²/Hz, perto da teoria de 2,20·10⁻⁴. Como os bits são os mesmos nos três canais, a razão RC sobre Dupont mede o |H|² do canal: 0,81 em 10 kHz com 16,8 nF, que bate com o τ de 7,3 µs, e 0,54 com 33 nF. Quanto maior o τ, menos alta frequência passa, mais lenta é a subida e maior a ISI."</div>
+</div>
+
+<article class="guia" id="g2">
+  <div class="g-top"><span class="g-num">Guia 2A</span><span class="g-tit">FFT ao vivo no osciloscópio</span><span class="g-tempo">≈ 2 min · ainda não testado</span></div>
+  <div class="g-corpo">
+    <div class="atencao" style="background:var(--g-panel);color:var(--g-ink)"><b>Treine antes:</b> estes ajustes foram calculados e seguem o funcionamento do menu de FFT dessa família de scope, mas ainda não rodaram na sua bancada. Os nomes do menu podem estar um pouco diferentes em português.</div>
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP3</div><div class="ponta c2"><b>CH2</b>CLK</div></div>
+    <div class="ajustes">
+      <div><span>CH1 VOLTS/DIV</span><b>1 V</b></div><div><span>SEC/DIV</span><b>1 ms</b></div><div><span>M Pos</span><b>50 ms</b></div>
+      <div><span>Disparo</span><b>Borda, CH2, Subida, Normal</b></div><div><span>Nível</span><b>1,6 V</b></div><div><span>Captura</span><b>SINGLE SEQ</b></div>
+      <div><span>MATH MENU</span><b>Operação FFT</b></div><div><span>Origem</span><b>CH1</b></div><div><span>Janela</span><b>Hanning</b></div>
+    </div>
+    <div class="acontece" style="background:var(--g-panel);border-color:var(--g-rule);color:var(--g-ink)"><b>Por que esses números?</b> A 1 ms/div, a tela guarda 10 ms em 2.500 pontos, ou seja, 250 mil pontos por segundo. Isso enxerga até 125 kHz, com detalhe de cerca de 120 Hz. O M Pos de 50 ms coloca a captura dentro do payload, que começa 22,2 ms depois da primeira borda.</div>
+    <ol class="passos">
+      <li><span class="txt">Ajuste CH1, tempo e disparo. Confira o M Pos: 50 ms.</span></li>
+      <li><span class="txt"><span class="mono">MATH MENU</span> → <span class="menu">Operação: FFT</span>, <span class="menu">Origem: CH1</span>, <span class="menu">Janela: Hanning</span>.</span></li>
+      <li><span class="txt">Aperte <span class="mono">SINGLE SEQ</span>, espere <code>Ready</code> e aperte <b>RESET no TX</b>.</span></li>
+      <li><span class="txt">Use o <span class="menu">Zoom</span> da FFT em X2 para aproximar a parte de baixo do eixo. Leia a escala em Hz/div no rodapé.</span></li>
+      <li><span class="txt"><span class="mono">CURSOR</span> de frequência: leve até o primeiro vale. Deve estar perto de <b>20 kHz</b>.</span></li>
+      <li><span class="txt">Ao terminar: <span class="mono">MATH MENU</span> → desligue a FFT.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> arcos separados por vales em <b>20, 40 e 60 kHz</b>, parecidos com a opção "Um bloco só" do gráfico acima. Com o RC, os arcos caem mais rápido que no Dupont.</div>
+    <div class="say" style="background:var(--g-panel);color:var(--g-ink);border-color:var(--g-rule)">"Esta é a FFT de uma captura de TP3. Os vales em múltiplos de 20 kHz vêm do pulso retangular de 50 µs. A curva é tremida porque é uma captura só. Para os números, uso a PSD do RX, com média de 15 blocos."</div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul>
+        <li><b>Curva quase plana ou só um pico em 0 Hz:</b> a captura pegou o fim do quadro, ou o sinal é contínuo. Confira o M Pos e repita.</li>
+        <li><b>Pico fino fora do padrão:</b> pode ser aliasing do ripple do PWM, porque o scope não tem filtro antes de amostrar. Não é o sinal PAM.</li>
+        <li><b>Vales fora de 20 kHz:</b> leia a escala de Hz/div de novo. Ela muda com o <span class="mono">SEC/DIV</span> e o Zoom.</li>
+      </ul>
+    </div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+
+<article class="guia" id="g2b">
+  <div class="g-top"><span class="g-num">Guia 2B</span><span class="g-tit">PSD oficial e razão entre canais</span><span class="g-tempo">≈ 1 min</span></div>
+  <div class="g-corpo">
+    <p>Este comando usa os logs oficiais em PAM-2. Para usar um quadro novo, troque o segundo arquivo.</p>
+    <pre class="cmd">.venv/bin/python python/pam_app.py comparar entrega/logs/Dupont_PAM2_20261103_162110.txt entrega/logs/RC16n8_PAM2_20261103_154922.txt --vref 3.297 --tau 7.3
+xdg-open entrega/figuras/psd_comparacao_PAM2.png</pre>
+    <ol class="passos">
+      <li><span class="txt">Rode e leia a coluna <code>razão RC/Dup</code> nas linhas de 5 e 10 kHz.</span></li>
+      <li><span class="txt">Mostre a figura: as duas curvas e, ao lado, a razão sobre a curva |H|².</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> razão perto de <b>0,94</b> em 5 kHz e <b>0,81</b> em 10 kHz. Pode variar um pouco de quadro para quadro.</div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ OLHO -->
+<section class="blk" id="olho">
+<div class="cab">
+  <div class="blk-tag"><b>Item 3</b> Olho</div>
+  <h2>Diagrama de olho: a folga para decidir</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O <a class="t" href="#d-olho">olho</a> desenha todos os símbolos um por cima do outro, sempre a partir da borda do CLK. Se o vão no meio está aberto, é fácil dizer se foi 0 ou 1. Em PAM-2 existe <b>um olho só</b>, entre o nível 0 e o nível 1.</div>
+  <div class="acontece"><span class="rot">O que acontece</span>Em cada símbolo só existem quatro caminhos: fica em 0, fica em 1, sobe ou desce. No RC, subir e descer viram curvas, que se cruzam no início do símbolo. Por isso o olho fica fechado à esquerda e aberto à direita. Com mais capacitor, as curvas ficam mais lentas.</div>
+</div>
+<div class="grid3">
+  <figure><img src="img/pam2_olho_dupont.png" alt="Olho PAM-2 no canal Dupont" loading="lazy"><figcaption><b>Dupont:</b> olho quadrado, aberto desde o início. Abertura de 3,291 V.</figcaption></figure>
+  <figure><img src="img/pam2_olho_rc16.png" alt="Olho PAM-2 no RC 16,8 nF" loading="lazy"><figcaption><b>RC 16,8 nF:</b> curvas que se acomodam antes do fim. Abertura de 3,273 V em k = 7.</figcaption></figure>
+  <figure><img src="img/pam2_olho_rc33.png" alt="Olho PAM-2 no RC 33 nF" loading="lazy"><figcaption><b>RC 33 nF:</b> curvas mais lentas. Abertura de 2,989 V em k = 7.</figcaption></figure>
+</div>
+
+<article class="guia" id="g3">
+  <div class="g-top"><span class="g-num">Guia 3</span><span class="g-tit">Mostrar o olho e apontar o melhor instante</span><span class="g-tempo">≈ 2 min</span></div>
+  <div class="g-corpo">
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP3</div><div class="ponta c2"><b>CH2</b>CLK</div></div>
+    <div class="ajustes">
+      <div><span>CH1 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 POSITION</span><b>3,5 div abaixo</b></div>
+      <div><span>CH2 VOLTS/DIV</span><b>1 V</b></div><div><span>CH2 POSITION</span><b>no centro</b></div>
+      <div><span>SEC/DIV</span><b>10 µs</b></div><div><span>M Pos</span><b>40 µs</b></div>
+      <div><span>Disparo</span><b>Borda, CH2, Subida, Normal</b></div><div><span>Nível</span><b>1,6 V</b></div>
+      <div><span>DISPLAY</span><b>Persist. infinita</b></div>
+    </div>
+    <ol class="passos">
+      <li><span class="txt">Desligue a FFT, se ainda estiver ligada. Ajuste tudo. Para limpar a tela, desligue e religue a persistência.</span></li>
+      <li><span class="txt">Confira <code>Ready</code> e aperte <b>RESET no TX</b>. O olho se forma em cerca de 5 s.</span></li>
+      <li><span class="txt">Quando parar de mudar, aperte <span class="mono">RUN/STOP</span>.</span></li>
+      <li><span class="txt"><span class="mono">CURSOR</span> → Tipo <span class="menu">Tempo</span>. Leve o cursor 1 até <b>46,87 µs</b>, ou seja, 4,7 quadradinhos depois da seta do disparo. É onde o olho está mais aberto.</span></li>
+      <li><span class="txt">Mude para Tipo <span class="menu">Amplitude</span> e meça a altura do vão nesse instante. Deve dar cerca de 3,3 quadradinhos.</span></li>
+      <li><span class="txt">Mostre 0,3 quadradinho depois da seta: é a primeira amostra, em 3,12 µs. No RC, as curvas ainda estão cruzando ali.</span></li>
+      <li><span class="txt">No fim, desligue a persistência.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> a imagem de cima correspondente ao canal montado.<br><b>A abertura oficial vem do log</b>, medida pelo ADC. A tela mostra a forma do olho.</div>
+    <div class="say" style="background:var(--g-panel);color:var(--g-ink);border-color:var(--g-rule)">"As curvas são subida e descida do RC. No início do símbolo elas se cruzam: nesse instante eu não consigo separar 0 de 1. No fim, o olho está aberto. O RX escolheu k = 7, 46,87 µs, com abertura de 3,27 V."</div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul>
+        <li><b>Mais de duas faixas planas:</b> o TX está em PAM-4. Tire o jumper PB0 e aperte RESET.</li>
+        <li><b>Muitos picos e olho borrado:</b> mau contato. Confira o GND da ponta e os fios. O teste de 04/11 mostrou isso no quadro em que o CLK falhou.</li>
+      </ul>
+    </div>
+    <details class="atalho"><summary>Atalho pelo terminal (arma o RX e o olho juntos)</summary><div>
+      <pre class="cmd">.venv/bin/python python/bancada.py ensaio --canal c --mod 2 --vref 3.297 --nome demo_PAM2_olho</pre></div></details>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ AMOSTRAS -->
+<section class="blk" id="amostras">
+<div class="cab">
+  <div class="blk-tag"><b>Item 4</b> Amostragem</div>
+  <h2>As 8 amostras de cada símbolo</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O RX tira 8 "fotos" da tensão durante cada símbolo. A borda do CLK zera um cronômetro. A primeira foto sai 3,12 µs depois da borda, e as outras a cada 6,25 µs.</div>
+  <div class="formula">t<sub>k</sub> = 3,12 + 6,25 × k µs,  k = 0 a 7     8 fotos ÷ 50 µs = 160.000 fotos/s</div>
+  <div class="tw"><table>
+    <tr><th>k</th><th class="n">0</th><th class="n">1</th><th class="n">2</th><th class="n">3</th><th class="n">4</th><th class="n">5</th><th class="n">6</th><th class="n">7</th></tr>
+    <tr><td>Instante (µs)</td><td class="n">3,12</td><td class="n">9,37</td><td class="n">15,62</td><td class="n">21,87</td><td class="n">28,12</td><td class="n">34,37</td><td class="n">40,62</td><td class="n">46,87</td></tr>
+    <tr><td>Quadradinhos após a seta, a 10 µs/div</td><td class="n">0,3</td><td class="n">0,9</td><td class="n">1,6</td><td class="n">2,2</td><td class="n">2,8</td><td class="n">3,4</td><td class="n">4,1</td><td class="n">4,7</td></tr>
+  </table></div>
+  <div class="acontece"><span class="rot">Por dentro do RX</span>A borda do CLK em PA0 zera o <b>TIM2</b>, que conta a 100 MHz até 625, ou seja, 6,25 µs. Em 312 contagens (3,12 µs) ele dispara o ADC. As medidas vão direto para a memória por DMA, sem ocupar o processador. O firmware confere cada símbolo: 8 amostras por borda.</div>
+</div>
+
+<div class="lab" id="labSym">
+  <h3 style="margin-top:0">Veja as 8 amostras de um símbolo real</h3>
+  <p>Cada ponto é uma medida real do ADC, do log oficial em PAM-2. A linha tracejada é o pulso de referência. Escolha o canal e o símbolo.</p>
+  <div class="acoes" role="group" aria-label="Canal"><button type="button" class="chBtn" data-ch="dupont">Dupont</button><button type="button" class="chBtn" data-ch="rc16">RC 16,8 nF</button><button type="button" class="chBtn" data-ch="rc33">RC 33 nF</button></div>
+  <div class="acoes" role="group" aria-label="Símbolo">
+    <button type="button" class="symBtn" data-j="141">1 depois de 0</button>
+    <button type="button" class="symBtn" data-j="142">0 depois de 1</button>
+    <button type="button" class="symBtn" data-j="143">0 depois de 0</button>
+    <button type="button" class="symBtn" data-j="145">1 depois de 1</button>
+    <label class="campo" for="symJ">Símbolo j <input type="number" id="symJ" min="140" max="395" value="142"></label>
+  </div>
+  <div class="plot" id="symPlot"></div>
+  <p id="symTxt" style="margin-bottom:0"></p>
+</div>
+
+<div class="read">
+  <div class="medido"><span class="rot">Por que não basta qualquer amostra</span>No RC 16,8 nF, olhe a primeira amostra (k = 0). O símbolo j = 141 é um <b>1</b> e lê <b>1517</b>. O j = 142 é um <b>0</b> e lê <b>2607</b>. Nesse instante, um zero está <b>mais alto</b> que um um, porque o sinal ainda está indo de um valor para o outro. Já em k = 7, o 1 lê 4095 e o 0 lê 13. Por isso o RX precisa escolher o instante certo.</div>
+  <div class="medido"><span class="rot">Esperado × medido em PAM-2</span>Esperado: 8 × 100.444 = 803.552 amostras. Medido: <b>803.552 amostras em 100.444 bordas</b>, com <code>bordas_com_contagem_errada = 0</code>. Isso prova as 8 amostras por símbolo em todos os símbolos do quadro.</div>
+  <div class="say">"O CLK de 50 µs zera o TIM2, e o TIM2 dispara o ADC 3,12 µs depois e a cada 6,25 µs. São 8 amostras por símbolo, 160 mil por segundo. A prova está aqui: 100.444 bordas e 803.552 amostras, que é exatamente 8 vezes, com zero símbolos com contagem errada."</div>
+</div>
+
+<article class="guia" id="g4">
+  <div class="g-top"><span class="g-num">Guia 4</span><span class="g-tit">Mostrar as 8 amostras e provar a contagem</span><span class="g-tempo">≈ 1 min</span></div>
+  <div class="g-corpo">
+    <p>As amostras ficam dentro do RX, então o osciloscópio não as mostra diretamente. A prova vem do relatório. No olho, você só aponta os instantes com o cursor.</p>
+    <pre class="cmd">L=entrega/logs/RC16n8_PAM2_20261103_154922.txt
+grep -E "^(modulacao|bordas_CLK|simbolos_esperados|amostras_processadas|bordas_com_contagem_errada|erro_ADC_overrun)=" $L
+grep -E "^(141|142|143|145)," $L
+xdg-open entrega/figuras/RC16n8_PAM2_20261103_154922.png</pre>
+    <ol class="passos">
+      <li><span class="txt">Para usar o quadro que você acabou de rodar, troque a primeira linha por <code>L=$(ls -t entrega/logs/*.txt | head -1)</code>.</span></li>
+      <li><span class="txt">Mostre <code>amostras_processadas = 8 × bordas_CLK</code>.</span></li>
+      <li><span class="txt">Mostre as linhas dos símbolos. O formato é <code>j, nível, a0, a1, …, a7, z</code>: as 8 amostras em códigos e, por último, a nota do filtro.</span></li>
+      <li><span class="txt">Abra a figura. O gráfico de cima, à esquerda, mostra os 8 pontos do pulso e os 8 do zero seguinte.</span></li>
+      <li><span class="txt">No olho do <a href="#g3">guia 3</a>, aponte com o cursor os instantes da tabela acima.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> <code>bordas_CLK=100444</code>, <code>amostras_processadas=803552</code>, <code>bordas_com_contagem_errada=0</code> e, por exemplo, <code>141,1,1517,3029,3650,3912,4022,4069,4087,4095,1.00028</code>.</div>
+    <p class="muted" style="color:var(--g-muted)">Para converter um código em volts: V = código × 3,297 ÷ 4095. Um código vale 0,805 mV.</p>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ FILTRO -->
+<section class="blk" id="filtro">
+<div class="cab">
+  <div class="blk-tag"><b>Item 5</b> Detecção</div>
+  <h2>Como o filtro casado é feito</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O <a class="t" href="#d-filtro">filtro casado</a> compara o formato das 8 medidas com um gabarito, o pulso medido no início do quadro. Medidas em que o pulso normalmente é alto ganham mais peso. O resultado é uma nota <a class="t" href="#d-z">z</a>: perto de 0 parece um 0, perto de 1 parece um 1.</div>
+  <p class="muted">De onde sai cada termo, com as contas feitas com os seus números (b<sub>c</sub>, p<sub>c</sub>[k], E<sub>c</sub>, z, centros e limiar): <a href="detectores_pam2.html#origem">Detectores passo a passo</a>.</p>
+  <h3>A receita, em quatro passos</h3>
+  <p>Os primeiros 140 símbolos do quadro são 20 repetições de <code>0, 0, 0, A, 0, 0, 0</code>, um pulso isolado.</p>
+  <div class="tw"><table>
+    <tr><th>Passo</th><th>O que faz</th><th>Conta</th><th class="n">RC 16,8 nF</th></tr>
+    <tr><td><b>1. Medir o zero</b></td><td>Média do zero antes de cada pulso, 8 amostras × 20 vezes = 160 leituras</td><td class="mono">b<sub>c</sub> = média</td><td class="n">4,68</td></tr>
+    <tr><td><b>2. Medir os pesos</b></td><td>Média das 20 leituras do pulso em cada k, menos o zero</td><td class="mono">p[k] = média[k] − b<sub>c</sub></td><td class="n">1501 … 4090</td></tr>
+    <tr><td><b>3. Medir a energia</b></td><td>Soma dos pesos ao quadrado</td><td class="mono">E<sub>c</sub> = Σ p[k]²</td><td class="n">105.983.952</td></tr>
+    <tr><td><b>4. Dar a nota</b></td><td>Para cada símbolo, peso × medida sem o zero, somado e dividido pela energia</td><td class="mono">z = Σ p[k]·(a[k] − b<sub>c</sub>) / E<sub>c</sub></td><td class="n">≈ 0 ou ≈ 1</td></tr>
+  </table></div>
+  <div class="acontece"><span class="rot">Por que se chama "casado"?</span>Os pesos têm o mesmo formato do pulso que chega: o filtro está casado com o pulso. Se o símbolo for idêntico ao pulso de referência, z dá exatamente 1. É o mesmo que uma correlação, e equivale a um filtro FIR com h[k] = p[7−k], lido no fim do símbolo. No RX é só uma conta:</div>
+  <pre class="codigo">/* firmware/rx/pam_rx_core.c: 8 multiplicações e uma soma */
+for (k = 0; k &lt; 8; k++)
+    acc += pc[k] * (a[k] - bc);
+return acc / Ec;</pre>
+</div>
+
+<div class="lab" id="labCalc">
+  <h3 style="margin-top:0">A conta do símbolo escolhido</h3>
+  <p>Usa o mesmo canal e o mesmo símbolo do gráfico anterior. Troque aqui se quiser.</p>
+  <div class="acoes" role="group" aria-label="Símbolo para a conta">
+    <button type="button" class="symBtn" data-j="141">1 depois de 0</button>
+    <button type="button" class="symBtn" data-j="142">0 depois de 1</button>
+    <button type="button" class="symBtn" data-j="143">0 depois de 0</button>
+    <button type="button" class="symBtn" data-j="145">1 depois de 1</button>
+  </div>
+  <div class="tw" id="calcTabela"></div>
+  <div class="decis" id="decis"></div>
+</div>
+
+<div class="read">
+  <div class="tw"><table>
+    <tr><th>Canal</th><th class="n">p[0]</th><th class="n">p[1]</th><th class="n">p[2]</th><th class="n">p[3]</th><th class="n">p[4]</th><th class="n">p[5]</th><th class="n">p[6]</th><th class="n">p[7]</th></tr>
+    <tr><td>Dupont</td><td class="n">4091</td><td class="n">4091</td><td class="n">4091</td><td class="n">4091</td><td class="n">4091</td><td class="n">4091</td><td class="n">4091</td><td class="n">4091</td></tr>
+    <tr class="hl"><td>RC 16,8 nF</td><td class="n">1501</td><td class="n">3022</td><td class="n">3646</td><td class="n">3906</td><td class="n">4016</td><td class="n">4063</td><td class="n">4084</td><td class="n">4090</td></tr>
+    <tr><td>RC 33 nF</td><td class="n">526</td><td class="n">1758</td><td class="n">2589</td><td class="n">3119</td><td class="n">3426</td><td class="n">3674</td><td class="n">3813</td><td class="n">3901</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">O que esses números mostram</span>
+    <p><b>Os pesos são a própria subida do canal</b> medida em 8 pontos. No Dupont, o pulso é quadrado e os pesos são iguais, então z vira uma média simples. Com mais capacitor, os primeiros pesos diminuem, porque ali o sinal ainda não subiu.</p>
+    <p style="margin-bottom:0"><b>Por que z pode passar de 1 ou não dar 0?</b> O gabarito veio de um pulso isolado, que parte de zero. Um "1 depois de 1" já começa alto e dá z = 1,093. Um "0 depois de 1" ainda está descendo e dá z = 0,097. Essa diferença é a <a class="t" href="#d-isi">ISI</a> entrando na nota.</p>
+  </div>
+  <div class="say">"Os 8 pesos são o pulso medido, menos a linha de base. Peguei um símbolo real, subtraí a linha de base de cada amostra, multipliquei pelo peso e somei. Dividindo pela energia, deu z. Comparo com o limiar de 0,548 e decido o bit. Fazer isso com o pulso medido é o que torna o filtro casado com o canal."</div>
+</div>
+
+<article class="guia" id="g5">
+  <div class="g-top"><span class="g-num">Guia 5</span><span class="g-tit">Fazer a conta do filtro à mão</span><span class="g-tempo">≈ 4 min</span></div>
+  <div class="g-corpo">
+    <pre class="cmd">L=entrega/logs/RC16n8_PAM2_20261103_154922.txt
+grep -E "^(b_c|E_c|p_c\[|limiar_z|centro_z)" $L
+grep -E "^142," $L</pre>
+    <ol class="passos">
+      <li><span class="txt">Anote <b>b<sub>c</sub></b>, <b>E<sub>c</sub></b>, os <b>8 pesos</b> e o <b>limiar_z</b>.</span></li>
+      <li><span class="txt">A última linha traz as 8 amostras do símbolo: <code>j, nível, a0…a7, z</code>. Para cada k, calcule <b>x = a − b<sub>c</sub></b>.</span></li>
+      <li><span class="txt">Para cada k, multiplique <b>x × peso</b> e some os 8 resultados.</span></li>
+      <li><span class="txt">Divida a soma por <b>E<sub>c</sub></b>. Esse é o z.</span></li>
+      <li><span class="txt">Confira com o último número da linha do log.</span></li>
+      <li><span class="txt">Compare com o limiar: acima é bit 1, abaixo é bit 0.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Para conferir com j = 142:</b> enviado 0. A soma dá cerca de 10,25 milhões, e z ≈ <b>0,0967</b>. Como 0,0967 &lt; 0,5478, decide <b>bit 0</b>, e acertou.<br>O quadro de conta acima mostra cada linha dessa soma.</div>
+    <p class="muted" style="color:var(--g-muted)">O roteiro da equipe pede que cada integrante faça a própria conta. Escolha outro j, de 140 a 395, e confira no quadro acima.</p>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ CALIBRAÇÃO -->
+<section class="blk" id="calibracao">
+<div class="cab">
+  <div class="blk-tag"><b>Item 6</b> Calibração</div>
+  <h2>Como o RX escolhe o instante e o limiar nos dois detectores</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>Antes dos dados, o TX manda uma sequência que o RX já conhece. O RX vê como cada bit chega, escolhe a melhor foto e traça uma linha entre o 0 e o 1. Essa linha é o <a class="t" href="#d-limiar">limiar</a>. Depois, ele congela tudo e passa a decidir os dados.</div>
+  <h3>O que acontece em cada parte do quadro</h3>
+  <div class="tw"><table>
+    <tr><th>Símbolos</th><th>Parte</th><th>O que o RX calcula</th><th>Resultado</th></tr>
+    <tr><td class="n">0–139</td><td><b>Pulso</b></td><td>Linha de base, pesos e energia</td><td><code>b_c</code>, <code>p_c[k]</code>, <code>E_c</code></td></tr>
+    <tr><td class="n">140–395</td><td><b>Calibração</b></td><td>32 × (0,1,0,0,1,1,0,1). Guarda as amostras e calcula z de cada símbolo</td><td><code>k*</code>, centros, limiares, margens</td></tr>
+    <tr><td class="n">396–443</td><td><b>Início</b></td><td>Decide os 48 bits com os dois detectores. Não pode errar nenhum</td><td><code>sincronismo_ok</code></td></tr>
+    <tr><td class="n">444 em diante</td><td><b>Payload</b></td><td>Só decide e conta erros. <b>Nada é recalculado</b></td><td><code>BER_amostra</code>, <code>BER_filtro</code></td></tr>
+  </table></div>
+  <h3>Os dois detectores usam a mesma ideia</h3>
+  <div class="tw"><table>
+    <tr><th></th><th>Amostra única</th><th>Filtro casado</th></tr>
+    <tr><td><b>Valor que decide</b></td><td class="mono">u = a[k*]</td><td class="mono">z = Σ p[k]·(a[k] − b<sub>c</sub>) / E<sub>c</sub></td></tr>
+    <tr><td><b>Usa quantas amostras</b></td><td>1, a melhor</td><td>As 8</td></tr>
+    <tr><td><b>Unidade</b></td><td>Código do ADC</td><td>Sem unidade</td></tr>
+    <tr><td><b><a class="t" href="#d-centro">Centro</a> de cada nível</b></td><td colspan="2">Média dos valores desse nível nos 256 símbolos da calibração</td></tr>
+    <tr><td><b>Limiar</b></td><td colspan="2">Metade do caminho entre os centros: (centro 0 + centro 1) / 2</td></tr>
+    <tr><td><b><a class="t" href="#d-margem">Margem</a></b></td><td colspan="2">Menor valor do nível 1 − maior valor do nível 0. É a folga real.</td></tr>
+    <tr><td><b>Decisão</b></td><td colspan="2">Valor acima do limiar é bit 1; caso contrário, é bit 0</td></tr>
+  </table></div>
+  <h3>Passo 1: escolher k*</h3>
+  <p>Para cada um dos 8 instantes, o RX calcula a folga: <b>menor nível 1 − maior nível 0</b>. O melhor k é o de maior folga. Em empate, fica o menor k. Folga negativa significa que os níveis se cruzam ali.</p>
+</div>
+
+<div class="lab" id="labCal">
+  <h3 style="margin-top:0">A calibração real, passo a passo</h3>
+  <div class="acoes" role="group" aria-label="Canal"><button type="button" class="chBtn" data-ch="dupont">Dupont</button><button type="button" class="chBtn" data-ch="rc16">RC 16,8 nF</button><button type="button" class="chBtn" data-ch="rc33">RC 33 nF</button></div>
+  <div class="legenda" aria-hidden="true"><span><i style="background:var(--n0)"></i>Nível 0 enviado</span><span><i style="background:var(--n1)"></i>Nível 1 enviado</span></div>
+  <h4>Faixa de leituras em cada amostra k (256 símbolos)</h4>
+  <div class="plot" id="calPlot"></div>
+  <h4>Passo 2: valor de cada símbolo nos dois detectores, com o limiar</h4>
+  <div class="dois">
+    <div><b>Amostra única: u = a[k*]</b><div class="plot pequeno" id="uPlot"></div></div>
+    <div><b>Filtro casado: z</b><div class="plot pequeno" id="zPlot"></div></div>
+  </div>
+  <h4>Passo 3: resultado</h4>
+  <div class="tw" id="calRes"></div>
+  <p class="muted" style="font-size:14px;margin-bottom:0">Calculado nesta página com as 256 linhas da calibração. Os valores são iguais aos que o firmware imprimiu no log.</p>
+</div>
+
+<div class="read">
+  <h3>Comparação entre os canais em PAM-2</h3>
+  <div class="tw"><table>
+    <tr><th>Canal</th><th class="n">k*</th><th class="n">Limiar u</th><th class="n">Margem u</th><th class="n">Limiar z</th><th class="n">Margem z</th><th class="n">Margem relativa<br>u × z</th><th>Erros</th></tr>
+    <tr><td>Dupont</td><td class="n">1</td><td class="n">2049,23</td><td class="n">4089</td><td class="n">0,4999</td><td class="n">0,9998</td><td class="n">1,00 × 1,00</td><td>0 e 0</td></tr>
+    <tr class="hl"><td>RC 16,8 nF</td><td class="n">7</td><td class="n">2052,88</td><td class="n">4076</td><td class="n">0,5478</td><td class="n">0,9007</td><td class="n">1,00 × 0,95</td><td>0 e 0</td></tr>
+    <tr><td>RC 33 nF</td><td class="n">7</td><td class="n">2054,46</td><td class="n">3734</td><td class="n">0,6161</td><td class="n">0,7712</td><td class="n">0,97 × 0,86</td><td>0 e 0</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">Como ler</span>
+    <p><b>Não compare 4076 com 0,90.</b> As escalas são diferentes. Por isso existe a <b>margem relativa</b>: margem ÷ distância entre os centros.</p>
+    <p><b>Quanto mais capacitor, mais o filtro casado perde em relação à amostra única.</b> O filtro usa as primeiras amostras, as mais contaminadas pelo símbolo anterior. A amostra única olha só o fim. O filtro casado é o melhor contra <b>ruído</b>, mas aqui o ruído é de 1 a 2 mV, e o que atrapalha é a <b>ISI</b>.</p>
+    <p style="margin-bottom:0"><b>Dupont: k* = 1 é um empate.</b> As folgas foram 4087, <b>4089</b>, 4088, 4088, 4088, 4087, <b>4089</b>, 4085. O ruído desempatou, e a regra pegou o menor k.</p>
+  </div>
+  <p class="muted">No RC 33 nF, o b<sub>c</sub> deu 26,24 códigos, acima dos cerca de 5 dos outros canais. Não investiguei a causa. Se o professor perguntar, diga isso, em vez de arriscar uma explicação.</p>
+  <h3>Por que congelar antes do payload</h3>
+  <p>Se o RX ajustasse o limiar usando os próprios dados, ele estaria usando a resposta para corrigir a prova, e a contagem de erros ficaria otimista. Por isso a ordem é: aprender na calibração, confirmar nos 48 bits de início e só então contar erros.</p>
+  <pre class="codigo">/* firmware/rx/pam_rx_core.c */
+thr_u = 0.5 * (cen_u[0] + cen_u[1]);          /* limiar da amostra única */
+thr_z = 0.5 * (cen_z[0] + cen_z[1]);          /* limiar do filtro casado */
+marg_u = umin[1] - umax[0];                   /* margem da amostra única */
+lvl_u = (a[kstar]    > thr_u) ? 1 : 0;        /* decisão: mesmas amostras, */
+lvl_z = (matched(a)  > thr_z) ? 1 : 0;        /* contadores separados      */</pre>
+  <p class="muted">Trecho resumido para PAM-2. No firmware, as funções atendem também PAM-4.</p>
+  <div class="say">"Nos 256 símbolos de calibração, o RX já sabe o que foi enviado. Para cada amostra k, ele calcula a menor distância entre o nível 1 e o nível 0, e escolhe a maior: k = 7, com 4076 códigos. Os centros são as médias de cada nível, 10,8 e 4094,9, e o limiar é a metade: 2052,9. No filtro casado é igual, com a nota z: centros 0,072 e 1,024, limiar 0,548. Tudo fica congelado antes do payload. Depois, os dois decidem as mesmas amostras, cada um com o seu contador, e os dois deram 0 erros em 100.000 bits."</div>
+</div>
+
+<article class="guia" id="g6">
+  <div class="g-top"><span class="g-num">Guia 6</span><span class="g-tit">Mostrar a calibração no relatório e a mudança ao vivo</span><span class="g-tempo">≈ 3 min</span></div>
+  <div class="g-corpo">
+    <h4>A) Mostrar os números</h4>
+    <pre class="cmd">L=$(ls -t entrega/logs/*.txt | head -1)
+echo $L
+grep -E "^(modulacao|canal|separacao_k|k_estrela|t_k_estrela_us|centro_|limiar_|margem_|calibracao_ok|sincronismo_ok|BER_)" $L</pre>
+    <ol class="passos">
+      <li><span class="txt">Aponte as 8 linhas de <code>separacao_k</code> e mostre que <code>k_estrela</code> é a maior.</span></li>
+      <li><span class="txt">Faça a conta do limiar na frente dele: (centro 0 + centro 1) ÷ 2, e mostre que bate com <code>limiar_u[0]</code>. Repita com z.</span></li>
+      <li><span class="txt">Mostre <code>margem_u_ADC</code> e <code>margem_z</code>, e diga que estão em escalas diferentes.</span></li>
+      <li><span class="txt">Mostre <code>BER_amostra</code> e <code>BER_filtro</code>: 0/100000 nos dois.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Tem que aparecer no RC 16,8 nF:</b> separações de −1193 a 4076, <code>k_estrela=7</code>, <code>centro_u</code> 10,83 e 4094,94, <code>limiar_u[0]=2052.88</code>, <code>centro_z</code> 0,07181 e 1,02381, <code>limiar_z[0]=0.54781</code>.</div>
+    <h4>B) Mostrar que a calibração se refaz sozinha</h4>
+    <ol class="passos">
+      <li><span class="txt">Coloque o <b>jumper de N ao GND</b> (33 nF).</span></li>
+      <li><span class="txt">Rode o comando, espere <code>#ARMADO PAM-2</code> e aperte <b>RESET no TX</b>.</span></li>
+      <li><span class="txt">Rode de novo o comando da parte A. Compare e tire o jumper no fim.</span></li>
+    </ol>
+    <pre class="cmd">.venv/bin/python python/pam_app.py capturar --mod 2 --canal x --vref 3.297</pre>
+    <div class="deve"><b class="ok">Esperado com 33 nF:</b> k* continua 7, a margem cai de 4076 para cerca de 3734 códigos, o centro do nível 0 sobe para cerca de 131, o limiar z passa para cerca de 0,616 e a margem z cai para cerca de 0,77. Continua com 0 erros.</div>
+    <div class="say" style="background:var(--g-panel);color:var(--g-ink);border-color:var(--g-rule)">"Eu não mudei nada no firmware. Cada quadro traz a própria calibração, então o RX mede o canal novo e ajusta pesos, k* e limiares sozinho."</div>
+    <div class="senao"><b>Se der errado</b>
+      <ul>
+        <li><code>calibracao_ok = 0</code>: os centros saíram fora de ordem. Provável GND solto ou jumper de modo errado.</li>
+        <li><code>sincronismo_ok = 0</code>: algum bit dos 48 de início saiu errado. O RX não dá BER. Repita.</li>
+        <li><code>perda_CLK = 1</code>: o fio de CLK falhou. O RX não dá BER. Firme o fio e repita.</li>
+      </ul>
+    </div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ TAU -->
+<section class="blk" id="tau">
+<div class="cab">
+  <div class="blk-tag"><b>Item 7</b> Canal</div>
+  <h2>Medir τ no degrau</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span><a class="t" href="#d-tau">τ</a> diz o quanto o canal demora para responder. Pense num balde enchendo por uma torneira estreita: depois de 1 τ ele está <b>63,2 %</b> cheio. Para medir, basta ver quanto tempo a tensão leva para fazer 63,2 % da subida.</div>
+  <div class="formula">
+    τ pela conta = R × C = (330 + 56) Ω × 16,8 nF = 6,48 µs<br>
+    τ medido = t<sub>63</sub> − t<sub>0</sub>   <span class="c">(t₀ = início da subida, não o ponto de 10 %)</span><br>
+    V<sub>63</sub> = V<sub>0</sub> + 0,632 × (V<sub>f</sub> − V<sub>0</sub>)<br>
+    conferência: τ ≈ t<sub>10–90</sub> ÷ 2,197     corte: f<sub>c</sub> = 1 / (2π τ)
+  </div>
+  <h3>Esperado × medido em PAM-2</h3>
+  <div class="tw"><table>
+    <tr><th>Canal</th><th class="n">τ pela conta</th><th class="n">Com filtro do TX</th><th class="n">τ medido</th><th class="n">Subida medida</th><th class="n">τ pela subida</th><th class="n">f<sub>c</sub></th></tr>
+    <tr class="hl"><td>RC 16,8 nF</td><td class="n">6,48 µs</td><td class="n">7,1 µs</td><td class="n"><b>7,32 µs</b></td><td class="n">16,68 µs</td><td class="n">7,59 µs</td><td class="n">21,7 kHz</td></tr>
+    <tr><td>RC 33 nF</td><td class="n">12,74 µs</td><td class="n">13,9 µs</td><td class="n"><b>13,20 µs</b></td><td class="n">27,10 µs</td><td class="n">12,34 µs</td><td class="n">12,1 kHz</td></tr>
+    <tr><td>Dupont</td><td class="n">0,13 µs</td><td class="n">0,14 µs</td><td class="n"><b>0,22 µs</b></td><td class="n">0,42 µs</td><td class="n">0,19 µs</td><td class="n">≈ 0,7 MHz</td></tr>
+  </table></div>
+  <p class="muted">Valores da captura PAM-2 de cada canal. Em PAM-4, o τ do RC 16,8 nF deu 7,30 µs, e não depende da modulação.</p>
+  <h3>Por que o medido é maior que a conta</h3>
+  <ol class="steps">
+    <li><b>Filtro do TX:</b> os 400 pF formam um segundo polo. Com ele e os cerca de 30 Ω do pino, a conta sobe para 7,1 µs. É a maior parte da diferença.</li>
+    <li><b>Tolerância:</b> vocês montaram 16,5 nF nominais, e capacitores comuns variam de ±10 a 20 %. Um capacímetro confirma.</li>
+    <li><b>Ponta do osciloscópio:</b> pesa no Dupont e quase nada no RC. O caderno registra o CH2 em 1X nas medidas do Dupont de 03/11, com cerca de 100 pF a mais em TP3.</li>
+  </ol>
+  <p><b>TP2 também não é ideal.</b> No RC, TP2 dá um salto de cerca de 20 % e depois sobe junto com TP3, porque os 330 Ω do TX fazem parte do RC. Por isso a conta usa R = 330 + 56 Ω.</p>
+  <div class="say">"Pelos componentes, τ = 386 Ω × 16,8 nF = 6,48 µs. No degrau em TP3, a tensão fez 63,2 % da subida em 7,32 µs, e o tempo de subida deu 16,7 µs. A diferença vem principalmente do segundo polo, o filtro de 400 pF do TX, e da resistência do pino. Incluindo os dois, a conta dá 7,1 µs."</div>
+</div>
+<div class="grid2">
+  <figure><img src="img/pam2_degrau_rc16.png" alt="Degrau em PAM-2 no RC 16,8 nF" loading="lazy"><figcaption><b>RC 16,8 nF, PAM-2.</b> A curva chega ao topo antes de o símbolo acabar. 25 µs/div: um símbolo tem 2 quadradinhos.</figcaption></figure>
+  <figure><img src="img/pam2_degrau_rc33.png" alt="Degrau em PAM-2 no RC 33 nF" loading="lazy"><figcaption><b>RC 33 nF, PAM-2.</b> A subida é bem mais lenta.</figcaption></figure>
+</div>
+
+<article class="guia" id="g7">
+  <div class="g-top"><span class="g-num">Guia 7</span><span class="g-tit">Medir τ com os cursores</span><span class="g-tempo">≈ 3 min</span></div>
+  <div class="g-corpo">
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP2 (entrada do canal)</div><div class="ponta c2"><b>CH2</b>TP3 (saída do canal)</div></div>
+    <div class="ajustes">
+      <div><span>CH1 e CH2 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 e CH2 POSITION</span><b>3,5 div abaixo</b></div>
+      <div><span>SEC/DIV</span><b>25 µs</b></div><div><span>M Pos</span><b>80 µs</b></div>
+      <div><span>Disparo</span><b>Borda, CH1, Subida, Normal</b></div><div><span>Nível</span><b>1,6 V</b></div>
+      <div><span>Captura</span><b>SINGLE SEQ</b></div>
+    </div>
+    <h4>Capturar</h4>
+    <ol class="passos">
+      <li><span class="txt">Mude as pontas com cuidado. Espere o quadro anterior acabar.</span></li>
+      <li><span class="txt">Ajuste, aperte <span class="mono">SINGLE SEQ</span> e espere <code>Ready</code>.</span></li>
+      <li><span class="txt">Aperte <b>RESET no TX</b>. O disparo pega o primeiro pulso do quadro.</span></li>
+    </ol>
+    <h4>Medir</h4>
+    <ol class="passos">
+      <li><span class="txt"><span class="mono">CURSOR</span> → Tipo <span class="menu">Tempo</span> → Origem <span class="menu">CH2</span>.</span></li>
+      <li><span class="txt">Com <span class="mono">POSITION</span> do CH1, ponha o cursor 1 no <b>início da subida</b>. A seta do disparo não serve, porque ela marca o ponto em que TP2 passa de 1,6 V.</span></li>
+      <li><span class="txt">Com <span class="mono">POSITION</span> do CH2, leve o cursor 2 até o CH2 chegar à altura V<sub>63</sub> da tabela. <b>O Δt é o τ.</b></span></li>
+      <li><span class="txt">Para o tempo de subida: cursor 1 em V<sub>10</sub> e cursor 2 em V<sub>90</sub>. O Δt é t<sub>10–90</sub>.</span></li>
+    </ol>
+    <div class="tw"><table style="color:var(--g-ink)">
+      <tr><th style="color:var(--g-muted)">Canal</th><th style="color:var(--g-muted)">V<sub>f</sub></th><th style="color:var(--g-muted)">V<sub>10</sub></th><th style="color:var(--g-muted)">V<sub>63</sub></th><th style="color:var(--g-muted)">V<sub>90</sub></th><th style="color:var(--g-muted)">τ esperado</th><th style="color:var(--g-muted)">Subida esperada</th></tr>
+      <tr><td>RC 16,8 nF</td><td class="n">3,38 V</td><td class="n">0,34 V</td><td class="n">2,13 V</td><td class="n">3,04 V</td><td class="n">≈ 7,3 µs</td><td class="n">≈ 16,7 µs</td></tr>
+      <tr><td>RC 33 nF</td><td class="n">3,26 V</td><td class="n">0,33 V</td><td class="n">2,06 V</td><td class="n">2,93 V</td><td class="n">≈ 13,2 µs</td><td class="n">≈ 27 µs</td></tr>
+    </table></div>
+    <div class="deve"><b class="ok">Como conferir:</b> com a escala de 1 V/div, cada quadradinho vale 1 V acima da base, e a 25 µs/div a leitura é aproximada. O comando abaixo dá o número com mais precisão, pelos pontos da captura.</div>
+    <pre class="cmd">.venv/bin/python python/bancada.py osc degrau --canal c --mod 2 --sem-rx --nome demo_PAM2_degrau</pre>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul>
+        <li><b>Subida reta e quase vertical:</b> o canal está em Dupont. O τ é pequeno demais para esta escala. Use 250 ns/div e M Pos de 750 ns.</li>
+        <li><b>Disparo antes do RESET:</b> a ponta encostou. Aperte <span class="mono">SINGLE SEQ</span> de novo e espere cerca de 10 s, caso haja um quadro em andamento.</li>
+        <li><b>Valores 10 vezes errados:</b> a chave da ponta e o menu do canal não concordam.</li>
+      </ul>
+    </div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- ================================================ PERGUNTAS -->
+<section class="blk" id="perguntas">
+<div class="cab">
+  <div class="blk-tag"><b>Treino</b> Tente responder antes de abrir</div>
+  <h2>Perguntas que ele pode fazer sobre isso</h2>
+</div>
+<div class="read">
+  <details class="q"><summary>Como você sabe que está em PAM-2?</summary><div class="a"><p>PB0 do TX solto. No scope, TP2 tem só 2 níveis, 0 e 3,38 V, na sequência 0,1,0,0,1,1,0,1. No log: <code>modulacao=PAM-2</code>, 100.444 bordas.</p></div></details>
+  <details class="q"><summary>Por que a PSD tem zeros em 20, 40 e 60 kHz?</summary><div class="a"><p>O pulso é um retângulo de 50 µs. Sua transformada é um sinc, que zera em múltiplos de 1/50 µs = 20 kHz. A PSD é esse sinc ao quadrado.</p></div></details>
+  <details class="q"><summary>Qual a diferença entre FFT e PSD?</summary><div class="a"><p>A FFT é o algoritmo que leva o sinal para a frequência. A PSD é a potência por hertz em cada frequência, calculada a partir da FFT. Aqui: 15 blocos de 1.024 amostras, janela de Hann e 50 % de sobreposição, em V²/Hz.</p></div></details>
+  <details class="q"><summary>O que é a janela de Hann e por que usar?</summary><div class="a"><p>É uma curva em forma de sino, w[n] = 0,5 − 0,5·cos(2πn/1024), que vale 0 nas pontas do bloco e 1 no meio. A FFT supõe que o bloco se repete; sem janela, a emenda entre o fim e o começo vira um salto, que espalha energia para outras frequências (vazamento). Com a janela as pontas descem a zero e o salto some. No RC 16,8 nF, sem janela o vale de 20 kHz sobe de −84 para −72 dB. O custo é perder as pontas, recuperadas com 50 % de sobreposição, e a escala é corrigida dividindo por Σw².</p></div></details>
+  <details class="q"><summary>Por que tirar a média antes da FFT?</summary><div class="a"><p>O sinal vai de 0 a 3,3 V, com média perto de 1,65 V. Isso criaria um pico enorme em 0 Hz, que vazaria para as frequências próximas.</p></div></details>
+  <details class="q"><summary>Por que k* é 7 no RC e 1 no Dupont?</summary><div class="a"><p>No RC o sinal vai se acomodando, e a folga cresce até o fim do símbolo: −1193, 1898 … 4076 códigos. No Dupont o sinal fica pronto em menos de 1 µs, então as folgas empatam entre 4085 e 4089, e o ruído desempata. A regra pega o menor k entre os empatados.</p></div></details>
+  <details class="q"><summary>O que significa folga negativa?</summary><div class="a"><p>A menor leitura do nível 1 ficou abaixo da maior leitura do nível 0. Os níveis se cruzaram e nenhum limiar separa os dois nesse instante. Exemplo: k = 0 no RC 16,8 nF, com −1193 códigos.</p></div></details>
+  <details class="q"><summary>Como é escolhido o limiar?</summary><div class="a"><p>É a metade do caminho entre os centros, que são as médias de cada nível na calibração. Amostra única: (10,83 + 4094,94)/2 = 2052,88. Filtro casado: (0,07181 + 1,02381)/2 = 0,54781.</p></div></details>
+  <details class="q"><summary>De onde vêm os pesos do filtro casado?</summary><div class="a"><p>Do próprio canal. São a média das 20 leituras do pulso em cada k, menos a linha de base, medidos no início de cada quadro. No RC 16,8 nF: 1501, 3022, 3646, 3906, 4016, 4063, 4084, 4090.</p></div></details>
+  <details class="q"><summary>Por que z pode ser maior que 1?</summary><div class="a"><p>O z vale 1 quando o símbolo é igual ao pulso de referência, que parte de zero. Um 1 depois de outro 1 já começa alto, então suas primeiras amostras ficam maiores. Isso é ISI: no RC 16,8 nF, z = 1,093.</p></div></details>
+  <details class="q"><summary>Qual detector é melhor?</summary><div class="a"><p>Em PAM-2 os dois deram 0 erros em 100.000 bits. A margem relativa da amostra única foi maior no RC: 1,00 contra 0,95 com 16,8 nF, e 0,97 contra 0,86 com 33 nF. O filtro casado é ótimo contra ruído branco sem ISI. Aqui o ruído é muito pequeno e o que domina é ISI, que contamina as primeiras amostras usadas pelo filtro.</p></div></details>
+  <details class="q"><summary>Por que não recalibrar durante o payload?</summary><div class="a"><p>O payload é o que está sendo avaliado. Se ele ajustasse o limiar, a contagem de erros ficaria enviesada. Por isso tudo é congelado antes dele.</p></div></details>
+  <details class="q"><summary>Por que o τ medido é maior que R × C?</summary><div class="a"><p>A conta de 1 polo ignora o filtro de 400 pF do TX e a resistência do pino, de cerca de 30 Ω. Com eles, a conta sobe de 6,48 para 7,1 µs. O medido foi 7,32 µs em PAM-2. O restante pode vir da tolerância dos capacitores, que dá para conferir com um capacímetro.</p></div></details>
+  <details class="q"><summary>O que acontece se eu tirar o fio de CLK durante o quadro?</summary><div class="a"><p><code>perda_CLK = 1</code>, <code>aquisicao_valida = 0</code> e nenhuma BER é atribuída. A sincronização depende desse fio. Isso já aconteceu na bancada, e o RX recusou o quadro todas as vezes.</p></div></details>
+</div>
+</section>
+
+<!-- ================================================ DICIONÁRIO -->
+<section class="blk" id="dicionario">
+<div class="cab">
+  <div class="blk-tag"><b>Consulta</b></div>
+  <h2>Palavras difíceis</h2>
+</div>
+<dl class="dic">
+<div id="d-adc"><dt>ADC</dt><dd>Conversor analógico-digital. Mede uma tensão e devolve um número de 0 a 4095 (12 bits). É o "voltímetro" do RX, no pino PA1.</dd></div>
+<div id="d-amostra-unica"><dt>Amostra única (u)</dt><dd>Detector simples: decide o nível olhando só uma das 8 medidas, a de k*. u = a[k*].</dd></div>
+<div id="d-bc"><dt>b<sub>c</sub> (linha de base)</dt><dd>A leitura média do ADC quando o sinal deveria ser zero. É descontada de todas as medidas. Vale 4,45 códigos no RC 16,8 nF.</dd></div>
+<div id="d-ber"><dt>BER</dt><dd>Taxa de erro de bit. Bits errados ÷ bits enviados. Aqui, N<sub>e</sub> / 100.000.</dd></div>
+<div id="d-centro"><dt>Centro</dt><dd>O valor médio com que um nível chega ao RX, calculado nos 256 símbolos da calibração.</dd></div>
+<div id="d-clk"><dt>CLK</dt><dd>Relógio de símbolo: onda quadrada de 20 kHz que marca o início de cada símbolo. Sai do PB4 do TX e entra no PA0 do RX.</dd></div>
+<div id="d-codigo"><dt>Código do ADC</dt><dd>O número que o ADC devolve. 0 = 0 V e 4095 = 3,297 V. Um código vale 0,805 mV.</dd></div>
+<div id="d-disparo"><dt>Disparo (trigger)</dt><dd>A regra que diz ao osciloscópio quando começar a desenhar, por exemplo "quando o CH2 subir e passar de 1,6 V". Sem isso, a imagem fica correndo.</dd></div>
+<div id="d-ec"><dt>E<sub>c</sub> (energia do pulso)</dt><dd>Soma dos quadrados dos 8 pesos do filtro casado. Serve para normalizar a nota, de modo que o pulso de referência dê z = 1.</dd></div>
+<div id="d-fft"><dt>FFT</dt><dd>Algoritmo rápido que calcula a transformada de Fourier no computador ou no osciloscópio. Mostra de quais frequências o sinal é feito.</dd></div>
+<div id="d-filtro"><dt>Filtro casado</dt><dd>Detector que compara as 8 medidas com o formato do pulso esperado, multiplicando por pesos e somando. É o melhor contra ruído branco quando não há ISI.</dd></div>
+<div id="d-isi"><dt>ISI</dt><dd>Interferência entre símbolos. É a sobra do símbolo anterior que atrapalha o atual, quando o canal é lento demais.</dd></div>
+<div id="d-janela"><dt>Janela de Hann</dt><dd>Curva em forma de sino que vale 0 nas pontas do bloco e 1 no meio. Multiplicada pelo bloco antes da FFT, faz as pontas descerem suavemente a zero. Sem ela, a emenda entre o fim e o começo do bloco vira um salto que espalha energia para frequências vizinhas (vazamento).</dd></div>
+<div id="d-k"><dt>k e k*</dt><dd>k é o número de cada uma das 8 medidas do símbolo, de 0 a 7. k* é a melhor delas, escolhida a partir da calibração. No RC é k = 7, em 46,87 µs.</dd></div>
+<div id="d-limiar"><dt>Limiar</dt><dd>A linha de decisão entre dois níveis, na metade do caminho entre os centros vizinhos.</dd></div>
+<div id="d-margem"><dt>Margem e margem relativa</dt><dd>Margem: a folga real no pior par, entre o menor valor do nível de cima e o maior do de baixo. Relativa: margem ÷ distância média entre centros, para comparar detectores com unidades diferentes.</dd></div>
+<div id="d-olho"><dt>Olho (diagrama de)</dt><dd>Todos os símbolos desenhados um sobre o outro, a partir da borda do CLK. O vão entre as faixas é a folga para decidir o nível.</dd></div>
+<div id="d-pam"><dt>PAM</dt><dd>Modulação por amplitude de pulso. Os bits são representados pela altura do pulso. PAM-2 tem 2 alturas e PAM-4 tem 4.</dd></div>
+<div id="d-payload"><dt>Payload</dt><dd>A carga útil: a parte do quadro com os dados. Aqui, 100.000 bits, onde os erros são contados.</dd></div>
+<div id="d-pc"><dt>p<sub>c</sub>[k] (pesos)</dt><dd>Os 8 pesos do filtro casado. São o pulso medido, descontada a linha de base, em cada uma das 8 posições.</dd></div>
+<div id="d-persist"><dt>Persistência</dt><dd>Faz o osciloscópio manter os traços antigos na tela, sem apagar. Com ela, os símbolos se acumulam e formam o olho.</dd></div>
+<div id="d-psd"><dt>PSD</dt><dd>Densidade espectral de potência. Diz quanta potência há em cada frequência, em V²/Hz.</dd></div>
+<div id="d-simbolo"><dt>Símbolo</dt><dd>Um pulso de 50 µs. Carrega 1 bit em PAM-2 e 2 bits em PAM-4.</dd></div>
+<div id="d-sinc"><dt>Sinc</dt><dd>A forma, sin(x)/x, da transformada de um pulso retangular. Tem zeros em intervalos regulares.</dd></div>
+<div id="d-subida"><dt>Tempo de subida (t<sub>10–90</sub>)</dt><dd>Quanto o sinal leva para ir de 10 % a 90 % da mudança. Em um RC, vale 2,197 × τ.</dd></div>
+<div id="d-tau"><dt>τ (tau)</dt><dd>Constante de tempo do RC: τ = R × C. É o tempo para a tensão fazer 63,2 % da mudança. Em 5 τ, praticamente acabou.</dd></div>
+<div id="d-welch"><dt>Welch</dt><dd>Método de calcular a PSD em vários blocos sobrepostos e fazer a média, para a curva ficar menos tremida.</dd></div>
+<div id="d-z"><dt>z (nota do filtro)</dt><dd>O resultado do filtro casado. z ≈ 0 parece nível 0 e z ≈ 1 parece o nível máximo. Não tem unidade.</dd></div>
+</dl>
+</section>
+</main>
+</div>
+
+<aside id="dica" hidden aria-live="polite">
+  <div class="in">
+    <div><b id="dicaT"></b><p id="dicaD"></p></div>
+    <button type="button" id="dicaX">Fechar</button>
+  </div>
+</aside>
+
+<script type="application/json" id="dados">{"ch":{"dupont":{"pc":[4090.93,4090.93,4090.93,4090.93,4090.93,4090.93,4090.93,4090.93],"bc":4.07,"Ec":133885328.0,"sep":[4087.0,4089.0,4088.0,4088.0,4088.0,4087.0,4089.0,4085.0],"ks":1,"cu":[3.45,4095.0],"cz":[-0.00013,1.0],"lu":2049.23,"lz":0.49993,"mu":4089.0,"mz":0.9998,"cal":[[140,0,4,4,5,3,5,3,6,5],[141,1,4095,4095,4095,4095,4095,4095,4095,4095],[142,0,2,6,4,5,5,4,4,3],[143,0,4,3,4,4,4,2,4,4],[144,1,4095,4095,4095,4095,4095,4095,4095,4095],[145,1,4095,4095,4095,4095,4095,4095,4095,4095],[146,0,6,1,3,4,4,2,4,4],[147,1,4095,4095,4095,4095,4095,4095,4095,4095],[148,0,4,3,4,3,3,4,2,2],[149,1,4095,4095,4095,4095,4095,4095,4095,4095],[150,0,4,5,5,4,4,3,4,4],[151,0,0,2,4,2,3,4,5,2],[152,1,4095,4095,4095,4095,4095,4095,4095,4095],[153,1,4095,4095,4095,4095,4095,4095,4095,4095],[154,0,4,3,4,3,4,4,3,4],[155,1,4095,4095,4095,4095,4095,4095,4095,4095],[156,0,6,3,4,4,4,4,4,3],[157,1,4095,4095,4095,4095,4095,4095,4095,4095],[158,0,4,4,4,4,4,4,4,4],[159,0,4,4,3,5,2,4,5,3],[160,1,4095,4095,4095,4095,4095,4095,4095,4095],[161,1,4095,4095,4095,4095,4095,4095,4095,4095],[162,0,4,3,3,6,3,2,4,3],[163,1,4095,4095,4095,4095,4095,4095,4095,4095],[164,0,4,2,4,1,3,4,3,4],[165,1,4095,4095,4095,4095,4095,4095,4095,4095],[166,0,3,2,4,4,3,4,5,3],[167,0,1,5,2,4,4,3,4,3],[168,1,4095,4095,4095,4095,4095,4095,4095,4095],[169,1,4095,4095,4095,4095,4095,4095,4095,4095],[170,0,3,4,2,4,4,4,4,3],[171,1,4095,4095,4095,4095,4095,4095,4095,4095],[172,0,4,3,3,2,3,3,1,2],[173,1,4095,4095,4095,4095,4095,4095,4095,4095],[174,0,4,3,4,3,4,2,4,3],[175,0,3,4,4,4,2,4,4,2],[176,1,4095,4095,4095,4095,4095,4095,4095,4095],[177,1,4095,4095,4095,4095,4095,4095,4095,4095],[178,0,3,4,4,4,2,5,2,2],[179,1,4095,4095,4095,4095,4095,4095,4095,4095],[180,0,4,6,3,4,4,4,4,5],[181,1,4095,4095,4095,4095,4095,4095,4095,4095],[182,0,5,2,2,4,3,3,3,4],[183,0,4,4,4,6,3,4,3,2],[184,1,4095,4095,4095,4095,4095,4095,4095,4095],[185,1,4095,4095,4095,4095,4095,4095,4095,4095],[186,0,2,4,1,2,5,5,2,3],[187,1,4095,4095,4095,4095,4095,4095,4095,4095],[188,0,4,2,4,4,3,2,3,1],[189,1,4095,4095,4095,4095,4095,4095,4095,4095],[190,0,4,4,5,4,3,4,4,3],[191,0,4,4,2,2,4,3,4,2],[192,1,4095,4095,4095,4095,4095,4095,4095,4095],[193,1,4095,4095,4095,4095,4095,4095,4095,4095],[194,0,3,5,3,2,5,4,3,2],[195,1,4095,4095,4095,4095,4095,4095,4095,4095],[196,0,5,4,2,4,2,3,4,1],[197,1,4095,4095,4095,4095,4095,4095,4095,4095],[198,0,4,2,4,4,3,3,3,4],[199,0,3,4,4,4,4,4,4,4],[200,1,4095,4095,4095,4095,4095,4095,4095,4095],[201,1,4095,4095,4095,4095,4095,4095,4095,4095],[202,0,4,4,5,3,4,2,5,4],[203,1,4095,4095,4095,4095,4095,4095,4095,4095],[204,0,4,4,5,1,3,3,2,4],[205,1,4095,4095,4095,4095,4095,4095,4095,4095],[206,0,4,3,2,4,3,4,4,3],[207,0,4,3,3,5,5,2,3,3],[208,1,4095,4095,4095,4095,4095,4095,4095,4095],[209,1,4095,4095,4095,4095,4095,4095,4095,4095],[210,0,5,4,4,5,4,3,3,4],[211,1,4095,4095,4095,4095,4095,4095,4095,4095],[212,0,5,4,4,3,4,4,2,4],[213,1,4095,4095,4095,4095,4095,4095,4095,4095],[214,0,5,5,4,2,2,4,3,3],[215,0,4,4,4,6,4,3,3,4],[216,1,4095,4095,4095,4095,4095,4095,4095,4095],[217,1,4095,4095,4095,4095,4095,4095,4095,4095],[218,0,4,4,4,4,4,4,0,3],[219,1,4095,4095,4095,4095,4095,4095,4095,4095],[220,0,6,2,4,3,4,3,3,3],[221,1,4095,4095,4095,4095,4095,4095,4095,4095],[222,0,5,4,2,4,5,3,4,5],[223,0,4,4,3,4,2,4,5,3],[224,1,4095,4095,4095,4095,4095,4095,4095,4095],[225,1,4095,4095,4095,4095,4095,4095,4095,4095],[226,0,4,2,3,5,4,4,3,4],[227,1,4095,4095,4095,4095,4095,4095,4095,4095],[228,0,3,2,3,4,3,3,4,4],[229,1,4095,4095,4095,4095,4095,4095,4095,4095],[230,0,4,3,3,4,4,5,4,4],[231,0,3,0,3,3,4,4,3,3],[232,1,4095,4095,4095,4095,4095,4095,4095,4095],[233,1,4095,4095,4095,4095,4095,4095,4095,4095],[234,0,3,3,3,2,4,4,4,4],[235,1,4095,4095,4095,4095,4095,4095,4095,4095],[236,0,4,5,4,5,4,2,4,5],[237,1,4095,4095,4095,4095,4095,4095,4095,4095],[238,0,4,5,3,2,3,4,4,5],[239,0,4,2,4,4,4,4,5,4],[240,1,4095,4095,4095,4095,4095,4095,4095,4095],[241,1,4095,4095,4095,4095,4095,4095,4095,4095],[242,0,3,3,5,5,4,4,4,0],[243,1,4095,4095,4095,4095,4095,4095,4095,4095],[244,0,5,3,2,5,4,2,3,4],[245,1,4095,4095,4095,4095,4095,4095,4095,4095],[246,0,4,4,4,4,2,4,4,4],[247,0,4,4,4,4,3,4,4,4],[248,1,4095,4095,4095,4095,4095,4095,4095,4095],[249,1,4095,4095,4095,4095,4095,4095,4095,4095],[250,0,4,2,2,3,4,4,4,4],[251,1,4095,4095,4095,4095,4095,4095,4095,4095],[252,0,3,4,5,3,3,4,4,4],[253,1,4095,4095,4095,4095,4095,4095,4095,4095],[254,0,4,3,3,4,3,3,4,4],[255,0,3,4,3,2,4,3,3,2],[256,1,4095,4095,4095,4095,4095,4095,4095,4095],[257,1,4095,4095,4095,4095,4095,4095,4095,4095],[258,0,4,3,3,4,3,4,4,2],[259,1,4095,4095,4095,4095,4095,4095,4095,4095],[260,0,6,1,3,4,3,4,4,4],[261,1,4095,4095,4095,4095,4095,4095,4095,4095],[262,0,4,4,4,3,4,4,3,3],[263,0,4,2,4,4,3,4,4,5],[264,1,4095,4095,4095,4095,4095,4095,4095,4095],[265,1,4095,4095,4095,4095,4095,4095,4095,4092],[266,0,5,4,5,4,4,2,4,3],[267,1,4095,4095,4095,4095,4095,4095,4095,4095],[268,0,3,4,3,4,4,4,3,7],[269,1,4095,4095,4095,4095,4095,4095,4095,4095],[270,0,5,3,3,3,4,4,2,2],[271,0,3,4,2,4,5,3,2,3],[272,1,4095,4095,4095,4095,4095,4095,4095,4095],[273,1,4095,4095,4095,4095,4095,4095,4095,4095],[274,0,5,4,5,5,4,2,5,2],[275,1,4095,4095,4095,4095,4095,4095,4095,4095],[276,0,4,4,4,4,4,4,3,4],[277,1,4095,4095,4095,4095,4095,4095,4095,4095],[278,0,4,4,3,3,4,3,3,4],[279,0,5,4,3,3,5,4,4,4],[280,1,4095,4095,4095,4095,4095,4095,4095,4095],[281,1,4095,4095,4095,4095,4095,4095,4095,4095],[282,0,4,4,4,3,4,4,4,5],[283,1,4095,4095,4095,4095,4095,4095,4095,4095],[284,0,0,2,4,6,2,4,4,4],[285,1,4095,4095,4095,4095,4095,4095,4095,4095],[286,0,4,4,2,4,4,6,4,4],[287,0,3,4,7,2,3,4,4,4],[288,1,4095,4095,4095,4095,4095,4095,4095,4095],[289,1,4095,4095,4095,4095,4095,4095,4095,4095],[290,0,4,4,5,4,3,2,3,4],[291,1,4095,4095,4095,4095,4095,4095,4095,4095],[292,0,4,4,5,4,2,4,4,4],[293,1,4095,4095,4095,4095,4095,4095,4095,4095],[294,0,4,2,3,3,4,3,4,3],[295,0,3,5,5,2,4,3,3,4],[296,1,4095,4095,4095,4095,4095,4095,4095,4095],[297,1,4095,4095,4095,4095,4095,4095,4095,4095],[298,0,1,1,4,4,2,3,3,3],[299,1,4095,4095,4095,4095,4095,4095,4095,4095],[300,0,6,5,3,4,3,3,4,6],[301,1,4095,4095,4095,4095,4095,4095,4095,4095],[302,0,4,4,5,4,4,4,4,5],[303,0,2,3,2,4,2,4,4,4],[304,1,4095,4095,4095,4095,4095,4095,4095,4095],[305,1,4095,4095,4095,4095,4095,4095,4095,4095],[306,0,4,4,4,4,3,2,3,3],[307,1,4095,4095,4095,4095,4095,4095,4095,4095],[308,0,5,3,3,3,2,2,4,1],[309,1,4095,4095,4095,4095,4095,4095,4095,4095],[310,0,3,3,1,3,2,4,4,4],[311,0,3,4,4,4,2,4,4,4],[312,1,4095,4095,4095,4095,4095,4095,4095,4095],[313,1,4095,4095,4095,4095,4095,4095,4095,4095],[314,0,5,3,4,3,4,4,4,2],[315,1,4095,4095,4095,4095,4095,4095,4095,4095],[316,0,4,5,3,3,4,4,4,3],[317,1,4095,4095,4095,4095,4095,4095,4095,4095],[318,0,4,4,4,4,4,4,4,5],[319,0,4,4,2,4,3,3,2,3],[320,1,4095,4095,4095,4095,4095,4095,4095,4095],[321,1,4095,4095,4095,4095,4095,4095,4095,4095],[322,0,4,4,4,4,4,3,4,4],[323,1,4095,4095,4095,4095,4095,4095,4095,4095],[324,0,5,5,0,4,7,4,4,4],[325,1,4095,4095,4095,4095,4095,4095,4095,4095],[326,0,5,4,4,3,4,4,4,3],[327,0,4,3,4,4,2,4,3,3],[328,1,4095,4095,4095,4095,4095,4095,4095,4095],[329,1,4095,4095,4095,4095,4095,4095,4095,4092],[330,0,0,3,3,3,0,4,4,5],[331,1,4095,4095,4095,4095,4095,4095,4095,4095],[332,0,4,4,3,3,4,4,4,4],[333,1,4095,4095,4095,4095,4095,4095,4095,4095],[334,0,4,3,3,4,3,3,5,2],[335,0,3,3,3,3,4,8,4,2],[336,1,4095,4095,4095,4095,4095,4095,4095,4095],[337,1,4095,4095,4095,4095,4095,4095,4095,4095],[338,0,4,4,4,5,4,4,3,4],[339,1,4095,4095,4095,4095,4095,4095,4095,4095],[340,0,4,4,4,4,1,3,3,4],[341,1,4095,4095,4095,4095,4095,4095,4095,4095],[342,0,4,2,5,5,3,5,4,5],[343,0,3,4,4,2,0,4,2,4],[344,1,4095,4095,4095,4095,4095,4095,4095,4095],[345,1,4095,4095,4095,4095,4095,4095,4095,4095],[346,0,4,5,4,4,3,3,4,2],[347,1,4095,4095,4095,4095,4095,4095,4095,4095],[348,0,4,5,4,5,3,4,4,3],[349,1,4095,4095,4095,4095,4095,4095,4095,4095],[350,0,4,2,5,1,4,4,3,3],[351,0,3,2,4,7,4,1,4,2],[352,1,4095,4095,4095,4095,4095,4095,4095,4095],[353,1,4095,4095,4095,4095,4095,4095,4095,4095],[354,0,3,3,3,4,3,2,5,5],[355,1,4095,4095,4095,4095,4095,4095,4095,4095],[356,0,0,4,2,4,3,0,2,4],[357,1,4095,4095,4095,4095,4095,4095,4095,4095],[358,0,3,5,4,1,3,4,2,6],[359,0,2,4,3,4,3,4,4,3],[360,1,4095,4095,4095,4095,4095,4095,4095,4095],[361,1,4095,4095,4095,4095,4095,4095,4095,4095],[362,0,4,2,2,4,3,3,4,3],[363,1,4095,4095,4095,4095,4095,4095,4095,4095],[364,0,4,3,4,4,2,4,3,4],[365,1,4095,4095,4095,4095,4095,4095,4095,4095],[366,0,4,5,3,3,3,2,2,5],[367,0,2,1,4,2,3,4,4,4],[368,1,4095,4095,4095,4095,4095,4095,4095,4095],[369,1,4095,4095,4095,4095,4095,4095,4095,4095],[370,0,4,5,3,4,4,3,3,4],[371,1,4095,4095,4095,4095,4095,4095,4095,4095],[372,0,5,0,3,4,4,4,2,4],[373,1,4095,4095,4095,4095,4095,4095,4095,4095],[374,0,6,5,4,4,4,4,5,4],[375,0,2,2,3,5,3,4,3,4],[376,1,4095,4095,4095,4095,4095,4095,4095,4095],[377,1,4095,4095,4095,4095,4095,4095,4095,4095],[378,0,8,0,4,4,2,4,3,2],[379,1,4095,4095,4095,4095,4095,4095,4095,4095],[380,0,5,3,2,4,2,3,3,3],[381,1,4095,4095,4095,4095,4095,4095,4095,4095],[382,0,4,2,3,3,4,3,3,0],[383,0,3,2,3,4,4,3,3,2],[384,1,4095,4095,4095,4095,4095,4095,4095,4095],[385,1,4095,4095,4095,4095,4095,4095,4095,4095],[386,0,4,6,2,1,3,4,3,3],[387,1,4095,4095,4095,4095,4095,4095,4095,4095],[388,0,2,4,5,3,4,5,2,4],[389,1,4095,4095,4095,4095,4095,4095,4095,4095],[390,0,4,5,5,4,3,3,3,3],[391,0,3,4,2,4,4,4,3,2],[392,1,4095,4095,4095,4095,4095,4095,4095,4095],[393,1,4095,4095,4095,4095,4095,4095,4095,4095],[394,0,3,4,5,4,2,4,4,5],[395,1,4095,4095,4095,4095,4095,4095,4095,4095]]},"rc16":{"pc":[1501.38,3021.52,3645.72,3906.22,4016.07,4063.38,4084.13,4090.27],"bc":4.68,"Ec":105983952.0,"sep":[-1193.0,1898.0,3170.0,3700.0,3926.0,4019.0,4058.0,4076.0],"ks":7,"cu":[10.83,4094.94],"cz":[0.07181,1.02381],"lu":2052.88,"lz":0.54781,"mu":4076.0,"mz":0.90065,"cal":[[140,0,4,5,4,5,5,5,4,5],[141,1,1517,3029,3650,3912,4022,4069,4087,4095],[142,0,2607,1092,465,201,90,44,24,13],[143,0,8,8,6,6,5,5,5,5],[144,1,1519,3029,3650,3912,4024,4071,4090,4095],[145,1,4095,4095,4095,4095,4095,4095,4095,4095],[146,0,2613,1090,461,201,92,43,24,13],[147,1,1518,3033,3657,3915,4022,4068,4089,4095],[148,0,2612,1092,464,202,91,43,24,12],[149,1,1520,3034,3657,3913,4022,4070,4091,4095],[150,0,2605,1088,463,200,91,44,21,13],[151,0,10,5,7,6,4,5,5,3],[152,1,1517,3032,3656,3915,4022,4069,4089,4095],[153,1,4095,4095,4095,4095,4095,4095,4095,4095],[154,0,2614,1096,463,202,91,42,23,11],[155,1,1522,3033,3656,3916,4023,4070,4088,4095],[156,0,2609,1090,461,200,90,43,22,13],[157,1,1515,3032,3657,3915,4023,4067,4089,4095],[158,0,2609,1092,461,200,89,44,21,11],[159,0,9,5,8,7,4,6,6,4],[160,1,1478,3016,3648,3911,4023,4070,4083,4095],[161,1,4095,4095,4095,4095,4095,4095,4095,4095],[162,0,2607,1092,462,203,91,43,22,14],[163,1,1517,3027,3648,3908,4030,4071,4085,4094],[164,0,2600,1090,461,200,90,43,22,13],[165,1,1519,3032,3656,3914,4024,4071,4088,4095],[166,0,2610,1094,463,203,89,43,23,13],[167,0,9,8,5,5,5,5,4,4],[168,1,1516,3029,3653,3911,4021,4070,4091,4095],[169,1,4095,4095,4095,4095,4095,4095,4095,4095],[170,0,2614,1092,462,202,91,44,21,13],[171,1,1518,3030,3655,3915,4021,4069,4092,4095],[172,0,2613,1094,462,200,90,43,22,13],[173,1,1526,3035,3654,3912,4024,4072,4091,4095],[174,0,2606,1093,462,200,91,43,21,13],[175,0,8,8,6,6,5,4,3,5],[176,1,1515,3030,3656,3914,4020,4070,4091,4095],[177,1,4095,4095,4095,4095,4095,4095,4095,4095],[178,0,2615,1096,464,200,90,43,22,15],[179,1,1520,3032,3659,3916,4025,4069,4089,4095],[180,0,2655,1110,469,204,93,43,22,14],[181,1,1513,3029,3658,3915,4023,4069,4090,4095],[182,0,2611,1090,460,200,91,42,23,13],[183,0,9,6,5,5,5,5,4,5],[184,1,1509,3028,3653,3912,4023,4069,4089,4095],[185,1,4095,4095,4095,4095,4095,4095,4095,4095],[186,0,2614,1095,461,202,91,44,21,13],[187,1,1509,3030,3652,3912,4024,4071,4091,4095],[188,0,2602,1091,462,200,90,42,22,12],[189,1,1517,3030,3653,3914,4022,4071,4090,4095],[190,0,2611,1093,465,202,89,44,23,13],[191,0,10,7,4,4,4,5,5,4],[192,1,1511,3027,3656,3913,4022,4070,4090,4095],[193,1,4095,4095,4095,4095,4095,4095,4095,4091],[194,0,2611,1091,462,202,89,43,22,14],[195,1,1521,3022,3649,3914,4034,4067,4084,4095],[196,0,2610,1088,462,202,86,42,23,13],[197,1,1517,3032,3657,3911,4021,4071,4090,4095],[198,0,2609,1092,462,201,90,43,21,13],[199,0,10,7,8,6,5,5,5,5],[200,1,1468,3018,3646,3912,4021,4067,4087,4095],[201,1,4095,4095,4095,4095,4095,4095,4095,4095],[202,0,2617,1090,465,202,93,40,22,12],[203,1,1521,3038,3656,3914,4026,4072,4091,4095],[204,0,2607,1086,463,203,89,43,22,13],[205,1,1512,3034,3653,3914,4023,4071,4089,4095],[206,0,2605,1085,462,200,90,43,23,14],[207,0,8,7,5,6,5,5,5,4],[208,1,1507,3032,3651,3912,4023,4069,4091,4095],[209,1,4095,4095,4095,4095,4095,4095,4095,4095],[210,0,2618,1093,464,203,91,43,23,8],[211,1,1511,3034,3654,3918,4021,4070,4091,4095],[212,0,2607,1085,461,200,91,43,22,12],[213,1,1517,3035,3653,3914,4024,4070,4091,4095],[214,0,2612,1088,463,202,91,44,22,14],[215,0,11,7,5,6,4,5,6,4],[216,1,1508,3032,3653,3914,4023,4069,4091,4095],[217,1,4095,4095,4095,4095,4095,4095,4095,4095],[218,0,2616,1088,464,204,92,43,23,13],[219,1,1513,3038,3657,3915,4021,4070,4090,4095],[220,0,2651,1102,468,203,92,43,22,13],[221,1,1519,3036,3656,3915,4021,4070,4090,4095],[222,0,2611,1083,461,201,90,43,22,12],[223,0,8,12,6,6,4,5,4,4],[224,1,1513,3033,3652,3914,4021,4069,4088,4095],[225,1,4095,4095,4095,4095,4095,4095,4095,4095],[226,0,2614,1095,465,203,90,40,23,14],[227,1,1519,3032,3649,3922,4029,4065,4085,4095],[228,0,2612,1088,463,208,92,44,23,13],[229,1,1511,3033,3653,3913,4022,4072,4091,4095],[230,0,2606,1085,462,203,91,44,21,12],[231,0,9,10,6,5,5,4,6,5],[232,1,1518,3030,3653,3912,4019,4069,4090,4095],[233,1,4095,4095,4095,4095,4095,4095,4095,4095],[234,0,2619,1089,463,202,91,44,23,14],[235,1,1507,3034,3653,3913,4022,4068,4091,4095],[236,0,2611,1086,463,201,90,44,23,14],[237,1,1513,3033,3655,3912,4021,4070,4091,4095],[238,0,2615,1089,464,202,91,45,23,13],[239,0,8,8,5,6,6,5,5,5],[240,1,1462,3017,3648,3909,4019,4069,4088,4095],[241,1,4095,4095,4095,4095,4095,4095,4095,4095],[242,0,2597,1089,463,202,91,43,22,13],[243,1,1527,3036,3654,3916,4024,4069,4089,4095],[244,0,2602,1091,464,201,90,44,22,13],[245,1,1529,3036,3656,3917,4020,4070,4089,4095],[246,0,2615,1088,463,202,90,44,22,13],[247,0,10,7,6,5,4,5,5,3],[248,1,1528,3035,3652,3913,4023,4070,4089,4095],[249,1,4095,4095,4095,4095,4095,4095,4095,4095],[250,0,2623,1091,464,201,92,44,25,13],[251,1,1529,3035,3654,3914,4020,4070,4091,4095],[252,0,2599,1088,462,201,90,43,24,13],[253,1,1511,3034,3654,3915,4024,4070,4089,4095],[254,0,2596,1088,462,201,90,43,22,12],[255,0,9,6,6,6,6,5,8,6],[256,1,1518,3029,3650,3912,4021,4070,4091,4095],[257,1,4095,4095,4095,4095,4095,4095,4095,4094],[258,0,2607,1094,465,202,91,41,23,14],[259,1,1524,3028,3649,3912,4031,4069,4083,4093],[260,0,2636,1103,469,205,92,42,23,12],[261,1,1524,3034,3653,3914,4021,4069,4091,4095],[262,0,2605,1090,464,202,91,43,20,14],[263,0,9,6,6,4,6,4,5,5],[264,1,1519,3032,3654,3916,4024,4068,4086,4095],[265,1,4095,4095,4095,4095,4095,4095,4095,4095],[266,0,2598,1089,464,203,91,44,23,13],[267,1,1527,3033,3650,3912,4027,4071,4090,4095],[268,0,2600,1090,465,201,91,43,22,13],[269,1,1529,3036,3658,3917,4025,4071,4086,4095],[270,0,2601,1085,464,201,89,42,22,13],[271,0,10,7,6,6,6,5,5,4],[272,1,1526,3034,3648,3912,4022,4071,4089,4095],[273,1,4095,4095,4095,4095,4095,4095,4095,4095],[274,0,2605,1094,465,201,90,44,24,13],[275,1,1532,3036,3652,3910,4024,4071,4090,4095],[276,0,2598,1090,463,202,91,43,22,14],[277,1,1524,3029,3652,3912,4025,4071,4088,4095],[278,0,2595,1088,463,202,90,43,22,13],[279,0,8,6,6,6,6,6,5,4],[280,1,1484,3015,3642,3909,4022,4070,4091,4095],[281,1,4095,4095,4095,4095,4095,4095,4095,4095],[282,0,2611,1091,465,202,91,43,23,14],[283,1,1519,3032,3654,3916,4023,4069,4092,4095],[284,0,2599,1088,461,202,90,44,22,14],[285,1,1522,3033,3653,3914,4024,4072,4092,4095],[286,0,2602,1090,464,201,90,43,23,14],[287,0,8,7,6,5,3,5,4,5],[288,1,1519,3032,3654,3913,4022,4068,4089,4095],[289,1,4095,4095,4095,4095,4095,4095,4095,4095],[290,0,2600,1088,463,201,92,44,23,14],[291,1,1522,3041,3653,3912,4020,4076,4095,4095],[292,0,2609,1090,465,201,92,44,22,13],[293,1,1529,3034,3656,3917,4025,4069,4085,4095],[294,0,2602,1090,464,200,90,43,21,13],[295,0,10,8,5,6,4,5,5,4],[296,1,1525,3032,3648,3914,4024,4070,4090,4095],[297,1,4095,4095,4095,4095,4095,4095,4095,4095],[298,0,2612,1093,465,200,92,44,24,14],[299,1,1524,3033,3653,3916,4024,4071,4093,4095],[300,0,2645,1109,471,203,92,44,22,14],[301,1,1520,3032,3651,3913,4023,4071,4091,4095],[302,0,2599,1088,464,200,89,44,23,14],[303,0,9,4,5,6,5,4,6,5],[304,1,1513,3028,3653,3914,4021,4069,4090,4095],[305,1,4095,4095,4095,4095,4095,4095,4095,4095],[306,0,2605,1092,465,201,91,44,23,13],[307,1,1518,3032,3656,3915,4025,4071,4089,4095],[308,0,2600,1088,465,200,88,42,23,12],[309,1,1521,3033,3655,3916,4021,4069,4089,4095],[310,0,2613,1092,464,201,89,42,22,13],[311,0,9,6,6,4,6,5,5,5],[312,1,1517,3030,3651,3912,4023,4069,4087,4095],[313,1,4095,4095,4095,4095,4095,4095,4095,4095],[314,0,2603,1090,464,201,91,45,24,13],[315,1,1523,3032,3654,3914,4025,4071,4089,4095],[316,0,2606,1092,466,199,90,44,23,12],[317,1,1526,3033,3657,3915,4023,4069,4089,4095],[318,0,2604,1090,464,201,90,42,22,14],[319,0,9,7,5,6,4,6,5,4],[320,1,1475,3012,3641,3912,4023,4070,4089,4095],[321,1,4095,4095,4095,4095,4095,4095,4095,4095],[322,0,2615,1097,466,201,91,44,23,13],[323,1,1525,3028,3649,3920,4031,4066,4086,4095],[324,0,2600,1090,462,201,91,46,19,13],[325,1,1516,3031,3652,3913,4022,4071,4091,4095],[326,0,2599,1090,463,201,92,42,24,14],[327,0,9,6,6,6,5,5,4,4],[328,1,1511,3028,3652,3913,4020,4069,4089,4095],[329,1,4095,4095,4095,4095,4095,4095,4095,4095],[330,0,2608,1092,465,201,91,42,23,13],[331,1,1516,3030,3656,3916,4025,4069,4089,4095],[332,0,2603,1090,462,201,90,43,22,13],[333,1,1517,3028,3655,3913,4021,4070,4091,4095],[334,0,2603,1092,462,202,90,43,23,13],[335,0,8,8,8,9,4,5,4,5],[336,1,1514,3031,3658,3915,4022,4069,4089,4095],[337,1,4095,4095,4095,4095,4095,4095,4095,4095],[338,0,2605,1092,463,200,92,44,22,14],[339,1,1521,3030,3654,3916,4025,4069,4089,4095],[340,0,2643,1105,468,204,92,43,23,13],[341,1,1521,3035,3657,3917,4024,4068,4089,4095],[342,0,2610,1095,462,200,91,43,22,13],[343,0,9,8,6,7,5,4,5,4],[344,1,1519,3032,3654,3913,4024,4071,4091,4095],[345,1,4095,4095,4095,4095,4095,4095,4095,4095],[346,0,2615,1096,464,202,91,45,22,13],[347,1,1520,3034,3657,3914,4021,4070,4090,4095],[348,0,2607,1091,462,201,90,44,21,14],[349,1,1514,3031,3653,3915,4022,4069,4091,4095],[350,0,2600,1089,464,200,91,42,23,12],[351,0,9,8,6,6,4,4,6,5],[352,1,1507,3028,3655,3912,4021,4067,4090,4095],[353,1,4095,4095,4095,4095,4095,4095,4095,4095],[354,0,2616,1094,464,203,91,43,24,9],[355,1,1517,3027,3650,3914,4032,4071,4083,4095],[356,0,2602,1088,463,201,91,43,22,14],[357,1,1517,3031,3657,3915,4025,4069,4083,4095],[358,0,2613,1092,464,201,91,43,22,14],[359,0,10,8,6,6,5,4,6,4],[360,1,1469,3008,3645,3908,4023,4070,4090,4095],[361,1,4095,4095,4095,4095,4095,4095,4095,4095],[362,0,2612,1093,464,202,91,44,24,14],[363,1,1515,3030,3657,3913,4021,4070,4092,4095],[364,0,2610,1092,464,200,91,44,21,14],[365,1,1520,3032,3659,3913,4022,4071,4093,4095],[366,0,2605,1092,462,201,90,42,19,13],[367,0,8,6,6,4,4,4,4,4],[368,1,1514,3028,3656,3917,4021,4069,4089,4095],[369,1,4095,4095,4095,4095,4095,4095,4095,4095],[370,0,2613,1096,464,203,91,44,22,14],[371,1,1522,3038,3654,3914,4025,4073,4089,4095],[372,0,2604,1091,463,200,90,42,23,14],[373,1,1510,3028,3656,3917,4021,4068,4088,4095],[374,0,2609,1091,461,200,90,44,21,13],[375,0,9,7,6,5,4,5,5,4],[376,1,1509,3026,3653,3913,4025,4069,4089,4095],[377,1,4095,4095,4095,4095,4095,4095,4095,4095],[378,0,2611,1093,467,202,92,44,23,12],[379,1,1514,3027,3653,3914,4025,4070,4092,4095],[380,0,2647,1108,470,204,89,44,23,13],[381,1,1519,3033,3652,3912,4024,4073,4091,4095],[382,0,2608,1088,464,201,91,42,23,13],[383,0,9,7,7,5,6,4,3,4],[384,1,1508,3033,3655,3913,4020,4072,4090,4095],[385,1,4095,4095,4095,4095,4095,4095,4095,4095],[386,0,2617,1091,464,202,90,43,22,13],[387,1,1517,3029,3650,3912,4031,4071,4083,4095],[388,0,2613,1088,463,203,91,44,21,14],[389,1,1517,3038,3659,3916,4023,4068,4089,4095],[390,0,2615,1086,461,202,90,42,23,12],[391,0,9,7,5,7,5,6,4,4],[392,1,1510,3036,3653,3914,4024,4071,4089,4095],[393,1,4095,4095,4095,4095,4095,4095,4095,4095],[394,0,2616,1090,465,203,91,44,22,14],[395,1,1515,3037,3658,3915,4025,4071,4089,4095]]},"rc33":{"pc":[526.06,1757.96,2589.16,3119.06,3426.11,3673.86,3812.91,3901.41],"bc":26.24,"Ec":74794320.0,"sep":[-2975.0,-483.0,1144.0,2187.0,2875.0,3291.0,3560.0,3734.0],"ks":7,"cu":[130.81,3978.1],"cz":[0.1667,1.0655],"lu":2054.46,"lz":0.6161,"mu":3734.0,"mz":0.77115,"cal":[[140,0,60,14,16,24,17,16,24,13],[141,1,560,1787,2615,3148,3461,3696,3837,3931],[142,0,3435,2214,1436,925,550,395,257,164],[143,0,161,81,60,52,38,27,27,24],[144,1,565,1787,2616,3146,3460,3706,3843,3929],[145,1,4037,4020,4052,4063,4017,4077,4082,4081],[146,0,3525,2267,1467,950,576,398,265,180],[147,1,655,1871,2681,3180,3480,3723,3846,3939],[148,0,3439,2212,1433,931,551,392,268,164],[149,1,667,1877,2659,3185,3486,3714,3856,3950],[150,0,3415,2210,1432,913,556,395,245,169],[151,0,154,72,57,51,25,26,32,10],[152,1,584,1808,2635,3163,3482,3701,3849,3944],[153,1,4031,4026,4053,4054,4028,4087,4076,4081],[154,0,3518,2266,1466,955,564,395,277,174],[155,1,677,1889,2672,3184,3493,3721,3855,3949],[156,0,3417,2207,1428,915,550,396,251,166],[157,1,687,1860,2660,3203,3483,3722,3864,3944],[158,0,3424,2214,1420,923,563,386,248,180],[159,0,146,76,65,43,32,33,25,13],[160,1,561,1785,2614,3168,3468,3708,3856,3937],[161,1,4027,4034,4054,4059,4040,4087,4074,4094],[162,0,3514,2252,1466,952,558,398,269,166],[163,1,672,1872,2677,3198,3508,3717,3861,3949],[164,0,3414,2212,1428,904,559,391,244,174],[165,1,670,1845,2677,3195,3480,3728,3867,3931],[166,0,3447,2227,1419,926,561,379,259,172],[167,0,134,81,62,34,41,33,14,24],[168,1,572,1802,2634,3168,3462,3718,3857,3926],[169,1,4031,4037,4044,4063,4041,4071,4080,4089],[170,0,3511,2265,1466,941,571,405,259,172],[171,1,668,1876,2676,3199,3487,3723,3861,3943],[172,0,3427,2217,1424,922,563,383,253,174],[173,1,672,1878,2677,3195,3485,3729,3858,3939],[174,0,3429,2213,1426,929,556,384,258,166],[175,0,143,84,61,42,39,35,25,26],[176,1,574,1804,2632,3157,3464,3712,3846,3937],[177,1,4042,4034,4048,4067,4040,4079,4089,4087],[178,0,3505,2263,1465,939,574,402,258,174],[179,1,680,1884,2696,3211,3482,3728,3863,3939],[180,0,3444,2225,1434,923,566,386,256,172],[181,1,663,1875,2688,3193,3491,3730,3856,3946],[182,0,3417,2203,1416,918,552,384,257,167],[183,0,144,80,57,40,39,24,22,22],[184,1,575,1803,2645,3170,3473,3715,3852,3937],[185,1,4042,4025,4043,4064,4036,4085,4091,4089],[186,0,3511,2267,1459,941,571,396,258,178],[187,1,679,1863,2690,3200,3503,3739,3863,3947],[188,0,3408,2190,1406,909,555,383,256,163],[189,1,688,1894,2698,3200,3505,3735,3863,3953],[190,0,3420,2200,1420,911,553,385,253,165],[191,0,143,81,55,43,39,28,23,24],[192,1,587,1821,2638,3172,3476,3719,3847,3939],[193,1,4031,4028,4052,4071,4029,4081,4088,4082],[194,0,3519,2265,1470,951,574,399,263,182],[195,1,666,1855,2676,3180,3490,3736,3859,3946],[196,0,3427,2205,1421,923,556,390,258,167],[197,1,685,1890,2678,3194,3493,3728,3863,3939],[198,0,3435,2206,1426,916,557,388,254,173],[199,0,152,80,58,46,33,28,26,24],[200,1,550,1800,2632,3170,3478,3715,3851,3939],[201,1,4030,4029,4055,4069,4036,4087,4087,4094],[202,0,3513,2268,1452,942,572,393,264,174],[203,1,680,1881,2686,3202,3496,3730,3858,3947],[204,0,3425,2215,1427,919,551,388,252,166],[205,1,677,1879,2684,3204,3497,3727,3859,3948],[206,0,3422,2214,1423,913,558,388,251,172],[207,0,149,80,59,44,32,30,27,20],[208,1,573,1794,2616,3161,3463,3706,3849,3941],[209,1,4028,4036,4051,4067,4037,4085,4083,4093],[210,0,3515,2260,1464,946,571,398,264,171],[211,1,679,1871,2687,3205,3492,3728,3861,3952],[212,0,3417,2206,1422,914,555,388,247,171],[213,1,664,1865,2672,3201,3486,3726,3863,3943],[214,0,3419,2201,1422,918,556,384,252,173],[215,0,136,81,60,40,35,30,21,13],[216,1,581,1824,2641,3176,3477,3713,3855,3938],[217,1,4039,4033,4050,4062,4046,4084,4085,4093],[218,0,3497,2260,1462,937,570,403,261,169],[219,1,670,1885,2678,3198,3498,3724,3863,3947],[220,0,3442,2226,1433,917,560,389,252,171],[221,1,663,1878,2689,3196,3489,3731,3860,3942],[222,0,3417,2199,1419,913,551,383,256,169],[223,0,145,82,59,34,36,26,20,22],[224,1,568,1798,2632,3178,3478,3717,3855,3937],[225,1,4031,4029,4047,4064,4048,4081,4089,4091],[226,0,3503,2261,1460,932,573,400,256,171],[227,1,687,1878,2689,3208,3491,3733,3867,3943],[228,0,3417,2200,1417,911,553,378,253,168],[229,1,669,1887,2692,3192,3505,3739,3858,3943],[230,0,3418,2191,1413,904,554,378,256,163],[231,0,135,80,52,38,37,23,17,20],[232,1,583,1817,2649,3181,3476,3721,3857,3939],[233,1,4031,4030,4049,4073,4045,4081,4091,4085],[234,0,3510,2254,1451,934,573,394,254,176],[235,1,685,1880,2689,3202,3483,3715,3849,3933],[236,0,3427,2202,1406,910,556,383,247,169],[237,1,674,1903,2684,3207,3506,3736,3865,3949],[238,0,3419,2198,1412,907,551,383,254,166],[239,0,142,81,52,39,38,25,22,19],[240,1,568,1821,2653,3169,3487,3724,3854,3941],[241,1,4035,4030,4051,4071,4046,4081,4093,4090],[242,0,3499,2257,1450,935,572,390,256,176],[243,1,688,1898,2704,3207,3502,3735,3858,3945],[244,0,3422,2196,1412,916,554,380,252,166],[245,1,685,1904,2699,3212,3504,3730,3859,3948],[246,0,3423,2194,1413,909,555,385,249,165],[247,0,140,82,55,42,32,25,24,15],[248,1,579,1814,2638,3168,3479,3715,3853,3937],[249,1,4027,4027,4054,4061,4034,4085,4088,4087],[250,0,3511,2261,1454,940,571,393,260,170],[251,1,671,1899,2687,3203,3502,3731,3861,3949],[252,0,3413,2201,1419,913,552,386,252,170],[253,1,671,1873,2674,3188,3486,3723,3859,3944],[254,0,3414,2204,1415,911,556,389,253,169],[255,0,146,78,55,46,37,23,25,14],[256,1,584,1836,2654,3180,3481,3716,3856,3943],[257,1,4031,4034,4058,4065,4046,4085,4083,4090],[258,0,3515,2266,1455,941,567,396,258,168],[259,1,674,1876,2693,3203,3492,3724,3858,3946],[260,0,3455,2221,1429,919,559,390,249,166],[261,1,692,1886,2694,3200,3492,3734,3871,3939],[262,0,3419,2213,1414,908,557,384,244,170],[263,0,140,76,58,42,32,28,21,20],[264,1,586,1791,2649,3177,3471,3707,3853,3936],[265,1,4035,4029,4049,4058,4029,4080,4086,4087],[266,0,3509,2263,1453,939,568,397,260,171],[267,1,680,1853,2668,3194,3492,3727,3862,3939],[268,0,3433,2220,1426,915,559,387,249,174],[269,1,674,1855,2689,3192,3491,3729,3861,3938],[270,0,3424,2213,1419,917,557,382,253,169],[271,0,142,79,59,39,36,28,19,20],[272,1,576,1809,2646,3171,3467,3714,3854,3931],[273,1,4031,4033,4048,4070,4035,4077,4078,4087],[274,0,3517,2265,1460,942,572,400,257,171],[275,1,687,1883,2694,3199,3490,3727,3864,3939],[276,0,3431,2209,1418,917,554,380,252,170],[277,1,666,1872,2692,3197,3484,3725,3859,3941],[278,0,3423,2205,1416,917,554,379,252,165],[279,0,140,80,53,39,35,24,17,22],[280,1,563,1785,2644,3169,3471,3714,3848,3933],[281,1,4034,4031,4047,4064,4041,4078,4087,4087],[282,0,3509,2262,1466,941,575,397,251,176],[283,1,678,1860,2692,3199,3483,3724,3851,3938],[284,0,3433,2207,1416,921,556,380,254,170],[285,1,673,1863,2681,3197,3487,3730,3858,3946],[286,0,3435,2202,1425,918,555,383,257,164],[287,0,146,81,53,42,38,22,22,21],[288,1,563,1826,2644,3169,3470,3723,3847,3939],[289,1,4032,4026,4051,4065,4034,4083,4090,4084],[290,0,3515,2261,1454,942,574,391,257,175],[291,1,657,1889,2679,3196,3496,3734,3855,3941],[292,0,3439,2206,1419,923,549,381,261,162],[293,1,661,1874,2668,3189,3496,3729,3857,3947],[294,0,3419,2196,1418,911,551,387,247,164],[295,0,149,72,53,49,29,20,22,9],[296,1,571,1827,2642,3170,3482,3709,3852,3948],[297,1,4031,4028,4059,4061,4031,4090,4082,4081],[298,0,3520,2260,1453,946,571,389,266,172],[299,1,670,1885,2681,3194,3505,3733,3850,3951],[300,0,3454,2226,1438,924,551,390,259,158],[301,1,670,1884,2669,3200,3491,3710,3863,3949],[302,0,3428,2207,1430,908,561,394,239,174],[303,0,153,66,60,53,23,30,32,8],[304,1,574,1818,2640,3169,3484,3704,3855,3950],[305,1,4028,4032,4061,4054,4043,4095,4073,4087],[306,0,3522,2261,1468,959,555,397,276,164],[307,1,666,1905,2678,3203,3505,3718,3857,3953],[308,0,3424,2213,1436,908,549,393,244,160],[309,1,679,1865,2685,3208,3481,3718,3874,3939],[310,0,3423,2203,1409,902,566,378,242,178],[311,0,141,70,66,36,23,36,17,6],[312,1,576,1832,2636,3182,3464,3703,3865,3935],[313,1,4019,4042,4050,4053,4055,4078,4074,4095],[314,0,3511,2249,1464,937,559,402,259,160],[315,1,677,1885,2655,3189,3496,3716,3870,3949],[316,0,3423,2206,1437,925,564,391,239,176],[317,1,670,1870,2694,3200,3477,3734,3870,3929],[318,0,3423,2211,1412,925,564,375,258,178],[319,0,132,81,67,28,37,38,8,18],[320,1,566,1793,2636,3177,3457,3712,3863,3927],[321,1,4042,4042,4032,4063,4046,4068,4083,4095],[322,0,3497,2263,1464,929,568,404,248,169],[323,1,673,1870,2685,3214,3488,3726,3872,3934],[324,0,3434,2208,1410,911,565,378,246,180],[325,1,655,1884,2697,3190,3484,3746,3863,3933],[326,0,3428,2193,1409,918,550,370,263,162],[327,0,129,89,53,30,45,26,8,33],[328,1,564,1801,2647,3164,3464,3733,3855,3921],[329,1,4036,4028,4043,4081,4031,4064,4095,4094],[330,0,3509,2268,1453,926,580,398,246,180],[331,1,686,1874,2699,3201,3477,3735,3868,3930],[332,0,3413,2200,1409,921,561,370,258,173],[333,1,666,1901,2701,3186,3500,3741,3846,3949],[334,0,3421,2190,1420,920,541,388,262,152],[335,0,144,87,44,43,44,13,22,31],[336,1,564,1822,2662,3165,3479,3728,3837,3939],[337,1,4047,4016,4048,4078,4025,4079,4095,4075],[338,0,3507,2262,1443,935,580,384,256,187],[339,1,660,1858,2693,3190,3496,3735,3851,3939],[340,0,3449,2202,1416,927,553,376,264,161],[341,1,682,1883,2682,3191,3503,3723,3848,3957],[342,0,3409,2188,1423,908,544,391,246,156],[343,0,149,73,44,53,32,16,32,15],[344,1,586,1839,2650,3167,3497,3718,3844,3955],[345,1,4031,4022,4060,4068,4037,4094,4087,4077],[346,0,3503,2250,1444,942,576,380,267,176],[347,1,664,1895,2700,3187,3506,3735,3846,3952],[348,0,3415,2191,1421,925,541,388,258,153],[349,1,681,1896,2672,3201,3505,3713,3864,3957],[350,0,3411,2202,1423,902,559,395,238,173],[351,0,154,64,58,53,20,26,32,8],[352,1,569,1832,2634,3178,3489,3703,3854,3948],[353,1,4017,4029,4063,4053,4039,4090,4077,4085],[354,0,3511,2251,1458,950,564,392,272,165],[355,1,670,1899,2676,3189,3510,3722,3849,3956],[356,0,3409,2198,1428,911,545,392,242,158],[357,1,683,1882,2676,3208,3488,3725,3869,3938],[358,0,3420,2219,1424,909,566,382,241,180],[359,0,140,67,67,43,25,37,22,9],[360,1,558,1799,2626,3152,3455,3706,3856,3935],[361,1,4031,4035,4050,4059,4042,4077,4091,4091],[362,0,3499,2260,1461,941,570,398,261,167],[363,1,674,1889,2677,3194,3497,3727,3862,3950],[364,0,3419,2210,1425,917,555,389,247,170],[365,1,688,1875,2688,3200,3485,3728,3864,3940],[366,0,3421,2216,1420,921,558,381,255,176],[367,0,140,82,62,38,35,30,18,25],[368,1,574,1798,2649,3171,3469,3713,3855,3936],[369,1,4037,4034,4044,4065,4035,4078,4083,4089],[370,0,3512,2266,1468,940,573,399,259,170],[371,1,667,1875,2672,3200,3490,3725,3863,3938],[372,0,3420,2210,1420,910,554,383,250,171],[373,1,669,1886,2689,3194,3487,3730,3856,3940],[374,0,3423,2208,1422,923,553,387,261,171],[375,0,147,83,56,40,36,25,19,22],[376,1,567,1794,2629,3172,3473,3718,3851,3935],[377,1,4031,4032,4051,4065,4038,4077,4087,4094],[378,0,3503,2254,1453,934,573,396,256,172],[379,1,676,1877,2676,3201,3486,3728,3866,3941],[380,0,3443,2220,1430,919,563,386,247,176],[381,1,680,1876,2686,3197,3492,3728,3855,3945],[382,0,3427,2204,1426,915,550,382,256,163],[383,0,142,81,56,44,38,24,22,24],[384,1,579,1819,2639,3171,3465,3718,3847,3935],[385,1,4037,4026,4046,4061,4022,4067,4081,4083],[386,0,3509,2262,1460,942,574,397,257,174],[387,1,674,1877,2687,3203,3489,3727,3854,3944],[388,0,3430,2210,1423,924,554,381,253,168],[389,1,673,1885,2682,3189,3493,3720,3861,3941],[390,0,3421,2191,1418,913,554,387,250,166],[391,0,146,81,54,43,35,23,24,20],[392,1,570,1813,2650,3172,3462,3719,3847,3937],[393,1,4032,4027,4053,4069,4034,4079,4092,4088],[394,0,3515,2266,1460,947,578,397,262,179],[395,1,674,1876,2684,3193,3487,3732,3853,3942]]}},"psd":{"f":[0.0,0.156,0.312,0.469,0.625,0.781,0.938,1.094,1.25,1.406,1.562,1.719,1.875,2.031,2.188,2.344,2.5,2.656,2.812,2.969,3.125,3.281,3.438,3.594,3.75,3.906,4.062,4.219,4.375,4.531,4.688,4.844,5.0,5.156,5.312,5.469,5.625,5.781,5.938,6.094,6.25,6.406,6.562,6.719,6.875,7.031,7.188,7.344,7.5,7.656,7.812,7.969,8.125,8.281,8.438,8.594,8.75,8.906,9.062,9.219,9.375,9.531,9.688,9.844,10.0,10.156,10.312,10.469,10.625,10.781,10.938,11.094,11.25,11.406,11.562,11.719,11.875,12.031,12.188,12.344,12.5,12.656,12.812,12.969,13.125,13.281,13.438,13.594,13.75,13.906,14.062,14.219,14.375,14.531,14.688,14.844,15.0,15.156,15.312,15.469,15.625,15.781,15.938,16.094,16.25,16.406,16.562,16.719,16.875,17.031,17.188,17.344,17.5,17.656,17.812,17.969,18.125,18.281,18.438,18.594,18.75,18.906,19.062,19.219,19.375,19.531,19.688,19.844,20.0,20.156,20.312,20.469,20.625,20.781,20.938,21.094,21.25,21.406,21.562,21.719,21.875,22.031,22.188,22.344,22.5,22.656,22.812,22.969,23.125,23.281,23.438,23.594,23.75,23.906,24.062,24.219,24.375,24.531,24.688,24.844,25.0,25.156,25.312,25.469,25.625,25.781,25.938,26.094,26.25,26.406,26.562,26.719,26.875,27.031,27.188,27.344,27.5,27.656,27.812,27.969,28.125,28.281,28.438,28.594,28.75,28.906,29.062,29.219,29.375,29.531,29.688,29.844,30.0,30.156,30.312,30.469,30.625,30.781,30.938,31.094,31.25,31.406,31.562,31.719,31.875,32.031,32.188,32.344,32.5,32.656,32.812,32.969,33.125,33.281,33.438,33.594,33.75,33.906,34.062,34.219,34.375,34.531,34.688,34.844,35.0,35.156,35.312,35.469,35.625,35.781,35.938,36.094,36.25,36.406,36.562,36.719,36.875,37.031,37.188,37.344,37.5,37.656,37.812,37.969,38.125,38.281,38.438,38.594,38.75,38.906,39.062,39.219,39.375,39.531,39.688,39.844,40.0,40.156,40.312,40.469,40.625,40.781,40.938,41.094,41.25,41.406,41.562,41.719,41.875,42.031,42.188,42.344,42.5,42.656,42.812,42.969,43.125,43.281,43.438,43.594,43.75,43.906,44.062,44.219,44.375,44.531,44.688,44.844,45.0,45.156,45.312,45.469,45.625,45.781,45.938,46.094,46.25,46.406,46.562,46.719,46.875,47.031,47.188,47.344,47.5,47.656,47.812,47.969,48.125,48.281,48.438,48.594,48.75,48.906,49.062,49.219,49.375,49.531,49.688,49.844,50.0,50.156,50.312,50.469,50.625,50.781,50.938,51.094,51.25,51.406,51.562,51.719,51.875,52.031,52.188,52.344,52.5,52.656,52.812,52.969,53.125,53.281,53.438,53.594,53.75,53.906,54.062,54.219,54.375,54.531,54.688,54.844,55.0,55.156,55.312,55.469,55.625,55.781,55.938,56.094,56.25,56.406,56.562,56.719,56.875,57.031,57.188,57.344,57.5,57.656,57.812,57.969,58.125,58.281,58.438,58.594,58.75,58.906,59.062,59.219,59.375,59.531,59.688,59.844,60.0,60.156,60.312,60.469,60.625,60.781,60.938,61.094,61.25,61.406,61.562,61.719,61.875,62.031,62.188,62.344,62.5,62.656,62.812,62.969,63.125,63.281,63.438,63.594,63.75,63.906,64.062,64.219,64.375,64.531,64.688,64.844,65.0,65.156,65.312,65.469,65.625,65.781,65.938,66.094,66.25,66.406,66.562,66.719,66.875,67.031,67.188,67.344,67.5,67.656,67.812,67.969,68.125,68.281,68.438,68.594,68.75,68.906,69.062,69.219,69.375,69.531,69.688,69.844,70.0,70.156,70.312,70.469,70.625,70.781,70.938,71.094,71.25,71.406,71.562,71.719,71.875,72.031,72.188,72.344,72.5,72.656,72.812,72.969,73.125,73.281,73.438,73.594,73.75,73.906,74.062,74.219,74.375,74.531,74.688,74.844,75.0,75.156,75.312,75.469,75.625,75.781,75.938,76.094,76.25,76.406,76.562,76.719,76.875,77.031,77.188,77.344,77.5,77.656,77.812,77.969,78.125,78.281,78.438,78.594,78.75,78.906,79.062,79.219,79.375,79.531,79.688,79.844,80.0],"dupont":[-39.7,-36.1,-36.8,-38.4,-35.2,-35.2,-34.3,-34.5,-35.7,-35.6,-34.5,-34.3,-37.4,-35.8,-35.5,-35.5,-35.3,-35.1,-36.5,-36.6,-38.0,-36.4,-36.3,-36.5,-40.2,-36.5,-34.4,-33.9,-36.2,-39.1,-38.2,-36.4,-35.5,-36.0,-38.6,-37.3,-37.3,-35.3,-36.3,-37.1,-39.1,-39.6,-39.8,-35.3,-37.8,-39.9,-37.2,-36.3,-35.6,-37.9,-39.1,-38.8,-40.0,-40.3,-38.1,-38.6,-40.4,-39.7,-37.2,-37.4,-37.5,-39.0,-40.7,-39.8,-37.9,-40.0,-41.2,-39.8,-38.6,-38.7,-38.8,-41.5,-42.6,-41.1,-40.8,-43.3,-43.3,-42.3,-42.9,-42.0,-40.0,-41.0,-42.1,-45.1,-43.4,-41.1,-45.8,-46.1,-45.9,-44.2,-43.7,-43.1,-45.3,-45.7,-47.3,-45.1,-44.9,-46.2,-48.3,-49.7,-47.2,-45.2,-46.1,-48.5,-52.9,-49.6,-49.7,-50.4,-52.4,-51.7,-52.0,-51.4,-51.9,-52.9,-53.5,-54.4,-57.0,-54.9,-55.5,-57.9,-59.1,-59.1,-60.1,-62.7,-64.5,-69.8,-72.9,-76.3,-84.6,-76.4,-73.2,-70.2,-65.0,-63.4,-60.9,-60.0,-60.1,-59.0,-56.8,-56.2,-58.5,-56.1,-55.3,-54.8,-54.0,-53.5,-54.4,-54.1,-55.0,-53.1,-52.6,-52.6,-56.0,-51.8,-49.5,-48.8,-50.8,-53.4,-52.2,-50.3,-49.2,-49.4,-51.8,-50.3,-50.1,-48.0,-48.8,-49.4,-51.2,-51.6,-51.5,-46.9,-49.3,-51.2,-48.4,-47.3,-46.5,-48.7,-49.7,-49.3,-50.4,-50.6,-48.2,-48.7,-50.3,-49.4,-46.9,-46.9,-47.0,-48.4,-50.0,-48.9,-47.0,-49.0,-50.1,-48.6,-47.3,-47.3,-47.4,-50.0,-51.0,-49.4,-49.0,-51.4,-51.4,-50.3,-50.8,-49.9,-47.7,-48.7,-49.8,-52.7,-50.9,-48.6,-53.2,-53.5,-53.1,-51.4,-50.8,-50.1,-52.3,-52.7,-54.2,-51.9,-51.7,-52.9,-55.0,-56.3,-53.8,-51.8,-52.5,-55.0,-59.2,-55.9,-56.0,-56.6,-58.6,-57.8,-58.1,-57.4,-57.9,-58.8,-59.4,-60.3,-62.8,-60.6,-61.3,-63.5,-64.7,-64.7,-65.7,-68.3,-70.0,-75.2,-78.4,-81.6,-89.9,-81.7,-78.4,-75.4,-70.2,-68.6,-66.0,-65.1,-65.1,-64.0,-61.8,-61.2,-63.4,-61.0,-60.1,-59.6,-58.8,-58.3,-59.1,-58.8,-59.6,-57.7,-57.2,-57.1,-60.5,-56.3,-53.9,-53.2,-55.3,-57.8,-56.6,-54.6,-53.4,-53.7,-56.1,-54.5,-54.3,-52.1,-52.9,-53.5,-55.3,-55.7,-55.5,-50.9,-53.3,-55.2,-52.3,-51.2,-50.3,-52.5,-53.6,-53.1,-54.2,-54.3,-52.0,-52.4,-54.0,-53.1,-50.5,-50.6,-50.6,-52.0,-53.5,-52.5,-50.5,-52.5,-53.6,-52.1,-50.7,-50.7,-50.7,-53.3,-54.3,-52.7,-52.3,-54.7,-54.6,-53.5,-54.1,-53.1,-50.9,-51.8,-52.9,-55.8,-54.0,-51.7,-56.3,-56.5,-56.2,-54.4,-53.8,-53.1,-55.3,-55.6,-57.1,-54.8,-54.6,-55.8,-57.8,-59.1,-56.6,-54.5,-55.3,-57.7,-61.9,-58.6,-58.7,-59.3,-61.2,-60.4,-60.7,-60.0,-60.5,-61.4,-61.9,-62.8,-65.3,-63.1,-63.8,-66.0,-67.1,-67.1,-68.1,-70.7,-72.4,-77.6,-80.7,-84.0,-92.0,-84.0,-80.7,-77.7,-72.4,-70.8,-68.2,-67.3,-67.3,-66.2,-64.0,-63.4,-65.6,-63.1,-62.2,-61.7,-60.9,-60.4,-61.1,-60.8,-61.7,-59.7,-59.2,-59.1,-62.5,-58.3,-55.9,-55.1,-57.2,-59.7,-58.5,-56.5,-55.3,-55.5,-57.9,-56.3,-56.1,-53.9,-54.7,-55.3,-57.0,-57.4,-57.2,-52.6,-55.0,-56.8,-54.0,-52.9,-52.0,-54.2,-55.2,-54.7,-55.8,-55.9,-53.5,-53.9,-55.5,-54.6,-52.0,-52.1,-52.1,-53.4,-55.0,-53.9,-51.9,-53.9,-55.0,-53.5,-52.1,-52.1,-52.1,-54.7,-55.6,-54.0,-53.6,-56.0,-55.9,-54.8,-55.3,-54.3,-52.1,-53.1,-54.2,-57.0,-55.2,-52.9,-57.5,-57.6,-57.3,-55.5,-54.9,-54.2,-56.4,-56.7,-58.2,-55.9,-55.6,-56.8,-58.8,-60.1,-57.6,-55.5,-56.3,-58.7,-62.9,-59.5,-59.6,-60.2,-62.1,-61.3,-61.6,-60.9,-61.4,-62.3,-62.8,-63.7,-66.1,-63.9,-64.6,-66.8,-67.9,-67.9,-68.8,-71.4,-73.1,-78.3,-81.3,-84.6,-95.7],"dupont_um":[-70.8,-38.9,-36.2,-41.4,-32.7,-30.8,-31.6,-34.8,-36.6,-41.0,-33.9,-31.9,-47.2,-39.4,-42.6,-39.3,-34.6,-38.5,-39.5,-42.3,-36.6,-34.0,-37.9,-51.2,-38.1,-34.6,-36.8,-33.4,-39.9,-51.5,-42.5,-48.3,-33.6,-33.1,-37.2,-35.9,-34.9,-32.4,-34.1,-40.4,-42.9,-45.3,-48.0,-37.4,-36.1,-45.1,-43.7,-36.9,-36.1,-47.4,-40.5,-43.0,-38.2,-35.1,-36.1,-40.1,-41.6,-42.5,-38.9,-34.2,-35.3,-47.4,-48.5,-39.2,-33.4,-39.2,-48.9,-48.7,-36.4,-35.5,-40.4,-44.4,-43.7,-42.6,-38.9,-38.0,-41.4,-46.5,-44.3,-51.9,-40.6,-41.5,-48.5,-50.6,-41.7,-43.0,-54.1,-52.0,-49.7,-47.5,-41.6,-40.1,-43.0,-44.3,-46.0,-42.3,-42.9,-57.6,-52.6,-62.1,-51.1,-44.8,-48.4,-46.7,-50.5,-63.3,-51.7,-48.1,-50.9,-57.8,-54.6,-55.3,-51.1,-56.5,-60.6,-58.5,-65.8,-52.6,-54.4,-64.7,-59.5,-60.2,-57.5,-58.6,-61.3,-73.2,-73.5,-75.3,-93.9,-75.5,-73.6,-73.5,-61.9,-59.2,-58.2,-61.0,-60.5,-65.6,-55.8,-54.0,-67.6,-60.1,-62.4,-58.4,-53.2,-57.3,-57.0,-60.1,-53.6,-50.8,-54.5,-66.6,-53.7,-50.0,-51.9,-48.3,-54.7,-65.9,-56.6,-61.8,-47.1,-46.6,-50.5,-48.9,-47.7,-45.0,-46.6,-52.7,-55.0,-57.4,-59.7,-48.9,-47.6,-56.6,-54.8,-47.9,-47.1,-58.3,-51.1,-53.5,-48.6,-45.3,-46.3,-50.2,-51.5,-52.3,-48.6,-43.7,-44.8,-57.0,-57.8,-48.3,-42.5,-48.3,-57.9,-57.4,-45.1,-44.1,-49.0,-52.9,-52.2,-50.9,-47.1,-46.2,-49.5,-54.5,-52.2,-59.7,-48.4,-49.2,-56.2,-58.2,-49.2,-50.5,-61.5,-59.3,-57.0,-54.7,-48.8,-47.2,-50.0,-51.2,-52.9,-49.1,-49.7,-64.4,-59.3,-68.8,-57.7,-51.3,-54.9,-53.1,-56.9,-69.7,-58.0,-54.3,-57.1,-63.9,-60.8,-61.3,-57.1,-62.4,-66.5,-64.4,-71.7,-58.4,-60.1,-70.3,-65.1,-65.7,-63.0,-64.1,-66.8,-78.5,-78.9,-80.5,-97.3,-80.7,-78.9,-78.9,-67.1,-64.4,-63.4,-66.1,-65.5,-70.8,-60.7,-59.0,-72.4,-65.0,-67.2,-63.2,-58.0,-62.2,-61.7,-64.8,-58.2,-55.4,-59.1,-71.0,-58.2,-54.5,-56.3,-52.8,-59.2,-70.2,-60.9,-66.1,-51.4,-50.8,-54.7,-53.1,-51.9,-49.2,-50.8,-56.8,-59.1,-61.4,-63.8,-52.9,-51.6,-60.5,-58.7,-51.8,-50.9,-62.2,-54.9,-57.3,-52.3,-49.1,-50.0,-53.9,-55.2,-56.0,-52.2,-47.4,-48.4,-60.6,-61.3,-51.8,-46.0,-51.8,-61.3,-60.8,-48.6,-47.5,-52.4,-56.2,-55.5,-54.2,-50.4,-49.5,-52.8,-57.7,-55.4,-62.8,-51.5,-52.4,-59.4,-61.3,-52.3,-53.6,-64.6,-62.3,-60.0,-57.7,-51.7,-50.1,-52.9,-54.2,-55.8,-52.0,-52.6,-67.3,-62.1,-71.6,-60.5,-54.1,-57.7,-55.9,-59.6,-72.4,-60.6,-57.0,-59.8,-66.5,-63.4,-63.9,-59.7,-65.0,-69.0,-66.8,-74.2,-60.9,-62.6,-72.8,-67.5,-68.1,-65.4,-66.5,-69.2,-80.8,-81.2,-82.8,-101.0,-83.1,-81.3,-81.1,-69.3,-66.6,-65.6,-68.3,-67.7,-72.9,-62.9,-61.1,-74.6,-67.1,-69.3,-65.3,-60.1,-64.2,-63.8,-66.9,-60.2,-57.4,-61.1,-73.0,-60.2,-56.4,-58.3,-54.7,-61.1,-72.2,-62.8,-68.0,-53.3,-52.7,-56.5,-54.9,-53.7,-51.0,-52.6,-58.6,-60.9,-63.2,-65.5,-54.6,-53.3,-62.2,-60.4,-53.4,-52.6,-63.8,-56.5,-58.9,-53.9,-50.6,-51.6,-55.4,-56.7,-57.5,-53.7,-48.8,-49.9,-62.1,-62.8,-53.2,-47.5,-53.2,-62.8,-62.1,-49.9,-48.9,-53.8,-57.6,-56.8,-55.5,-51.7,-50.8,-54.0,-59.0,-56.7,-64.0,-52.8,-53.6,-60.6,-62.4,-53.5,-54.8,-65.8,-63.5,-61.1,-58.8,-52.8,-51.2,-54.0,-55.2,-56.9,-53.0,-53.6,-68.3,-63.2,-72.6,-61.5,-55.1,-58.6,-56.9,-60.6,-73.4,-61.5,-57.9,-60.7,-67.3,-64.3,-64.8,-60.6,-65.9,-69.9,-67.7,-75.2,-61.7,-63.5,-73.5,-68.4,-69.0,-66.2,-67.3,-70.0,-81.6,-81.6,-83.3,-103.9],"rc16":[-39.7,-36.1,-36.8,-38.5,-35.2,-35.2,-34.3,-34.5,-35.7,-35.7,-34.5,-34.4,-37.5,-35.8,-35.5,-35.5,-35.3,-35.2,-36.6,-36.7,-38.1,-36.5,-36.4,-36.6,-40.4,-36.6,-34.5,-34.1,-36.4,-39.3,-38.4,-36.7,-35.8,-36.2,-38.9,-37.6,-37.6,-35.7,-36.6,-37.5,-39.5,-40.0,-40.2,-35.7,-38.2,-40.4,-37.7,-36.8,-36.1,-38.5,-39.7,-39.4,-40.6,-41.0,-38.7,-39.3,-41.1,-40.4,-37.9,-38.1,-38.3,-39.8,-41.5,-40.7,-38.8,-40.9,-42.2,-40.8,-39.6,-39.7,-39.8,-42.5,-43.7,-42.2,-42.0,-44.5,-44.6,-43.6,-44.2,-43.3,-41.3,-42.3,-43.6,-46.6,-44.9,-42.6,-47.3,-47.7,-47.5,-45.8,-45.4,-44.8,-47.1,-47.5,-49.1,-46.9,-46.8,-48.1,-50.2,-51.6,-49.2,-47.3,-48.1,-50.6,-55.0,-51.7,-51.9,-52.6,-54.7,-54.0,-54.4,-53.7,-54.3,-55.3,-55.9,-56.9,-59.5,-57.5,-58.2,-60.6,-61.8,-61.8,-62.8,-65.5,-67.2,-72.7,-76.1,-80.0,-83.7,-78.9,-76.1,-73.4,-68.3,-66.7,-64.1,-63.2,-63.3,-62.3,-60.2,-59.7,-62.0,-59.6,-58.8,-58.4,-57.6,-57.1,-58.0,-57.8,-58.8,-56.9,-56.5,-56.4,-59.9,-55.7,-53.4,-52.7,-54.9,-57.5,-56.4,-54.5,-53.4,-53.7,-56.1,-54.6,-54.5,-52.4,-53.2,-53.9,-55.7,-56.1,-56.1,-51.5,-53.9,-55.9,-53.1,-52.1,-51.3,-53.6,-54.6,-54.2,-55.3,-55.6,-53.3,-53.7,-55.4,-54.6,-52.1,-52.2,-52.3,-53.7,-55.3,-54.3,-52.4,-54.5,-55.7,-54.2,-52.9,-52.9,-53.0,-55.6,-56.7,-55.2,-54.9,-57.3,-57.3,-56.3,-56.8,-55.9,-53.8,-54.8,-56.0,-58.9,-57.2,-54.9,-59.5,-59.8,-59.5,-57.8,-57.4,-56.7,-58.9,-59.3,-60.9,-58.6,-58.4,-59.6,-61.8,-63.2,-60.7,-58.7,-59.5,-61.9,-66.2,-62.9,-63.1,-63.7,-65.8,-65.1,-65.5,-64.7,-65.2,-66.2,-66.8,-67.8,-70.4,-68.3,-69.0,-71.3,-72.4,-72.4,-73.2,-75.9,-77.7,-83.3,-87.0,-90.4,-89.1,-88.6,-86.6,-83.8,-78.7,-76.9,-74.2,-73.3,-73.4,-72.3,-70.3,-69.7,-72.0,-69.6,-68.8,-68.3,-67.5,-67.0,-67.9,-67.7,-68.6,-66.7,-66.3,-66.2,-69.6,-65.4,-63.1,-62.4,-64.5,-67.1,-66.0,-64.0,-62.9,-63.1,-65.5,-64.1,-63.9,-61.8,-62.6,-63.2,-65.1,-65.5,-65.3,-60.8,-63.1,-65.1,-62.4,-61.3,-60.5,-62.7,-63.8,-63.3,-64.4,-64.6,-62.3,-62.8,-64.5,-63.6,-61.1,-61.2,-61.2,-62.6,-64.2,-63.3,-61.3,-63.4,-64.5,-63.1,-61.7,-61.8,-61.8,-64.4,-65.5,-64.0,-63.7,-66.1,-66.0,-65.0,-65.5,-64.5,-62.5,-63.4,-64.6,-67.6,-65.8,-63.5,-68.1,-68.3,-68.0,-66.4,-65.9,-65.2,-67.4,-67.7,-69.3,-67.0,-66.8,-68.1,-70.2,-71.6,-69.1,-67.2,-68.0,-70.3,-74.5,-71.2,-71.4,-72.1,-74.2,-73.5,-73.8,-73.0,-73.5,-74.4,-75.1,-76.0,-78.6,-76.7,-77.4,-79.6,-80.6,-80.6,-81.2,-83.8,-85.9,-91.7,-96.5,-95.4,-90.0,-93.5,-94.7,-92.0,-86.8,-85.0,-82.1,-81.2,-81.4,-80.4,-78.5,-78.1,-80.1,-77.7,-76.7,-76.2,-75.5,-75.0,-75.9,-75.8,-76.8,-74.8,-74.4,-74.4,-77.7,-73.4,-71.1,-70.4,-72.6,-75.2,-74.0,-72.1,-70.9,-71.2,-73.5,-72.1,-71.9,-69.9,-70.6,-71.2,-73.1,-73.5,-73.3,-68.7,-71.1,-73.2,-70.4,-69.3,-68.5,-70.8,-71.7,-71.2,-72.4,-72.6,-70.3,-70.8,-72.5,-71.6,-69.0,-69.0,-69.1,-70.5,-72.2,-71.2,-69.3,-71.3,-72.4,-70.9,-69.5,-69.6,-69.6,-72.3,-73.4,-71.8,-71.5,-73.8,-73.8,-72.7,-73.2,-72.2,-70.3,-71.2,-72.3,-75.3,-73.4,-71.0,-75.7,-75.9,-75.7,-74.1,-73.5,-72.8,-75.0,-75.3,-76.8,-74.4,-74.2,-75.5,-77.7,-79.0,-76.5,-74.4,-75.1,-77.5,-81.6,-78.4,-78.5,-79.2,-81.5,-80.7,-80.9,-79.9,-80.4,-81.2,-81.8,-82.9,-85.3,-83.8,-84.3,-86.1,-87.0,-86.6,-87.0,-90.4,-92.6,-96.8,-101.0,-97.7,-96.0],"rc16_um":[-71.8,-38.9,-36.2,-41.4,-32.8,-30.8,-31.6,-34.8,-36.6,-41.0,-33.9,-31.9,-47.1,-39.5,-42.7,-39.3,-34.6,-38.5,-39.5,-42.2,-36.8,-34.2,-38.0,-51.2,-38.3,-34.7,-37.0,-33.6,-40.1,-51.8,-42.7,-48.4,-33.8,-33.3,-37.5,-36.2,-35.3,-32.8,-34.5,-40.7,-43.3,-45.7,-48.4,-37.8,-36.5,-45.6,-44.2,-37.4,-36.7,-47.8,-41.0,-43.6,-38.8,-35.7,-36.8,-40.8,-42.3,-43.2,-39.7,-34.9,-36.1,-48.2,-49.3,-40.1,-34.4,-40.1,-49.9,-49.7,-37.4,-36.5,-41.5,-45.5,-44.9,-43.8,-40.1,-39.2,-42.6,-47.8,-45.6,-53.1,-41.9,-42.8,-50.0,-52.1,-43.2,-44.5,-55.6,-53.5,-51.3,-49.1,-43.3,-41.8,-44.7,-46.0,-47.8,-44.1,-44.7,-59.2,-54.6,-64.2,-53.2,-46.9,-50.5,-48.9,-52.7,-65.3,-53.9,-50.3,-53.2,-60.1,-57.0,-57.7,-53.5,-58.8,-63.1,-61.1,-68.3,-55.3,-57.0,-67.4,-62.1,-63.0,-60.1,-61.3,-64.1,-76.4,-77.0,-81.1,-87.8,-77.4,-76.2,-76.5,-65.1,-62.5,-61.4,-64.1,-63.8,-68.8,-59.2,-57.4,-71.0,-63.6,-66.0,-62.0,-56.8,-60.9,-60.8,-63.6,-57.3,-54.6,-58.3,-70.3,-57.6,-53.9,-55.9,-52.3,-58.7,-70.1,-60.7,-66.1,-51.3,-50.8,-54.8,-53.2,-52.1,-49.4,-51.0,-57.1,-59.6,-61.9,-64.3,-53.5,-52.2,-61.3,-59.6,-52.7,-51.9,-63.2,-56.0,-58.4,-53.5,-50.3,-51.3,-55.3,-56.7,-57.5,-53.8,-49.0,-50.1,-62.3,-63.1,-53.7,-48.0,-53.8,-63.5,-62.9,-50.7,-49.7,-54.7,-58.6,-57.9,-56.7,-53.0,-52.1,-55.4,-60.5,-58.2,-65.6,-54.4,-55.3,-62.3,-64.3,-55.5,-56.8,-67.9,-65.6,-63.2,-61.1,-55.3,-53.7,-56.5,-57.8,-59.5,-55.8,-56.4,-70.7,-66.2,-75.8,-64.6,-58.3,-61.9,-60.1,-64.0,-76.8,-65.0,-61.5,-64.4,-71.4,-68.0,-68.6,-64.4,-69.7,-74.0,-71.9,-79.1,-66.0,-67.8,-78.3,-73.0,-73.7,-70.7,-71.6,-74.5,-87.1,-89.7,-94.0,-91.3,-86.2,-85.9,-85.5,-75.3,-72.9,-71.4,-73.8,-73.9,-78.9,-69.4,-67.6,-80.4,-73.6,-75.9,-72.1,-66.8,-70.8,-70.5,-73.4,-67.1,-64.4,-68.1,-79.8,-67.2,-63.6,-65.5,-61.9,-68.3,-79.5,-70.4,-75.7,-60.8,-60.3,-64.3,-62.6,-61.5,-58.8,-60.4,-66.5,-68.9,-71.0,-73.4,-62.7,-61.5,-70.5,-68.7,-61.8,-61.1,-72.5,-65.1,-67.5,-62.6,-59.4,-60.4,-64.3,-65.6,-66.6,-62.7,-57.9,-59.0,-71.1,-71.9,-62.6,-56.9,-62.6,-72.5,-71.7,-59.5,-58.5,-63.4,-67.3,-66.7,-65.4,-61.7,-60.8,-64.2,-69.1,-66.8,-74.1,-63.1,-64.0,-71.0,-72.8,-64.0,-65.3,-76.5,-74.3,-71.7,-69.7,-63.9,-62.2,-65.0,-66.3,-67.9,-64.1,-64.8,-78.9,-74.6,-84.6,-73.0,-66.8,-70.2,-68.5,-72.3,-84.7,-73.3,-69.8,-72.8,-79.8,-76.2,-76.9,-72.6,-77.8,-82.2,-80.1,-87.2,-74.4,-76.1,-86.8,-81.4,-81.9,-78.5,-79.6,-83.0,-96.3,-101.4,-97.8,-92.9,-93.6,-93.9,-92.0,-83.3,-81.2,-79.2,-81.5,-81.8,-86.7,-77.7,-76.0,-87.5,-81.7,-84.5,-80.4,-74.7,-78.6,-78.7,-81.3,-75.2,-72.5,-76.3,-88.2,-75.3,-71.6,-73.6,-69.9,-76.5,-86.7,-78.4,-83.6,-68.8,-68.3,-72.3,-70.6,-69.5,-66.8,-68.3,-74.6,-76.7,-78.5,-81.2,-70.7,-69.3,-78.6,-76.9,-69.8,-69.1,-80.8,-72.9,-75.5,-70.6,-67.3,-68.2,-72.2,-73.5,-74.6,-70.4,-65.7,-66.9,-79.1,-79.8,-70.4,-64.7,-70.5,-80.6,-79.4,-67.3,-66.3,-71.2,-75.2,-74.6,-73.0,-69.3,-68.5,-71.9,-76.9,-74.4,-81.8,-70.9,-71.7,-78.6,-80.5,-71.4,-72.9,-84.5,-81.9,-79.3,-77.5,-71.3,-69.7,-72.4,-73.8,-75.4,-71.4,-72.0,-85.7,-82.6,-92.2,-80.2,-74.1,-77.8,-75.6,-79.2,-92.1,-80.2,-76.7,-80.0,-86.3,-83.0,-83.3,-79.2,-84.6,-89.5,-87.5,-92.5,-81.2,-82.7,-92.9,-87.2,-86.5,-83.8,-86.5,-90.1,-101.6,-104.9,-98.1,-99.0],"rc33":[-39.8,-36.2,-36.9,-38.5,-35.2,-35.2,-34.3,-34.6,-35.8,-35.8,-34.6,-34.5,-37.6,-36.0,-35.7,-35.7,-35.6,-35.5,-36.9,-37.0,-38.4,-36.8,-36.7,-37.0,-40.8,-37.1,-35.0,-34.6,-36.9,-39.8,-39.0,-37.2,-36.4,-36.9,-39.6,-38.3,-38.4,-36.5,-37.4,-38.3,-40.3,-40.9,-41.2,-36.8,-39.3,-41.5,-38.8,-38.0,-37.2,-39.6,-40.9,-40.7,-42.0,-42.4,-40.2,-40.8,-42.5,-41.9,-39.4,-39.7,-39.9,-41.4,-43.2,-42.4,-40.5,-42.7,-43.9,-42.7,-41.5,-41.7,-41.9,-44.6,-45.8,-44.3,-44.1,-46.5,-46.7,-45.8,-46.5,-45.7,-43.7,-44.7,-45.9,-48.9,-47.3,-45.1,-49.8,-50.3,-50.2,-48.6,-48.1,-47.4,-49.7,-50.1,-51.9,-49.8,-49.7,-51.0,-53.2,-54.6,-52.1,-50.2,-51.1,-53.6,-58.1,-55.0,-55.2,-55.9,-57.9,-57.1,-57.5,-57.0,-57.6,-58.8,-59.5,-60.6,-63.2,-60.9,-61.6,-63.9,-65.2,-65.4,-66.6,-69.8,-72.0,-77.3,-80.1,-74.3,-69.4,-73.8,-79.3,-76.3,-71.0,-69.5,-67.4,-66.9,-67.2,-66.1,-64.1,-63.5,-65.8,-63.2,-62.4,-62.1,-61.5,-61.2,-62.1,-61.9,-62.8,-60.9,-60.3,-60.2,-63.8,-59.8,-57.5,-57.0,-59.1,-61.7,-60.5,-58.4,-57.4,-57.7,-60.3,-58.9,-58.9,-56.8,-57.6,-58.1,-59.9,-60.3,-60.4,-55.9,-58.4,-60.5,-57.7,-56.6,-55.7,-57.9,-59.0,-58.7,-59.9,-60.3,-58.1,-58.5,-60.1,-59.1,-56.6,-56.7,-56.9,-58.4,-60.2,-59.3,-57.3,-59.3,-60.3,-58.9,-57.6,-57.8,-58.0,-60.7,-61.9,-60.3,-59.8,-62.1,-62.1,-61.2,-61.9,-61.1,-59.2,-60.2,-61.1,-64.0,-62.1,-59.8,-64.6,-65.1,-65.0,-63.5,-62.8,-62.0,-64.0,-64.2,-65.9,-63.7,-63.8,-65.3,-67.6,-68.7,-65.8,-63.6,-64.4,-66.9,-71.4,-68.6,-69.1,-69.8,-71.3,-69.9,-70.0,-69.3,-69.9,-71.2,-72.3,-73.8,-76.2,-73.0,-73.1,-74.7,-75.5,-75.6,-77.0,-80.8,-83.8,-86.8,-84.2,-79.5,-76.1,-81.7,-91.9,-89.9,-84.5,-81.9,-80.1,-80.5,-81.8,-81.6,-79.2,-78.1,-78.5,-75.3,-74.3,-74.4,-74.5,-74.3,-75.4,-75.2,-75.4,-72.8,-71.6,-71.5,-75.5,-71.8,-69.7,-69.3,-71.2,-73.3,-71.5,-69.2,-68.3,-68.8,-71.6,-70.4,-70.3,-68.1,-68.4,-68.6,-70.2,-70.7,-71.0,-66.8,-69.3,-71.3,-68.3,-66.8,-65.6,-67.7,-69.1,-68.9,-70.3,-70.8,-68.5,-68.6,-69.9,-68.6,-66.1,-66.5,-67.0,-68.5,-70.3,-69.2,-67.0,-68.7,-69.4,-68.3,-67.2,-67.5,-68.0,-70.7,-71.5,-69.6,-68.8,-71.0,-71.2,-70.6,-71.5,-70.8,-68.7,-69.7,-70.2,-71.5,-70.7,-68.7,-73.8,-74.6,-74.5,-73.3,-72.1,-70.7,-72.8,-73.1,-75.1,-73.3,-73.3,-74.9,-76.9,-77.4,-74.2,-72.2,-73.3,-76.2,-81.1,-78.5,-79.0,-79.6,-80.1,-78.4,-79.0,-79.6,-80.5,-81.8,-83.0,-84.3,-85.5,-82.3,-83.0,-85.5,-87.4,-88.8,-90.5,-94.5,-96.5,-97.9,-96.0,-73.6,-67.7,-73.6,-92.4,-93.0,-87.6,-86.9,-86.2,-86.4,-85.2,-83.6,-82.7,-82.9,-85.2,-82.2,-81.4,-81.1,-80.5,-80.2,-80.7,-81.1,-82.9,-80.9,-79.4,-79.0,-82.4,-78.1,-75.8,-75.7,-78.6,-81.2,-79.5,-76.9,-75.8,-75.8,-78.2,-77.0,-77.6,-76.4,-76.9,-77.3,-78.5,-78.7,-78.6,-73.9,-76.5,-79.3,-77.3,-75.9,-74.5,-76.4,-77.2,-76.5,-77.7,-78.8,-77.3,-78.4,-79.6,-77.7,-74.8,-74.6,-74.8,-76.5,-78.8,-79.3,-77.9,-79.0,-78.9,-77.3,-75.7,-75.9,-76.5,-79.8,-83.0,-81.2,-79.7,-81.2,-80.0,-79.0,-79.9,-79.8,-79.4,-81.3,-82.0,-83.0,-80.3,-77.8,-82.6,-83.0,-83.9,-85.6,-85.7,-84.1,-84.0,-83.0,-83.8,-81.2,-82.1,-85.4,-90.0,-90.6,-85.7,-82.1,-82.0,-83.9,-88.2,-87.3,-90.4,-95.2,-92.3,-87.1,-86.0,-85.0,-84.9,-86.2,-88.6,-92.8,-92.1,-86.2,-85.7,-86.0,-85.9,-85.7,-87.1,-92.4,-94.3,-91.7,-87.7,-82.0,-81.0],"rc33_um":[-77.0,-39.1,-36.3,-41.6,-32.8,-30.8,-31.6,-34.9,-36.7,-41.1,-34.1,-32.1,-46.9,-39.7,-42.9,-39.5,-34.9,-38.7,-39.8,-42.5,-37.1,-34.5,-38.3,-51.5,-38.8,-35.2,-37.6,-34.1,-40.7,-52.5,-43.2,-48.8,-34.4,-34.0,-38.3,-36.9,-36.1,-33.6,-35.3,-41.5,-44.0,-46.5,-49.4,-38.9,-37.6,-46.7,-45.3,-38.5,-37.8,-48.8,-42.3,-45.0,-40.1,-37.1,-38.2,-42.3,-43.8,-44.6,-41.2,-36.5,-37.7,-49.8,-51.0,-41.9,-36.1,-41.9,-51.6,-51.6,-39.4,-38.5,-43.5,-47.6,-47.0,-45.9,-42.2,-41.3,-44.8,-50.1,-47.9,-55.6,-44.4,-45.3,-52.3,-54.7,-45.6,-46.9,-58.0,-56.3,-54.1,-51.8,-46.0,-44.5,-47.5,-48.7,-50.6,-47.0,-47.6,-62.6,-57.6,-67.2,-56.2,-49.8,-53.6,-51.9,-55.8,-68.3,-57.4,-53.7,-56.5,-63.1,-60.0,-61.0,-56.7,-62.5,-67.0,-64.9,-73.3,-58.5,-60.3,-70.6,-65.1,-66.3,-64.0,-65.9,-69.0,-80.6,-80.4,-74.4,-68.4,-71.2,-78.5,-78.6,-67.9,-65.3,-64.8,-67.8,-67.5,-72.3,-63.1,-61.4,-74.3,-67.4,-69.7,-65.9,-60.8,-64.9,-64.7,-67.8,-61.3,-58.5,-62.0,-74.0,-61.5,-57.9,-59.9,-56.5,-62.8,-74.1,-64.7,-69.7,-55.4,-54.9,-59.1,-57.5,-56.4,-53.9,-55.4,-61.4,-63.6,-66.1,-68.6,-57.9,-56.8,-66.1,-64.3,-57.2,-56.3,-67.2,-60.4,-63.0,-58.1,-55.1,-56.1,-60.0,-61.4,-61.9,-58.3,-53.6,-54.7,-66.7,-67.8,-58.6,-52.9,-58.7,-68.1,-67.3,-55.4,-54.6,-59.6,-63.7,-63.1,-61.8,-57.9,-57.0,-60.3,-65.6,-63.2,-71.0,-60.0,-61.0,-67.9,-70.0,-60.5,-61.6,-72.9,-71.1,-68.9,-66.9,-60.8,-59.1,-61.7,-62.6,-64.7,-60.9,-61.6,-77.6,-71.9,-80.2,-69.7,-63.3,-67.0,-65.3,-69.4,-82.9,-71.0,-67.2,-70.0,-76.2,-72.5,-72.7,-68.9,-75.7,-81.2,-77.8,-90.9,-70.2,-72.2,-81.0,-75.7,-76.6,-74.3,-77.6,-81.5,-87.7,-83.9,-78.3,-76.6,-81.4,-95.1,-92.9,-80.5,-77.5,-77.2,-80.1,-81.6,-85.9,-78.4,-76.6,-85.1,-80.3,-81.5,-79.1,-74.3,-77.9,-77.9,-81.3,-73.7,-70.5,-73.4,-86.0,-73.4,-69.9,-71.9,-68.9,-74.7,-84.9,-75.2,-79.2,-66.1,-65.9,-70.3,-69.2,-67.6,-65.0,-66.3,-71.8,-73.6,-75.6,-78.0,-68.5,-67.4,-77.4,-75.7,-67.3,-66.0,-75.6,-70.3,-72.8,-68.6,-65.7,-66.4,-70.1,-71.0,-71.4,-68.0,-63.4,-64.7,-77.4,-78.2,-68.1,-62.5,-68.4,-77.3,-76.7,-64.9,-64.2,-69.6,-73.3,-72.5,-71.0,-66.8,-65.7,-69.1,-74.4,-72.4,-85.3,-69.8,-68.5,-73.6,-70.9,-68.5,-71.2,-83.1,-79.7,-79.4,-76.3,-69.4,-67.7,-70.4,-70.8,-73.1,-70.0,-70.7,-86.8,-81.5,-87.9,-78.5,-71.6,-76.0,-74.5,-79.3,-95.2,-80.2,-76.3,-79.1,-83.4,-80.4,-86.6,-81.8,-87.3,-88.6,-90.6,-91.0,-78.1,-79.9,-93.3,-87.5,-90.7,-88.4,-90.7,-98.4,-95.1,-92.8,-73.0,-67.2,-72.6,-92.3,-95.3,-86.0,-82.9,-83.8,-87.8,-88.1,-90.7,-81.9,-80.0,-95.6,-87.7,-91.9,-87.7,-80.6,-86.7,-81.4,-88.1,-81.2,-77.7,-81.4,-90.5,-80.5,-76.4,-78.3,-75.1,-79.7,-91.9,-85.0,-85.7,-73.1,-72.2,-75.3,-74.0,-74.2,-73.3,-74.6,-80.2,-81.9,-83.1,-85.9,-76.4,-75.9,-87.1,-87.4,-77.0,-74.9,-84.5,-78.1,-80.5,-75.8,-73.2,-74.2,-78.7,-79.6,-80.2,-76.5,-71.2,-71.8,-83.4,-84.4,-78.5,-73.4,-78.0,-86.3,-83.6,-73.0,-72.7,-77.6,-82.8,-84.2,-81.4,-77.1,-76.1,-78.7,-85.0,-81.1,-87.8,-80.4,-83.3,-88.2,-88.3,-77.8,-78.6,-89.4,-87.8,-87.6,-90.7,-83.8,-82.4,-82.1,-80.9,-83.4,-79.0,-80.2,-94.5,-94.3,-98.1,-86.7,-81.3,-84.5,-81.7,-85.6,-94.8,-93.3,-93.0,-98.9,-93.0,-87.4,-88.7,-83.5,-90.1,-96.3,-97.0,-92.4,-82.2,-84.4,-91.9,-86.4,-85.2,-83.6,-89.3,-95.0,-99.2,-87.7,-80.5,-81.1]}}</script>
+<script>
+(function(){
+  function ler(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function gravar(k,v){try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
+  var D=JSON.parse(document.getElementById('dados').textContent);
+  function nf(v,d){return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+  function byId(i){return document.getElementById(i)}
+
+  /* definição */
+  var dica=byId('dica'),ultimo=null;
+  function fecha(){dica.hidden=true;if(ultimo){ultimo.focus();ultimo=null}}
+  byId('dicaX').addEventListener('click',fecha);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dica.hidden)fecha()});
+  document.addEventListener('click',function(e){
+    var a=e.target.closest?e.target.closest('a.t'):null;if(!a)return;
+    var alvo=byId(a.getAttribute('href').slice(1));if(!alvo)return;
+    e.preventDefault();byId('dicaT').innerHTML=alvo.querySelector('dt').innerHTML;byId('dicaD').innerHTML=alvo.querySelector('dd').innerHTML;
+    dica.hidden=false;ultimo=a;byId('dicaX').focus({preventScroll:true});
+  });
+
+  /* passos */
+  document.querySelectorAll('.guia').forEach(function(g){
+    var bx=[];
+    g.querySelectorAll('ol.passos').forEach(function(ol,oi){
+      ol.querySelectorAll(':scope > li').forEach(function(li,i){
+        var id=g.id+'-p'+oi+'-'+i,inp=document.createElement('input');
+        inp.type='checkbox';inp.id=id;inp.setAttribute('aria-label','Marcar passo '+(i+1));inp.checked=ler('d2-'+id)==='1';
+        inp.addEventListener('change',function(){gravar('d2-'+id,inp.checked?'1':null)});
+        li.insertBefore(inp,li.firstChild);bx.push(inp);
+      });
+    });
+    var b=g.querySelector('.limpar');if(b)b.addEventListener('click',function(){bx.forEach(function(x){x.checked=false;gravar('d2-'+x.id,null)})});
+  });
+
+  /* copiar */
+  document.querySelectorAll('pre.cmd').forEach(function(p){
+    var t=p.textContent,b=document.createElement('button');b.type='button';b.textContent='Copiar';
+    b.addEventListener('click',function(){
+      function ok(){b.textContent='Copiado';setTimeout(function(){b.textContent='Copiar'},1500)}
+      function sel(){var r=document.createRange();r.selectNodeContents(p);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selecionado'}
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,sel);else sel();
+    });p.appendChild(b);
+  });
+
+  /* modo */
+  var modo=byId('modo');
+  function aplica(on){document.body.classList.toggle('so-guias',on);modo.setAttribute('aria-pressed',on?'true':'false');modo.textContent=on?'Voltar a mostrar tudo':'Só os guias de bancada'}
+  modo.addEventListener('click',function(){var on=!document.body.classList.contains('so-guias');aplica(on);gravar('d2-modo',on?'1':null);window.scrollTo(0,0)});
+  aplica(ler('d2-modo')==='1');
+
+  /* PSD */
+  var P=D.psd,CHS=[['dupont','Dupont','--s1'],['rc16','RC 16,8 nF','--s2'],['rc33','RC 33 nF','--s3']],psdModo='';
+  function desenhaPSD(){
+    var W=720,H=340,L=50,R=14,T=12,B=40,ymax=-30,ymin=-90,xm=80,suf=psdModo;
+    var X=function(f){return L+f/xm*(W-L-R)},Y=function(d){return T+(ymax-Math.max(ymin,Math.min(ymax,d)))/(ymax-ymin)*(H-T-B)};
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="PSD em dB de 0 a 80 kHz nos canais Dupont, RC 16,8 nF e RC 33 nF, com vales em 20, 40 e 60 kHz">';
+    for(var d=ymin;d<=ymax;d+=10){s+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(d)+'" y2="'+Y(d)+'"/><text class="ax" text-anchor="end" x="'+(L-6)+'" y="'+(Y(d)+4)+'">'+String(d).replace('-','−')+'</text>'}
+    [20,40,60].forEach(function(f){s+='<line class="zero" x1="'+X(f)+'" x2="'+X(f)+'" y1="'+T+'" y2="'+(H-B)+'"/>'});
+    [5,10].forEach(function(f){s+='<line class="marca" x1="'+X(f)+'" x2="'+X(f)+'" y1="'+T+'" y2="'+(H-B)+'"/>'});
+    [0,5,10,20,40,60,80].forEach(function(f){s+='<text class="ax" text-anchor="middle" x="'+X(f)+'" y="'+(H-B+16)+'">'+f+'</text>'});
+    s+='<text class="ax" text-anchor="middle" x="'+((L+W-R)/2)+'" y="'+(H-5)+'">frequência (kHz)</text><text class="ax" x="'+(L+4)+'" y="'+(T+11)+'">dB (1 V²/Hz)</text>';
+    CHS.forEach(function(c){
+      var a=P[c[0]+suf],pts=[];for(var i=0;i<a.length;i++)pts.push(X(P.f[i]).toFixed(1)+','+Y(a[i]).toFixed(1));
+      s+='<polyline fill="none" stroke="var('+c[2]+')" stroke-width="'+(suf?1.3:2)+'" stroke-linejoin="round" points="'+pts.join(' ')+'"/>';
+    });
+    /* rótulos diretos no 2º lóbulo */
+    [['dupont','Dupont',-49],['rc16','RC 16,8 nF',-58.5],['rc33','RC 33 nF',-74]].forEach(function(c){s+='<text class="rot-s" text-anchor="middle" x="'+X(50)+'" y="'+Y(c[2])+'">'+c[1]+'</text>'});
+    s+='<g id="psdCruz" visibility="hidden"><line class="cruz" y1="'+T+'" y2="'+(H-B)+'"/>'+CHS.map(function(c,i){return '<circle r="4" fill="var('+c[2]+')" stroke="var(--surface)" stroke-width="2" data-i="'+i+'"/>'}).join('')+'</g>';
+    s+='<rect id="psdHit" x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-B)+'" fill="transparent"/></svg><div class="tip" id="psdTip" hidden></div>';
+    var box=byId('psdPlot');box.innerHTML=s;
+    var svg=box.querySelector('svg'),hit=byId('psdHit'),cz=byId('psdCruz'),tip=byId('psdTip');
+    function mov(e){
+      var r=svg.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*W,f=Math.max(0,Math.min(80,(vx-L)/(W-L-R)*xm)),i=Math.round(f/0.15625);
+      var fx=X(P.f[i]);cz.setAttribute('visibility','visible');var ln=cz.querySelector('line');ln.setAttribute('x1',fx);ln.setAttribute('x2',fx);
+      var h='<b>'+nf(P.f[i],2)+' kHz</b>';
+      CHS.forEach(function(c,n){var v=P[c[0]+suf][i];var ci=cz.querySelector('circle[data-i="'+n+'"]');ci.setAttribute('cx',fx);ci.setAttribute('cy',Y(v));h+='<div><i style="background:var('+c[2]+')"></i>'+c[1]+': '+nf(v,1)+' dB</div>'});
+      tip.innerHTML=h;tip.hidden=false;
+      var bx=box.getBoundingClientRect(),tx=e.clientX-bx.left+box.scrollLeft;tip.style.left=Math.min(tx+12,box.scrollWidth-185)+'px';tip.style.top='18px';
+    }
+    hit.addEventListener('pointermove',mov);hit.addEventListener('pointerdown',mov);
+    hit.addEventListener('pointerleave',function(){cz.setAttribute('visibility','hidden');tip.hidden=true});
+  }
+  function setPsd(m){psdModo=m;byId('psdMed').setAttribute('aria-pressed',m?'false':'true');byId('psdUm').setAttribute('aria-pressed',m?'true':'false');desenhaPSD()}
+  byId('psdMed').addEventListener('click',function(){setPsd('')});
+  byId('psdUm').addEventListener('click',function(){setPsd('_um')});
+  setPsd('');
+
+  /* estado do canal e do símbolo */
+  var E={ch:'rc16',j:142},TK=[0,1,2,3,4,5,6,7].map(function(k){return 3.12+6.25*k});
+  function linha(){return D.ch[E.ch].cal[E.j-140]}
+  function nota(c,r){var s=0;for(var k=0;k<8;k++)s+=c.pc[k]*(r[2+k]-c.bc);return {soma:s,z:s/c.Ec}}
+
+  function desenhaSym(){
+    var c=D.ch[E.ch],r=linha(),W=620,H=270,L=50,R=16,T=14,B=38,X=function(t){return L+t/50*(W-L-R)},Y=function(v){return T+(4200-v)/4200*(H-T-B)};
+    var cor=r[1]?'--n1':'--n0',s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="As 8 amostras do símbolo '+r[0]+'">';
+    [0,1000,2000,3000,4000].forEach(function(v){s+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text class="ax" text-anchor="end" x="'+(L-6)+'" y="'+(Y(v)+4)+'">'+v+'</text>'});
+    [0,10,20,30,40,50].forEach(function(t){s+='<text class="ax" text-anchor="middle" x="'+X(t)+'" y="'+(H-B+16)+'">'+t+'</text>'});
+    s+='<text class="ax" text-anchor="middle" x="'+((L+W-R)/2)+'" y="'+(H-5)+'">tempo depois da borda do CLK (µs)</text>';
+    s+='<line class="zero" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(c.lu)+'" y2="'+Y(c.lu)+'"/><text class="ax" x="'+(W-R)+'" text-anchor="end" y="'+(Y(c.lu)-5)+'">limiar da amostra única</text>';
+    var pts=TK.map(function(t,k){return X(t).toFixed(1)+','+Y(c.pc[k]+c.bc).toFixed(1)}).join(' ');
+    s+='<polyline fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-dasharray="5 4" points="'+pts+'"/>';
+    TK.forEach(function(t,k){var v=r[2+k],est=k===c.ks;
+      s+='<line x1="'+X(t)+'" x2="'+X(t)+'" y1="'+Y(0)+'" y2="'+Y(v)+'" stroke="var('+cor+')" stroke-width="2"/>';
+      if(est)s+='<circle cx="'+X(t)+'" cy="'+Y(v)+'" r="9" fill="none" stroke="var(--ink)" stroke-width="1.6"/>';
+      s+='<circle cx="'+X(t)+'" cy="'+Y(v)+'" r="5" fill="var('+cor+')" stroke="var(--surface)" stroke-width="2"><title>k = '+k+', '+nf(t,2)+' µs: '+v+' códigos = '+nf(v*3.297/4095,3)+' V</title></circle>';
+      s+='<text class="ax" text-anchor="middle" x="'+X(t)+'" y="'+(Math.max(Y(v)-11,T+9))+'">'+v+'</text>';
+    });
+    byId('symPlot').innerHTML=s+'</svg>';
+    byId('symTxt').innerHTML='<b>Símbolo j = '+r[0]+', nível '+r[1]+' enviado'+(r[0]>140?', depois de um nível '+D.ch[E.ch].cal[r[0]-141][1]:'')+'.</b> Altura em códigos do ADC. O círculo marca k* = '+c.ks+'. A linha tracejada é o pulso de referência do filtro.';
+    var inp=byId('symJ');if(document.activeElement!==inp)inp.value=r[0];
+    document.querySelectorAll('.symBtn').forEach(function(b){b.setAttribute('aria-pressed',+b.dataset.j===E.j?'true':'false')});
+  }
+  function desenhaCalc(){
+    var c=D.ch[E.ch],r=linha(),n=nota(c,r);
+    var t='<table><tr><th class="n">k</th><th class="n">Instante</th><th class="n">a[k], medido</th><th class="n">x = a − '+nf(c.bc,2)+'</th><th class="n">Peso p[k]</th><th class="n">p × x</th></tr>';
+    for(var k=0;k<8;k++){var x=r[2+k]-c.bc;t+='<tr'+(k===c.ks?' class="hl"':'')+'><td class="n">'+k+(k===c.ks?' (k*)':'')+'</td><td class="n">'+nf(TK[k],2)+' µs</td><td class="n">'+r[2+k]+'</td><td class="n">'+nf(x,2)+'</td><td class="n">'+nf(c.pc[k],2)+'</td><td class="n">'+nf(c.pc[k]*x,0)+'</td></tr>'}
+    t+='<tr><td colspan="5"><b>Soma</b></td><td class="n"><b>'+nf(n.soma,0)+'</b></td></tr></table>';
+    byId('calcTabela').innerHTML=t;
+    var u=r[2+c.ks],du=u>c.lu?1:0,dz=n.z>c.lz?1:0;
+    function card(tt,conta,dec){return '<div><span class="rot">'+tt+'</span><p>'+conta+'</p><p class="dc">Decide <b>bit '+dec+'</b> <span class="pill '+(dec===r[1]?'ok':'bad')+'">'+(dec===r[1]?'acertou':'errou')+'</span></p></div>'}
+    byId('decis').innerHTML=card('Amostra única','u = a['+c.ks+'] = <b>'+u+'</b>. Limiar: '+nf(c.lu,2)+'.',du)+card('Filtro casado','z = '+nf(n.soma,0)+' ÷ '+nf(c.Ec,0)+' = <b>'+nf(n.z,4)+'</b>. Limiar: '+nf(c.lz,4)+'.',dz);
+  }
+  function desenhaCal(){
+    var c=D.ch[E.ch],W=660,H=290,L=50,R=12,T=26,B=46,col=(W-L-R)/8,Y=function(v){return T+(4200-v)/4200*(H-T-B)};
+    var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Faixa de leituras dos níveis 0 e 1 em cada amostra e folga correspondente">';
+    s+='<rect class="dest" x="'+(L+col*c.ks+3)+'" y="'+(T-20)+'" width="'+(col-6)+'" height="'+(H-T-B+58)+'"/>';
+    [0,1000,2000,3000,4000].forEach(function(v){s+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text class="ax" text-anchor="end" x="'+(L-6)+'" y="'+(Y(v)+4)+'">'+v+'</text>'});
+    for(var k=0;k<8;k++){
+      var a0=[],a1=[];c.cal.forEach(function(r){(r[1]?a1:a0).push(r[2+k])});
+      var m0=Math.min.apply(null,a0),M0=Math.max.apply(null,a0),m1=Math.min.apply(null,a1),M1=Math.max.apply(null,a1),cx=L+col*(k+.5),sep=m1-M0;
+      function barra(x,lo,hi,cor,nome){var y1=Y(hi),y2=Y(lo);if(y2-y1<5){var m=(y1+y2)/2;y1=m-2.5;y2=m+2.5}return '<rect x="'+(x-5)+'" y="'+y1+'" width="10" height="'+(y2-y1)+'" rx="3" fill="var('+cor+')"><title>k = '+k+', nível '+nome+': leituras de '+lo+' a '+hi+'</title></rect>'}
+      s+=barra(cx-8,m0,M0,'--n0','0')+barra(cx+8,m1,M1,'--n1','1');
+      s+='<text class="ax" text-anchor="middle" x="'+cx+'" y="'+(H-B+15)+'">k='+k+(k===c.ks?' (k*)':'')+'</text>';
+      s+='<text class="'+(sep<0?'neg':'val')+'" text-anchor="middle" x="'+cx+'" y="'+(H-B+33)+'">'+String(sep).replace('-','−')+'</text>';
+    }
+    s+='<text class="ax" x="'+(L-46)+'" y="'+(H-B+33)+'">folga</text>';
+    byId('calPlot').innerHTML=s+'</svg>';
+    function strip(id,vals,lim,ymin,ymax,ticks,fmt){
+      var W=330,H=220,L=46,R=10,T=10,B=26,X=function(i){return L+i/255*(W-L-R)},Y=function(v){return T+(ymax-v)/(ymax-ymin)*(H-T-B)};
+      var s0=[],s1=[];vals.forEach(function(v,i){(c.cal[i][1]?s1:s0).push(v)});var M0=Math.max.apply(null,s0),m1=Math.min.apply(null,s1);
+      var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Valor de cada símbolo da calibração com o limiar">';
+      s+='<rect class="dest" x="'+L+'" y="'+Y(m1)+'" width="'+(W-L-R)+'" height="'+(Y(M0)-Y(m1))+'"/>';
+      for(var i=0;i<ticks.length;i++){var v=ticks[i];s+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text class="ax" text-anchor="end" x="'+(L-5)+'" y="'+(Y(v)+4)+'">'+fmt(v)+'</text>'}
+      s+='<text class="ax" x="'+L+'" y="'+(H-8)+'">j = 140</text><text class="ax" text-anchor="end" x="'+(W-R)+'" y="'+(H-8)+'">j = 395</text>';
+      vals.forEach(function(v,i){var lv=c.cal[i][1];s+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="2.4" fill="var('+(lv?'--n1':'--n0')+')"><title>j = '+c.cal[i][0]+', nível '+lv+': '+fmt(v)+'</title></circle>'});
+      s+='<line class="lim" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(lim)+'" y2="'+Y(lim)+'"/><text class="val" x="'+(L+5)+'" y="'+(Y(lim)-5)+'">limiar '+fmt(lim)+'</text>';
+      byId(id).innerHTML=s+'</svg>';
+    }
+    var us=c.cal.map(function(r){return r[2+c.ks]}),zs=c.cal.map(function(r){return nota(c,r).z});
+    strip('uPlot',us,c.lu,0,4200,[0,1000,2000,3000,4000],function(v){return nf(v,0)});
+    var zmax=Math.max(1.25,Math.ceil(Math.max.apply(null,zs)*10)/10);
+    strip('zPlot',zs,c.lz,-0.1,zmax,[0,0.25,0.5,0.75,1],function(v){return nf(v,2)});
+    var ru=c.mu/(c.cu[1]-c.cu[0]),rz=c.mz/(c.cz[1]-c.cz[0]);
+    byId('calRes').innerHTML='<table><tr><th>Item</th><th class="n">Amostra única</th><th class="n">Filtro casado</th><th>Como sai</th></tr>'
+     +'<tr><td>Valor usado</td><td class="n">a['+c.ks+'], em '+nf(TK[c.ks],2)+' µs</td><td class="n">z, as 8 amostras</td><td>k* = maior folga</td></tr>'
+     +'<tr><td>Centro do nível 0</td><td class="n">'+nf(c.cu[0],2)+'</td><td class="n">'+nf(c.cz[0],5)+'</td><td>Média dos símbolos de nível 0</td></tr>'
+     +'<tr><td>Centro do nível 1</td><td class="n">'+nf(c.cu[1],2)+'</td><td class="n">'+nf(c.cz[1],5)+'</td><td>Média dos símbolos de nível 1</td></tr>'
+     +'<tr class="hl"><td><b>Limiar</b></td><td class="n"><b>'+nf(c.lu,2)+'</b></td><td class="n"><b>'+nf(c.lz,5)+'</b></td><td>(centro 0 + centro 1) ÷ 2</td></tr>'
+     +'<tr><td>Margem</td><td class="n">'+nf(c.mu,0)+' ('+nf(c.mu*3.297/4095,3)+' V)</td><td class="n">'+nf(c.mz,5)+'</td><td>Menor nível 1 − maior nível 0</td></tr>'
+     +'<tr><td>Margem relativa</td><td class="n">'+nf(ru,2)+'</td><td class="n">'+nf(rz,2)+'</td><td>Margem ÷ distância entre centros</td></tr></table>';
+  }
+  function tudo(){
+    document.querySelectorAll('.chBtn').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.ch===E.ch?'true':'false')});
+    desenhaSym();desenhaCalc();desenhaCal();
+  }
+  document.querySelectorAll('.chBtn').forEach(function(b){b.addEventListener('click',function(){E.ch=b.dataset.ch;tudo()})});
+  document.querySelectorAll('.symBtn').forEach(function(b){b.addEventListener('click',function(){E.j=+b.dataset.j;desenhaSym();desenhaCalc()})});
+  byId('symJ').addEventListener('input',function(){var v=parseInt(this.value,10);if(v>=140&&v<=395){E.j=v;desenhaSym();desenhaCalc()}});
+  tudo();
+})();
+</script>
+<script>
+/* Demonstração da janela de Hann: bloco no tempo (simulado) e vazamento de uma senoide */
+(function(){
+  var N=1024,FA=160000,byId=function(i){return document.getElementById(i)};
+  if(!byId('hannTempo'))return;
+  function nf(v,d){return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+  var w=[];for(var n=0;n<N;n++)w.push(0.5-0.5*Math.cos(2*Math.PI*n/N));
+  /* PAM-2 de 128 símbolos por um RC de 7,3 µs, 8 amostras por símbolo; começa em 0 e termina em 1 */
+  var s=12345,bits=[];for(var j=0;j<128;j++){s=(s*1103515245+12345)%2147483648;bits.push(s>1073741824?1:0)}
+  bits[0]=0;bits[1]=0;bits[126]=1;bits[127]=1;
+  var a=Math.exp(-6.25/7.3),v=0,x=[],m=0;
+  for(var j=0;j<128;j++)for(var k=0;k<8;k++){v=bits[j]*3.297+(v-bits[j]*3.297)*a;x.push(v);m+=v}
+  m/=N;for(var n=0;n<N;n++)x[n]-=m;
+  var modo=0;
+  function tempo(){
+    var W=720,H=230,L=46,R=12,T=14,B=30,ym=2.2;
+    var X=function(i){return L+i/(2*N)*(W-L-R)},Y=function(u){return T+(ym-u)/(2*ym)*(H-T-B)};
+    var g='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Duas cópias de um bloco de 1024 amostras lado a lado, '+(modo?'com janela de Hann: as pontas vão a zero e não há salto na emenda':'sem janela: há um salto na emenda')+'">';
+    [-2,-1,0,1,2].forEach(function(u){g+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(u)+'" y2="'+Y(u)+'"/><text class="ax" text-anchor="end" x="'+(L-6)+'" y="'+(Y(u)+4)+'">'+String(u).replace('-','−')+' V</text>'});
+    g+='<line class="lim" x1="'+X(N)+'" x2="'+X(N)+'" y1="'+T+'" y2="'+(H-B)+'"/>';
+    g+='<text class="ax" text-anchor="middle" x="'+X(N/2)+'" y="'+(H-10)+'">bloco (6,4 ms)</text><text class="ax" text-anchor="middle" x="'+X(1.5*N)+'" y="'+(H-10)+'">o mesmo bloco, repetido</text>';
+    if(modo){var e1=[],e2=[];for(var c=0;c<2;c++)for(var n=0;n<N;n+=4){e1.push(X(c*N+n).toFixed(1)+','+Y(2*w[n]).toFixed(1));}
+      for(var c=0;c<2;c++)for(var n=0;n<N;n+=4){e2.push(X(c*N+n).toFixed(1)+','+Y(-2*w[n]).toFixed(1));}
+      g+='<polyline fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4" points="'+e1.join(' ')+'"/><polyline fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4" points="'+e2.join(' ')+'"/>';}
+    var p=[];for(var c=0;c<2;c++)for(var n=0;n<N;n++){var u=modo?x[n]*w[n]:x[n];p.push(X(c*N+n).toFixed(1)+','+Y(u).toFixed(1))}
+    g+='<polyline fill="none" stroke="var('+(modo?'--s1':'--s2')+')" stroke-width="1.4" stroke-linejoin="round" points="'+p.join(' ')+'"/>';
+    var u0=modo?x[0]*w[0]:x[0],u1=modo?x[N-1]*w[N-1]:x[N-1];
+    g+='<circle cx="'+X(N-1)+'" cy="'+Y(u1)+'" r="5" fill="none" stroke="var(--bad)" stroke-width="2"/><circle cx="'+X(N)+'" cy="'+Y(u0)+'" r="5" fill="none" stroke="var(--bad)" stroke-width="2"/>';
+    g+='<text class="rot-s" x="'+(X(N)+10)+'" y="'+(T+14)+'">emenda</text></svg>';
+    byId('hannTempo').innerHTML=g;
+    byId('hannSalto').innerHTML='Salto na emenda: <b>'+nf(Math.abs(u1-u0),2)+' V</b>'+(modo?' — as duas pontas estão em zero.':' — o fim do bloco está no nível 1 e o começo no nível 0.');
+    byId('hannSem').setAttribute('aria-pressed',modo?'false':'true');byId('hannCom').setAttribute('aria-pressed',modo?'true':'false');
+  }
+  /* senoide de 5,078 kHz: espectro com e sem janela (DFT direta até 25 kHz) */
+  function espectro(win){
+    var K=161,P=[],mx=0;
+    for(var k=0;k<K;k++){var re=0,im=0;for(var n=0;n<N;n++){var u=Math.cos(2*Math.PI*5078*n/FA)*(win?w[n]:1),ph=2*Math.PI*k*n/N;re+=u*Math.cos(ph);im-=u*Math.sin(ph)}var q=re*re+im*im;P.push(q);if(q>mx)mx=q}
+    return P.map(function(q){return 10*Math.log10(q/mx+1e-14)});
+  }
+  function freq(){
+    var A=espectro(false),Hn=espectro(true),W=720,H=260,L=50,R=12,T=12,B=36,ymin=-110,xm=25;
+    var X=function(f){return L+f/xm*(W-L-R)},Y=function(d){return T+(0-Math.max(ymin,d))/(0-ymin)*(H-T-B)};
+    var g='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Espectro de uma senoide de 5,078 kHz: sem janela o vazamento fica entre −20 e −41 dB; com Hann cai abaixo de −90 dB">';
+    for(var d=ymin+10;d<=0;d+=20){g+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(d)+'" y2="'+Y(d)+'"/><text class="ax" text-anchor="end" x="'+(L-6)+'" y="'+(Y(d)+4)+'">'+String(d).replace('-','−')+'</text>'}
+    [0,5,10,15,20,25].forEach(function(f){g+='<text class="ax" text-anchor="middle" x="'+X(f)+'" y="'+(H-B+16)+'">'+f+'</text>'});
+    g+='<text class="ax" text-anchor="middle" x="'+((L+W-R)/2)+'" y="'+(H-4)+'">frequência (kHz)</text><text class="ax" x="'+(L+4)+'" y="'+(T+11)+'">dB em relação ao pico</text>';
+    [[A,'--s2'],[Hn,'--s1']].forEach(function(c){var p=[];for(var k=0;k<c[0].length;k++)p.push(X(k*FA/N/1000).toFixed(1)+','+Y(c[0][k]).toFixed(1));g+='<polyline fill="none" stroke="var('+c[1]+')" stroke-width="2" stroke-linejoin="round" points="'+p.join(' ')+'"/>'});
+    g+='<text class="rot-s" x="'+X(13)+'" y="'+Y(-33)+'">sem janela: vazamento</text><text class="rot-s" x="'+X(9)+'" y="'+Y(-100)+'">com Hann</text></svg>';
+    byId('hannFreq').innerHTML=g;
+  }
+  byId('hannSem').addEventListener('click',function(){modo=0;tempo()});
+  byId('hannCom').addEventListener('click',function(){modo=1;tempo()});
+  tempo();freq();
+})();
+</script>

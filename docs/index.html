@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlackPAM: enlace PAM em banda base com STM32</title>
+<meta name="description" content="Enlace PAM-2/PAM-4 em banda base entre duas STM32 BlackPill: firmware, app de bancada, dados reais e material de estudo.">
+<style>
+:root{--bg:#f5f6f8;--surface:#fff;--ink:#151a21;--muted:#596270;--rule:#d8dde4;--accent:#0d5c78;--soft:#e3eff4;
+  --f:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;--mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1317;--surface:#161b21;--ink:#e5e9ee;--muted:#9aa4b1;--rule:#2a323c;--accent:#6cc4e3;--soft:#132a33}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--f)}
+main{max-width:980px;margin:0 auto;padding:48px 20px 64px}
+h1{font-size:2.6rem;line-height:1.1;margin:0;color:var(--accent);letter-spacing:-.01em}
+.lead{font-size:1.15rem;margin:.4rem 0 1.6rem;max-width:62ch}
+.hero{width:100%;border:1px solid var(--rule);border-radius:8px;background:#fff;display:block}
+h2{font-size:1.25rem;margin:2.4rem 0 .8rem;padding-bottom:.3rem;border-bottom:1px solid var(--rule)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+a.card{display:block;padding:16px 18px;background:var(--surface);border:1px solid var(--rule);border-radius:8px;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--accent)}
+a.card b{display:block;color:var(--accent);margin-bottom:.2rem}
+a.card span{color:var(--muted);font-size:.93rem}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--rule);font-size:.93rem}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left}
+th{background:var(--soft)}
+td.n{font-family:var(--mono);white-space:nowrap}
+.note{color:var(--muted);font-size:.9rem}
+footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
+footer a,.note a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<h1>BlackPAM</h1>
+<p class="lead">Enlace PAM-2 / PAM-4 em banda base entre duas STM32 BlackPill, do firmware à bancada. Projeto de Telecomunicações (Eng. Eletrônica, UTFPR, 2026/2).</p>
+<img class="hero" src="img/banner.png" alt="Esquema do enlace TX → canal RC → RX, olho PAM-4 no osciloscópio e análise das amostras do receptor">
+
+<h2>Resultados medidos</h2>
+<table>
+<tr><th>Canal</th><th>τ medido</th><th>Olho em k* (PAM-2 / PAM-4)</th><th>Erros nos dois detectores</th></tr>
+<tr><td>Dupont direto</td><td class="n">0,22 µs</td><td class="n">3,291 / 0,965 V</td><td class="n">0 em 100 000 bits</td></tr>
+<tr><td>RC 16,8 nF (≈ 300 m CAT5e)</td><td class="n">7,3 µs</td><td class="n">3,273 / 0,979 V</td><td class="n">0 em 100 000 bits</td></tr>
+<tr><td>RC 33 nF</td><td class="n">13,0 µs</td><td class="n">2,989 / 0,838 V</td><td class="n">0 em 100 000 bits</td></tr>
+<tr><td>Cabo manga 200 m</td><td class="n">≈ 7,3 µs</td><td class="n">3,262 / 0,970 V</td><td class="n">0 em 100 000 bits</td></tr>
+</table>
+<p class="note">Zero erros em 100 000 bits indica BER &lt; 3·10⁻⁵ com 95 % de confiança, não BER nula. Nesta bancada o limite foi a ISI, não o ruído.</p>
+
+<h2>Guias de estudo</h2>
+<div class="grid">
+<a class="card" href="GUIA_PASSO_A_PASSO.html"><b>Guia passo a passo</b><span>Do CubeMX à defesa: fases, código explicado, montagem e ensaios.</span></a>
+<a class="card" href="estudo_defesa/index.html"><b>Estudo para a defesa</b><span>Teoria com os números medidos, guias de osciloscópio e glossário.</span></a>
+<a class="card" href="estudo_defesa/detectores_pam2.html"><b>Detectores e sincronismo</b><span>Treinamento, k*, amostra única e filtro casado, animados com amostras reais.</span></a>
+<a class="card" href="estudo_defesa/demonstracao_pam2.html"><b>Demonstração PAM-2</b><span>FFT no osciloscópio, olho, 8 amostras, limiares e τ.</span></a>
+</div>
+
+<h2>Código e dados</h2>
+<div class="grid">
+<a class="card" href="https://github.com/gabrielfontini/BlackPAM"><b>Repositório</b><span>Firmware TX/RX, app de bancada em Python, MATLAB, Simulink e relatório.</span></a>
+<a class="card" href="https://github.com/gabrielfontini/BlackPAM/tree/main/entrega"><b>Dados da bancada</b><span>Logs do RX, capturas do osciloscópio em PNG e CSV e caderno de bancada.</span></a>
+</div>
+
+<footer>Código sob licença MIT. Feito com a ajuda do Claude Code; ensaios, medições e conclusões são do autor.</footer>
+</main>
+</body>
+</html>

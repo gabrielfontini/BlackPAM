@@ -10,14 +10,14 @@
 |---|---|---|
 | BlackPill STM32F411CEU6 (cristal de 25 MHz) | 2 | marque com fita: **TX** e **RX** |
 | ST-Link V2 (ou clone) | 1–2 | SWDIO, SWCLK, GND, 3V3 (só para referência) |
-| Adaptador USB-serial **3,3 V** (CP2102, CH340, FT232) | 1 | **[extra]** recebe o relatório do RX (PA9/PA10) |
+| Raspberry Pi Pico (RP2040) com firmware `pico-uart-bridge` | 1 | **[extra]** ponte USB-serial 3,3 V: recebe o relatório do RX (PA9/PA10) pela UART1 (GP4/GP5) → `/dev/ttyACM1` |
 | Resistor 330 Ω | 1 | filtro PWM do TX |
-| Capacitor 390 pF (cerâmico C0G/NP0 de preferência) | 1 | filtro PWM do TX |
+| Capacitor 390 pF → **montado: 4 × 100 pF em paralelo = 400 pF** | 4 | filtro PWM do TX (não havia 390 pF; +2,6 %) |
 | Resistor 56 Ω | 1 | canal 2 |
-| Capacitor 10 nF + 6,8 nF (em paralelo = 16,8 nF) | 1+1 | canal 2 (C0G ou poliéster: X7R pode variar ±10–15 %) |
-| Capacitor 33 nF | 1 | troca feita pelo professor na defesa (leve um seu para ensaiar) |
+| Capacitor 16,8 nF → **montado: 33 nF em série com 33 nF = 16,5 nF** | 2 | canal 2 (não havia 6,8 nF; −1,8 %). Meça no capacímetro: X7R pode variar ±10–15 % |
+| Capacitor 33 nF | 1 | troca da defesa: basta um jumper sobre um dos dois 33 nF do canal 2 (ou um 33 nF avulso) |
 | Resistor 1 kΩ | 1 (+1 opcional) | proteção do ADC (+ perturbação opcional) |
-| Diodo Schottky (ex.: BAT54S, BAT85, 1N5817) | 2 | **pedir ao professor** |
+| Diodo Schottky **1N5817** | 2 | proteção do ADC (D+ e D−) |
 | Resistor 10 kΩ | 1 | **[extra]** pull-down externo no fio de CLK no RX (recomendado) |
 | Jumper ou fio | 2 | **[extra]** PB0 → GND seleciona PAM-4 (um em cada placa) |
 | Fios Dupont ~20 cm | ≥ 6 | dados, CLK, GND |
@@ -48,13 +48,13 @@
 |---|---|---|
 | **PA0** | TIM2_CH1 — entrada do CLK (reset do TIM2) | fio Dupont "CLK" (e 10 kΩ para GND) |
 | **PA1** | ADC1_IN1 (TP4) | saída da rede de proteção |
-| PA9 | **[extra]** USART1_TX 460 800 8N1 | RX do adaptador USB-serial |
-| PA10 | **[extra]** USART1_RX | TX do adaptador USB-serial |
+| PA9 | **[extra]** USART1_TX 460 800 8N1 | **GP5** do Pico (UART1 RX) |
+| PA10 | **[extra]** USART1_RX | **GP4** do Pico (UART1 TX) |
 | PB0 | **[extra]** jumper de modo | aberto = PAM-2 ; ao GND = PAM-4 |
 | PC13 | LED (aceso = armado; pisca = recebendo) | — |
 | PA13/PA14 | SWD | ST-Link |
 | 3V3 | trilho de 3,3 V do RX | **catodo do D+** e medição de Vref |
-| GND | | GND comum, anodo do D−, GND do adaptador |
+| GND | | GND comum, anodo do D−, GND do Pico |
 
 > ⚠️ **Não aperte o botão KEY do RX**: ele fica em PA0, que é a entrada do CLK. Cada aperto vira uma "borda" falsa.
 
@@ -72,7 +72,7 @@
   PA8 ──[330 Ω]──●── TP2 ──── Dupont 20 cm ──[56 Ω]──●── TP3 ──[1 kΩ]──●── TP4 ── PA1 (ADC1_IN1)
    (TP1)         │                                   │                  │
               [390 pF]                           [16,8 nF]           ───┬─── D− (anodo no GND)
-                 │                              (10n ∥ 6n8)             │
+           (4×100p = 400p)              (33n série 33n = 16,5n)         │
   GND ───────────●──────────── Dupont GND ───────────●──────────────────●──── GND (RX)
 
   PB4 (CLK) ──────────────── Dupont 20 cm ─────────────────────────●──── PA0 (TIM2_CH1)
@@ -81,14 +81,16 @@
                                                                    │
                                                                   GND
 
-  Canal 1 (Dupont direto): retire o 56 Ω (curto) e o 16,8 nF.
-  Canal 2 (RC):            56 Ω em série + 16,8 nF de TP3 para GND, ANTES do 1 kΩ.
-  Troca da defesa:         16,8 nF -> 33 nF (só o capacitor).
+  Canal 1 (Dupont direto): retire o 56 Ω (curto) e os capacitores do canal.
+  Canal 2 (RC):            56 Ω em série + 33n série 33n (16,5 nF) de TP3 para GND, ANTES do 1 kΩ.
+                           TP3 ─[33n]─ N ─[33n]─ GND
+  Troca da defesa:         jumper de N ao GND (fica um 33 nF) — ou troque o par por um 33 nF.
 
   Diodos: D+ conduz de TP4 para 3V3 (anodo em TP4, catodo no 3V3 do RX)
           D− conduz de GND para TP4 (anodo no GND, catodo em TP4)
 
-  Adaptador USB-serial: GND—GND, RX do adaptador—PA9, TX do adaptador—PA10. NÃO ligue o VCC dele.
+  Pico (pico-uart-bridge, /dev/ttyACM1): GND—GND, GP5 (UART1 RX)—PA9, GP4 (UART1 TX)—PA10.
+  NÃO ligue 3V3/VSYS do Pico. A /dev/ttyACM0 é a UART0 (GP0/GP1) e fica sem uso.
 ```
 
 ### Canal 3 (cabo manga 200 m, exploratório)
@@ -218,7 +220,7 @@ Siga `firmware/INTEGRACAO.md` para copiar os arquivos e colar os trechos USER CO
    - no início, veja o treinamento **0,0,0,A,0,0,0** (pulso a cada 350 µs);
    - meça o atraso entre a borda do CLK e o início da transição em TP2 (esperado ≈ 0,2–0,4 µs: latência da ISR). Registre: é o "alinhamento" pedido no Apêndice A.1;
    - PAM-4: confirme os 4 níveis ≈ 0 / 1,1 / 2,2 / 3,3 V na sequência 0,1,0,3,2,3,1,2 (calibração).
-2. **RX**: grave, abra um terminal serial (460800 8N1) ou `matlab/captura_serial.m`. Deve aparecer `#ARMADO PAM-x ...`.
+2. **RX**: grave, abra um terminal serial em `/dev/ttyACM1` (460800 8N1) ou `matlab/captura_serial.m`. Deve aparecer `#ARMADO PAM-x ...`.
 3. Aperte RESET no TX. Em ~6 s o RX imprime `#BEGIN_REPORT ... #END_PSD`. Confira `aquisicao_valida=1`, `bordas_CLK = simbolos_esperados`, `bordas_com_contagem_errada=0`.
 
 ### Modulação e canal (comandos do RX)
@@ -243,5 +245,5 @@ O **TX** escolhe a modulação pelo jumper PB0 **no momento da transmissão** (P
 | `calibracao_ok=0` | centros fora de ordem: modulação diferente no TX e no RX, canal invertido, TP3 saturando | confira jumper PB0 nas duas placas |
 | `sincronismo_ok=0` com BER zero no treinamento | erro nos 48 bits de início (ruído) ou quadro deslocado | repita; se persistir, olhe `inicio_quadro_erros_u/z` |
 | nível 3 = 4095 sempre | 3V3 do TX > 3V3 do RX (ADC satura) | normal; registre. Os limiares continuam válidos |
-| nada na serial | TX/RX do adaptador invertidos, baud errado, GND do adaptador solto | |
+| nada na serial | porta errada (`ttyACM0` em vez de `ttyACM1`), GP4/GP5 invertidos, GND do Pico solto | teste de laço GP4–GP5 no Pico; ligação **cruzada** PA9→GP5, PA10→GP4 |
 | ADC lê ~0 o tempo todo | PA1 sem sinal, diodo D− invertido | meça TP4 |

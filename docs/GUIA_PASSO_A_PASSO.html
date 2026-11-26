@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia PAM Banda Base</title>
+<style>
+:root{
+  --bg:#f7f6f2; --bg2:#ffffff; --bg3:#efede6; --fg:#1d1d1b; --fg2:#55534d; --line:#d9d6cc;
+  --acc:#1f5fbf; --acc-bg:#e6eefb; --ok:#23803a; --ok-bg:#e3f3e6; --warn:#a36200; --warn-bg:#fdf1dc;
+  --bad:#b3261e; --bad-bg:#fbe5e3; --code:#f0eee7; --red:#c0392b; --blue:#2563c9; --green:#23803a; --orange:#d97706;
+  --mono:"JetBrains Mono","DejaVu Sans Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16171a; --bg2:#1e2024; --bg3:#26292e; --fg:#e8e6e1; --fg2:#a9a6a0; --line:#363a40;
+    --acc:#7fb0ff; --acc-bg:#1e2c44; --ok:#6fd38a; --ok-bg:#1b3324; --warn:#f0b35a; --warn-bg:#3a2c15;
+    --bad:#ff8a80; --bad-bg:#3d1f1d; --code:#24272c; --red:#ff7b6b; --blue:#7fb0ff; --green:#6fd38a; --orange:#f0a64a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16171a; --bg2:#1e2024; --bg3:#26292e; --fg:#e8e6e1; --fg2:#a9a6a0; --line:#363a40;
+  --acc:#7fb0ff; --acc-bg:#1e2c44; --ok:#6fd38a; --ok-bg:#1b3324; --warn:#f0b35a; --warn-bg:#3a2c15;
+  --bad:#ff8a80; --bad-bg:#3d1f1d; --code:#24272c; --red:#ff7b6b; --blue:#7fb0ff; --green:#6fd38a; --orange:#f0a64a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif}
+a{color:var(--acc)}
+code,kbd,pre{font-family:var(--mono);font-size:.88em}
+code{background:var(--code);padding:.1em .35em;border-radius:4px}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 .35em;background:var(--bg2)}
+pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow-x:auto;line-height:1.45;border:1px solid var(--line)}
+pre code{background:none;padding:0}
+h1,h2,h3,h4{line-height:1.25}
+h2{margin:0 0 .3em;font-size:1.55rem}
+h3{margin:1.6em 0 .5em;font-size:1.15rem}
+h4{margin:1.2em 0 .4em;font-size:1rem}
+table{border-collapse:collapse;width:100%;margin:.6em 0;font-size:.93em}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--bg3)}
+.tw{overflow-x:auto}
+/* layout */
+.top{position:sticky;top:0;z-index:20;background:var(--bg2);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.top h1{font-size:1.05rem;margin:0;flex:1 1 auto}
+.prog{flex:1 1 260px;display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--fg2)}
+.bar{flex:1;height:10px;background:var(--bg3);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.btn{border:1px solid var(--line);background:var(--bg2);color:var(--fg);border-radius:6px;padding:4px 10px;font:inherit;font-size:.85rem;cursor:pointer}
+.btn:hover{background:var(--bg3)}
+.wrap{display:grid;grid-template-columns:270px minmax(0,1fr);max-width:1320px;margin:0 auto}
+nav.side{position:sticky;top:56px;align-self:start;height:calc(100vh - 56px);overflow-y:auto;padding:16px 10px 40px 16px;border-right:1px solid var(--line)}
+nav.side a{display:flex;justify-content:space-between;gap:6px;padding:5px 8px;border-radius:6px;text-decoration:none;color:var(--fg);font-size:.9rem}
+nav.side a:hover{background:var(--bg3)}
+nav.side a .n{font-variant-numeric:tabular-nums;color:var(--fg2);font-size:.8rem;white-space:nowrap}
+nav.side a.done .n{color:var(--ok);font-weight:600}
+nav.side .grp{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2);margin:14px 8px 4px}
+main{padding:20px 28px 80px;min-width:0}
+section.fase{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin:0 0 26px;scroll-margin-top:70px}
+.kicker{font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--fg2);margin-bottom:2px}
+.tempo{display:inline-block;font-size:.8rem;color:var(--fg2);background:var(--bg3);border-radius:20px;padding:1px 10px;margin-left:6px;vertical-align:middle}
+.meta{border-left:4px solid var(--ok);background:var(--ok-bg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.meta b:first-child{color:var(--ok)}
+.info{border-left:4px solid var(--acc);background:var(--acc-bg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.aviso{border-left:4px solid var(--warn);background:var(--warn-bg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.perigo{border-left:4px solid var(--bad);background:var(--bad-bg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.meta>:first-child,.info>:first-child,.aviso>:first-child,.perigo>:first-child{margin-top:0}
+.meta>:last-child,.info>:last-child,.aviso>:last-child,.perigo>:last-child{margin-bottom:0}
+ul.chk{list-style:none;padding:0;margin:.6em 0}
+ul.chk>li{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;border:1px solid transparent}
+ul.chk>li:hover{background:var(--bg3)}
+ul.chk>li.ok{opacity:.62}
+ul.chk>li.ok .t>.lbl{text-decoration:line-through;text-decoration-color:var(--fg2)}
+ul.chk input{margin-top:.32em;width:18px;height:18px;flex:none;accent-color:var(--ok);cursor:pointer}
+ul.chk .t{flex:1;min-width:0}
+ul.chk .t small{display:block;color:var(--fg2)}
+details.como{border:1px solid var(--line);border-radius:10px;margin:14px 0;background:var(--bg)}
+details.como>summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none}
+details.como>summary::before{content:"▸ ";color:var(--acc)}
+details.como[open]>summary::before{content:"▾ "}
+details.como>div{padding:2px 16px 14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg)}
+.card h4{margin-top:0}
+figure{margin:14px 0}
+figure svg{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+figcaption{font-size:.85rem;color:var(--fg2);margin-top:5px}
+svg text{font-family:system-ui,sans-serif;fill:var(--fg)}
+svg .s{stroke:var(--fg);fill:none}
+svg .box{fill:var(--bg2);stroke:var(--fg2)}
+svg .boxa{fill:var(--acc-bg);stroke:var(--acc)}
+svg .boxok{fill:var(--ok-bg);stroke:var(--ok)}
+svg .boxw{fill:var(--warn-bg);stroke:var(--warn)}
+svg .boxb{fill:var(--bad-bg);stroke:var(--bad)}
+svg .mut{fill:var(--fg2)}
+svg .red{stroke:var(--red)}
+svg .blue{stroke:var(--blue)}
+svg .grn{stroke:var(--green)}
+svg .org{stroke:var(--orange)}
+svg .fr{fill:var(--red)}
+svg .fb{fill:var(--blue)}
+svg .fg{fill:var(--green)}
+svg .fo{fill:var(--orange)}
+.pill{display:inline-block;font-size:.75rem;padding:0 8px;border-radius:10px;background:var(--bg3);color:var(--fg2);margin-left:4px}
+.ex{color:var(--warn);font-weight:600}
+@media (max-width:900px){
+  .wrap{grid-template-columns:1fr}
+  nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 16px}
+  main{padding:16px 16px 60px}
+  section.fase{padding:16px}
+}
+@media print{nav.side,.top .btn{display:none}.wrap{display:block}section.fase{break-inside:avoid-page}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>Projeto PAM em banda base — guia passo a passo</h1>
+  <div class="prog"><span id="ptxt">0 / 0</span><div class="bar"><i id="pbar"></i></div></div>
+  <button class="btn" id="bt-tema" title="claro/escuro">◐ tema</button>
+  <button class="btn" id="bt-abrir">abrir tudo</button>
+  <button class="btn" id="bt-zerar">zerar progresso</button>
+</div>
+
+<div class="wrap">
+<nav class="side" id="nav">
+  <div class="grp">Começo</div>
+  <a href="#f0">0 · Visão geral <span class="n"></span></a>
+  <a href="#f1">1 · Preparar o PC <span class="n"></span></a>
+  <a href="#f2">2 · Teoria mínima <span class="n"></span></a>
+  <div class="grp">Firmware</div>
+  <a href="#f3">3 · CubeMX do TX <span class="n"></span></a>
+  <a href="#f4">4 · CubeMX do RX <span class="n"></span></a>
+  <a href="#f5">5 · Integrar e entender o código <span class="n"></span></a>
+  <a href="#f6">6 · Gravar as placas <span class="n"></span></a>
+  <div class="grp">Bancada</div>
+  <a href="#f7">7 · Serial com o Pico <span class="n"></span></a>
+  <a href="#f8">8 · Montagem na protoboard <span class="n"></span></a>
+  <a href="#f9">9 · Verificar o TX <span class="n"></span></a>
+  <a href="#f10">10 · Validar o RX <span class="n"></span></a>
+  <a href="#f11">11 · Canal 1 — Dupont <span class="n"></span></a>
+  <a href="#f12">12 · Canal 2 — RC e τ <span class="n"></span></a>
+  <a href="#f13">13 · PSD Dupont × RC <span class="n"></span></a>
+  <a href="#f14">14 · Canal 3 — cabo manga <span class="n"></span></a>
+  <a href="#f15">15 · Ensaio do 33 nF <span class="n"></span></a>
+  <div class="grp">Fechamento</div>
+  <a href="#f16">16 · Relatório e entrega <span class="n"></span></a>
+  <a href="#f17">17 · Defesa <span class="n"></span></a>
+  <a href="#f18">A · App Python (referência) <span class="n"></span></a>
+  <a href="#f19">B · Problemas comuns <span class="n"></span></a>
+</nav>
+
+<main>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f0">
+<div class="kicker">Fase 0</div>
+<h2>Visão geral: o que você vai construir</h2>
+<p>Um enlace digital <b>PAM em banda base</b> entre duas BlackPill STM32F411. O <b>TX</b> transforma bits em níveis de tensão (2 ou 4 níveis) a 20 000 símbolos/s; o sinal atravessa um <b>canal</b> (fio Dupont, depois um RC, depois um cabo de 200 m); o <b>RX</b> amostra 8 vezes por símbolo, aprende sozinho como o canal deformou o pulso (treinamento), decide cada símbolo com dois detectores (<i>amostra única</i> e <i>filtro casado</i>) e conta os erros. O relatório sai pela serial, passa por um Raspberry Pi Pico (usado só como ponte USB, <code>/dev/ttyACM1</code>) e chega ao app Python, que faz as figuras e as contas da defesa.</p>
+
+<figure>
+<svg viewBox="0 0 890 270" role="img" aria-label="Arquitetura do enlace">
+  <!-- CLK por cima -->
+  <path class="s org" stroke-width="2" stroke-dasharray="6 4" d="M85,60 V24 H805 V60"/>
+  <text x="445" y="18" text-anchor="middle" font-size="12" class="mut">CLK de símbolo 20 kHz: PB4 (TIM3) → fio Dupont → PA0 (TIM2 do RX). É o sincronismo "assistido".</text>
+  <rect class="boxa" x="10" y="60" width="150" height="80" rx="8"/>
+  <text x="85" y="82" text-anchor="middle" font-weight="600" font-size="14">BlackPill TX</text>
+  <text x="85" y="100" text-anchor="middle" font-size="11">quadro + PRBS-15 + Gray</text>
+  <text x="85" y="115" text-anchor="middle" font-size="11">TIM1 PWM 33,3 MHz (PA8)</text>
+  <text x="85" y="130" text-anchor="middle" font-size="11" class="mut">TP1</text>
+  <rect class="box" x="190" y="60" width="150" height="80" rx="8"/>
+  <text x="265" y="82" text-anchor="middle" font-weight="600" font-size="14">Filtro do PWM</text>
+  <text x="265" y="100" text-anchor="middle" font-size="11">330 Ω + 4×100 pF</text>
+  <text x="265" y="115" text-anchor="middle" font-size="11">"DAC" de 2 bits</text>
+  <text x="265" y="130" text-anchor="middle" font-size="11" class="mut">TP2</text>
+  <rect class="boxw" x="370" y="60" width="150" height="80" rx="8"/>
+  <text x="445" y="82" text-anchor="middle" font-weight="600" font-size="14">Canal</text>
+  <text x="445" y="100" text-anchor="middle" font-size="11">1: Dupont 20 cm</text>
+  <text x="445" y="115" text-anchor="middle" font-size="11">2: 56 Ω + 33n série 33n · 3: manga</text>
+  <text x="445" y="130" text-anchor="middle" font-size="11" class="mut">TP3</text>
+  <rect class="box" x="550" y="60" width="150" height="80" rx="8"/>
+  <text x="625" y="82" text-anchor="middle" font-weight="600" font-size="14">Proteção</text>
+  <text x="625" y="100" text-anchor="middle" font-size="11">1 kΩ + 2 Schottky</text>
+  <text x="625" y="115" text-anchor="middle" font-size="11">grampeia 0…3,3 V</text>
+  <text x="625" y="130" text-anchor="middle" font-size="11" class="mut">TP4</text>
+  <rect class="boxa" x="730" y="60" width="150" height="80" rx="8"/>
+  <text x="805" y="82" text-anchor="middle" font-weight="600" font-size="14">BlackPill RX</text>
+  <text x="805" y="100" text-anchor="middle" font-size="11">ADC 12 bits, 160 kS/s</text>
+  <text x="805" y="115" text-anchor="middle" font-size="11">8 amostras/símbolo</text>
+  <text x="805" y="130" text-anchor="middle" font-size="11">detectores + BER</text>
+  <g class="s" stroke-width="2"><path d="M160,100 H190"/><path d="M340,100 H370"/><path d="M520,100 H550"/><path d="M700,100 H730"/>
+  <path d="M805,140 V195"/><path d="M730,215 H700"/></g>
+  <rect class="boxok" x="730" y="185" width="150" height="62" rx="8"/>
+  <text x="805" y="206" text-anchor="middle" font-weight="600" font-size="13">Pico (RP2040)</text>
+  <text x="805" y="222" text-anchor="middle" font-size="11">pico-uart-bridge · ttyACM1</text>
+  <text x="805" y="237" text-anchor="middle" font-size="11">USB-serial 460 800</text>
+  <text x="815" y="170" font-size="11" class="mut">PA9/PA10 ↔ GP5/GP4</text>
+  <rect class="boxok" x="550" y="185" width="150" height="62" rx="8"/>
+  <text x="625" y="206" text-anchor="middle" font-weight="600" font-size="13">PC</text>
+  <text x="625" y="222" text-anchor="middle" font-size="11">python/pam_app.py</text>
+  <text x="625" y="237" text-anchor="middle" font-size="11">log, olho, PSD, tabela</text>
+  <text x="20" y="200" font-size="12" class="mut">Pontos de teste do enunciado:</text>
+  <text x="20" y="218" font-size="12" class="mut">TP1 = PWM bruto · TP2 = saída do filtro do TX</text>
+  <text x="20" y="236" font-size="12" class="mut">TP3 = saída do canal · TP4 = entrada do ADC (PA1)</text>
+</svg>
+<figcaption>Figura 0.1 — Caminho do sinal (linha de cima) e caminho do relatório (linha de baixo).</figcaption>
+</figure>
+
+<h3>Números que você vai usar o tempo todo</h3>
+<div class="tw"><table>
+<tr><th>Grandeza</th><th>Valor</th><th>De onde vem</th></tr>
+<tr><td>Taxa de símbolos R<sub>s</sub> / duração T<sub>s</sub></td><td>20 000 sím/s · 50 µs</td><td>TIM3: 100 MHz / (4999+1)</td></tr>
+<tr><td>Taxa de bits R<sub>b</sub></td><td>PAM-2: 20 kbit/s · PAM-4: 40 kbit/s</td><td>R<sub>b</sub> = R<sub>s</sub>·log<sub>2</sub>M</td></tr>
+<tr><td>Amostragem do RX</td><td>8 por símbolo = 160 000 amostras/s (a cada 6,25 µs)</td><td>TIM2: 100 MHz / (624+1)</td></tr>
+<tr><td>Instantes das amostras</td><td>t<sub>k</sub> = 3,12 + 6,25·k µs, k = 0…7</td><td>TIM2_CCR2 = 312</td></tr>
+<tr><td>Quadro</td><td>PAM-2: 100 444 símbolos (~5 s) · PAM-4: 50 420 (~2,5 s)</td><td>396 de treino + início + 100 000 bits</td></tr>
+<tr><td>τ do canal RC</td><td>(330+56) Ω × 16,8 nF = 6,48 µs (medido ≈ 7,1 µs)</td><td>ver Fase 12</td></tr>
+<tr><td>Gray (PAM-4)</td><td>00→0 · 01→1 · 11→2 · 10→3</td><td>vizinhos diferem em 1 bit</td></tr>
+</table></div>
+
+<h3>O quadro transmitido</h3>
+<figure>
+<svg viewBox="0 0 890 150" role="img" aria-label="Estrutura do quadro">
+  <rect class="boxa" x="10" y="20" width="160" height="46" rx="4"/><text x="90" y="40" text-anchor="middle" font-weight="600" font-size="13">Pulso</text><text x="90" y="57" text-anchor="middle" font-size="11">20 × (0,0,0,A,0,0,0) = 140</text>
+  <rect class="boxa" x="170" y="20" width="200" height="46" rx="4"/><text x="270" y="40" text-anchor="middle" font-weight="600" font-size="13">Níveis</text><text x="270" y="57" text-anchor="middle" font-size="11">32 × 8 níveis conhecidos = 256</text>
+  <rect class="boxw" x="370" y="20" width="150" height="46" rx="4"/><text x="445" y="40" text-anchor="middle" font-weight="600" font-size="13">Início de quadro</text><text x="445" y="57" text-anchor="middle" font-size="11">0101… + 0xD391C5A7</text>
+  <rect class="boxok" x="520" y="20" width="360" height="46" rx="4"/><text x="700" y="40" text-anchor="middle" font-weight="600" font-size="13">Payload</text><text x="700" y="57" text-anchor="middle" font-size="11">100 000 bits PRBS-15 (b0…b14 = 1)</text>
+  <path class="s" d="M10,80 V88 H370 V80"/><text x="190" y="104" text-anchor="middle" font-size="12">treinamento (396 símbolos): b_c, p_c[k], k*, centros, limiares</text>
+  <text x="190" y="120" text-anchor="middle" font-size="12" class="mut">→ congelados aqui, nunca mais mudam</text>
+  <path class="s" d="M370,80 V88 H520 V80"/><text x="445" y="104" text-anchor="middle" font-size="12">48 bits: sincronismo</text>
+  <text x="445" y="120" text-anchor="middle" font-size="12" class="mut">1 erro = quadro sem BER</text>
+  <path class="s" d="M520,80 V88 H880 V80"/><text x="700" y="104" text-anchor="middle" font-size="12">BER/SER contadas aqui · 1024 símbolos a partir do nº 1000</text>
+  <text x="700" y="120" text-anchor="middle" font-size="12" class="mut">vão brutos no log para olho e PSD</text>
+</svg>
+<figcaption>Figura 0.2 — Estrutura do quadro (sem escala: o payload é ~250× maior que o resto).</figcaption>
+</figure>
+
+<h3>Metas finais (o que precisa existir no fim)</h3>
+<ul class="chk">
+<li><input type="checkbox" data-id="f0-1"><span class="t"><span class="lbl">Firmware TX e RX funcionando nas placas, com prints do CubeMX (pinout, clock, TIM1/TIM3, TIM2/ADC/DMA)</span></span></li>
+<li><input type="checkbox" data-id="f0-2"><span class="t"><span class="lbl">Logs brutos válidos de 4 condições: Dupont PAM-2, Dupont PAM-4, RC PAM-2, RC PAM-4 (+ cabo manga exploratório)</span></span></li>
+<li><input type="checkbox" data-id="f0-3"><span class="t"><span class="lbl">Capturas do osciloscópio nomeadas com canal e modulação (CLK, níveis, Gray, degrau, olho, ripple)</span></span></li>
+<li><input type="checkbox" data-id="f0-4"><span class="t"><span class="lbl">τ medido, PSDs na mesma escala, razão S<sub>RC</sub>/S<sub>Dupont</sub> em 5 e 10 kHz comparada com |H|²</span></span></li>
+<li><input type="checkbox" data-id="f0-5"><span class="t"><span class="lbl">Tabela da Seção 5.1 + relatório curto (4–6 páginas) com declaração de uso de IA</span></span></li>
+<li><input type="checkbox" data-id="f0-6"><span class="t"><span class="lbl">Cada integrante consegue explicar k*, o filtro casado (conta de um z à mão) e a PSD — e refazer tudo ao vivo com 33 nF</span></span></li>
+</ul>
+<div class="info"><p>Os outros documentos continuam valendo como referência detalhada: <code>docs/01_ROTEIRO.md</code> (dia a dia), <code>02_MATERIAL_ESTUDO.md</code> (teoria), <code>03_SIMULINK_PASSO_A_PASSO.md</code>, <code>04_HARDWARE_E_CUBEMX.md</code>, <code>05_DEFESA_PERGUNTAS.md</code> e <code>firmware/INTEGRACAO.md</code>. Este guia junta tudo em ordem de execução. Marque as caixas: o progresso fica salvo neste navegador.</p></div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f1">
+<div class="kicker">Fase 1 <span class="tempo">≈ 1 h</span></div>
+<h2>Preparar o PC</h2>
+<div class="meta"><p><b>Meta:</b> o app Python abre, roda em modo demonstração e analisa um log simulado. A partir daí você treina a análise antes mesmo de ter as placas montadas.</p></div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f1-1"><span class="t"><span class="lbl">Instalar o <b>STM32CubeIDE</b> (já inclui o CubeMX) e, se for gravar por USB, o <b>STM32CubeProgrammer</b></span><small>Site da ST, versão Linux .deb/.sh. No primeiro projeto ele baixa o pacote "STM32Cube FW_F4".</small></span></li>
+<li><input type="checkbox" data-id="f1-2"><span class="t"><span class="lbl">Dar acesso às portas seriais ao seu usuário (Linux)</span>
+<pre><code>sudo usermod -aG dialout $USER     # depois saia da sessão e entre de novo
+</code></pre></span></li>
+<li><input type="checkbox" data-id="f1-3"><span class="t"><span class="lbl">Criar o ambiente do app e instalar as dependências</span>
+<pre><code>cd Projeto_PAM_BB/python
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt    # numpy, matplotlib, pyserial
+sudo apt install python3-tk        # só se der erro de "tkinter"</code></pre></span></li>
+<li><input type="checkbox" data-id="f1-4"><span class="t"><span class="lbl">Abrir o app: <code>python pam_app.py</code> → aba 1 → marcar <b>modo demonstração</b> → Conectar → PAM-4 + canal c → <b>ARMAR</b></span><small>Em ~6 s ele "recebe" um quadro simulado, grava em <code>entrega/logs/</code>, mostra 9 critérios em verde e abre a aba de análise com pulso, olho, calibração e PSD.</small></span></li>
+<li><input type="checkbox" data-id="f1-5"><span class="t"><span class="lbl">Criar a pasta de entrega com subpastas: <code>entrega/capturas</code>, <code>entrega/logs</code>, <code>entrega/prints_cubemx</code>, <code>entrega/relatorio</code></span><small>O app cria <code>logs/</code> e <code>figuras/</code> sozinho. Regra do checklist: <b>todo arquivo com canal e modulação no nome</b> (ex.: <code>TP3_olho_RC_PAM4.png</code>).</small></span></li>
+<li><input type="checkbox" data-id="f1-6"><span class="t"><span class="lbl">(Opcional) MATLAB: <code>cd matlab; simula_enlace</code> gera as previsões de tudo; <code>firmware/teste_host: make && ./sim_host 4 1</code> roda TX+canal+RX no PC</span></span></li>
+</ul>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f2">
+<div class="kicker">Fase 2 <span class="tempo">≈ 2 h</span></div>
+<h2>Teoria mínima para entender o resto</h2>
+<div class="meta"><p><b>Meta:</b> conseguir explicar com suas palavras os 6 conceitos abaixo. Eles aparecem no código, nas medidas e nas perguntas da defesa. Aprofunde em <code>docs/02_MATERIAL_ESTUDO.md</code>.</p></div>
+<div class="grid2">
+<div class="card"><h4>1. PWM vira tensão (DAC de pobre)</h4><p>O TIM1 gera PWM de 33,3 MHz. O filtro 330 Ω/390 pF (τ = 0,13 µs, f<sub>c</sub> ≈ 1,2 MHz) deixa passar só a <b>média</b>: duty 0, ⅓, ⅔, 1 → 0; 1,1; 2,2; 3,3 V. Sobra um ripple de ~150 mVpp.</p></div>
+<div class="card"><h4>2. Canal = sistema LIT</h4><p>O RC é um passa-baixas: no tempo, o degrau sobe como 1−e<sup>−t/τ</sup>; na frequência, |H(f)|² = 1/(1+(2πfτ)²). Subida lenta = símbolo "vaza" no seguinte = <b>ISI</b>.</p></div>
+<div class="card"><h4>3. Por que 8 amostras e k*</h4><p>Cada símbolo é lido em 8 instantes. Com os 256 símbolos de níveis conhecidos, o RX mede para cada k a menor distância entre níveis vizinhos e escolhe o melhor instante <b>k*</b>. No RC dá k = 7 (46,87 µs): o fim do símbolo, quando o RC já subiu.</p></div>
+<div class="card"><h4>4. Filtro casado</h4><p>Com os 20 pulsos "A" isolados ele aprende o formato do pulso p<sub>c</sub>[k]. Depois calcula z = Σ p<sub>c</sub>[k]·(a[k]−b<sub>c</sub>) / E<sub>c</sub>: média ponderada das 8 amostras. Ganha da amostra única contra ruído branco (√8 em SNR), mas sofre com ISI.</p></div>
+<div class="card"><h4>5. Limiares e margens</h4><p>Centro de cada nível = média na calibração; limiar = ponto médio entre centros vizinhos; margem = (menor valor do nível de cima) − (maior do de baixo). Margem grande ≫ ruído ⇒ 0 erros.</p></div>
+<div class="card"><h4>6. PSD</h4><p>8 192 amostras → volts com o <b>Vref medido</b> → tira a média → blocos de 1024 com Hann e 50 % → média. Resolução 156,25 Hz. Para LIT: S<sub>y</sub> = |H|²S<sub>x</sub>, então S<sub>RC</sub>/S<sub>Dupont</sub> ≈ |H<sub>RC</sub>|².</p></div>
+</div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f2-1"><span class="t"><span class="lbl">Ler <code>02_MATERIAL_ESTUDO.md</code> seções 1–4 (taxas, Fourier do pulso, canal LIT)</span></span></li>
+<li><input type="checkbox" data-id="f2-2"><span class="t"><span class="lbl">Ler seções 8–9 (ISI, olho, k*, filtro casado, BER) e a 6.4 (o vale do PAM-4 em 10 kHz)</span></span></li>
+<li><input type="checkbox" data-id="f2-3"><span class="t"><span class="lbl">Fazer de cabeça: τ = (330+56)·16,8 nF; f<sub>c</sub>; t<sub>10–90</sub> = 2,197τ; |H(5 kHz)|² e |H(10 kHz)|²</span><small>Respostas: 6,48 µs · 24,5 kHz · 14,2 µs · 0,96 e 0,86 (com o modelo de 2 polos: 0,95 e 0,83).</small></span></li>
+</ul>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f3">
+<div class="kicker">Fase 3 <span class="tempo">≈ 1 h</span></div>
+<h2>CubeMX do TX (gerar o projeto)</h2>
+<div class="meta"><p><b>Meta:</b> projeto <code>PAM_TX</code> gerado com clock de 100 MHz, PWM de 33,3 MHz em PA8, CLK de 20 kHz em PB4 com interrupção, e os prints salvos em <code>entrega/prints_cubemx/</code>.</p></div>
+
+<h3>Passo a passo</h3>
+<ul class="chk">
+<li><input type="checkbox" data-id="f3-1"><span class="t"><span class="lbl">CubeIDE → <i>File → New → STM32 Project</i> → Part Number <b>STM32F411CEU6</b> → nome <code>PAM_TX</code> → C, Executable</span></span></li>
+<li><input type="checkbox" data-id="f3-2"><span class="t"><span class="lbl"><b>System Core → SYS → Debug: Serial Wire</b></span><small>Por quê: no modo JTAG o pino PB4 é NJTRST e não poderia ser o CLK. Serial Wire usa só PA13/PA14.</small></span></li>
+<li><input type="checkbox" data-id="f3-3"><span class="t"><span class="lbl"><b>System Core → RCC → HSE: Crystal/Ceramic Resonator</b></span><small>Usa o cristal de 25 MHz da BlackPill: clock preciso (o RC interno varia ~1 %).</small></span></li>
+<li><input type="checkbox" data-id="f3-4"><span class="t"><span class="lbl">Aba <b>Clock Configuration</b>: Input 25 MHz · PLL Source HSE · /M = 25 · ×N = 200 · /P = 2 · System Clock Mux = PLLCLK · AHB /1 · <b>APB1 /2</b> · <b>APB2 /1</b></span><small>Confira: SYSCLK = HCLK = 100 MHz; "APB1 Timer clocks" = 100 MHz (o APB1 é 50 MHz mas os timers dele recebem ×2); "APB2 Timer clocks" = 100 MHz. <b>Print desta tela.</b></small></span></li>
+<li><input type="checkbox" data-id="f3-5"><span class="t"><span class="lbl"><b>Timers → TIM1</b>: Clock Source = Internal Clock · Channel1 = <b>PWM Generation CH1</b> (confira que foi para <b>PA8</b>)</span>
+<small>Parameter Settings: Prescaler <b>0</b> · Counter Mode Up · Counter Period <b>2</b> · auto-reload preload Disable · PWM mode 1 · Pulse <b>0</b> · <b>Output compare preload Enable</b> · CH Polarity High. GPIO Settings → PA8 → Maximum output speed <b>Very High</b>.</small></span></li>
+<li><input type="checkbox" data-id="f3-6"><span class="t"><span class="lbl"><b>Timers → TIM3</b>: Internal Clock · Channel1 = PWM Generation CH1 → no pinout clique em <b>PB4</b> e escolha <b>TIM3_CH1</b></span>
+<small>Por padrão o CubeMX põe o TIM3_CH1 em PA6 — mude para PB4. Parameter Settings: Prescaler <b>0</b> · Period <b>4999</b> · PWM mode 1 · Pulse <b>2500</b> · Output compare preload Enable. <b>NVIC Settings: TIM3 global interrupt ✔</b>. GPIO PB4: Pull-down, speed High.</small></span></li>
+<li><input type="checkbox" data-id="f3-7"><span class="t"><span class="lbl">GPIO: <b>PC13 → GPIO_Output</b> (LED, nível inicial High) · <b>PA0 → GPIO_Input</b> Pull-up (botão KEY) · <b>PB0 → GPIO_Input</b> Pull-up (jumper de modo)</span></span></li>
+<li><input type="checkbox" data-id="f3-8"><span class="t"><span class="lbl"><b>System Core → NVIC</b>: TIM3 global interrupt com <b>Preemption Priority 0</b> (a mais alta)</span><small>A ISR do TIM3 é o que troca o nível a cada borda: quanto mais cedo ela roda, melhor o alinhamento do nível com o CLK.</small></span></li>
+<li><input type="checkbox" data-id="f3-9"><span class="t"><span class="lbl"><b>Project Manager</b>: Toolchain STM32CubeIDE · Code Generator "Copy only the necessary library files" → <b>Ctrl+S / Generate Code</b></span></span></li>
+<li><input type="checkbox" data-id="f3-10"><span class="t"><span class="lbl">Prints: <b>Pinout</b>, <b>Clock Configuration</b>, parâmetros do <b>TIM1</b> e do <b>TIM3</b> → <code>prints_cubemx/TX_*.png</code></span><small>Confira no pinout que nenhum pino tem duas funções (exigência do enunciado §4).</small></span></li>
+</ul>
+
+<details class="como"><summary>Como funciona o TIM1 como DAC (por que ARR = 2 e CCR = 0…3)</summary><div>
+<p>O contador do TIM1 conta 0, 1, 2, 0, 1, 2… a 100 MHz: um período de PWM = 3 contagens = 30 ns ⇒ <b>33,3 MHz</b>. No <i>PWM mode 1</i> a saída fica alta enquanto <code>CNT &lt; CCR1</code>. Então o valor de <code>CCR1</code> escolhe quantas das 3 contagens ficam em 3,3 V:</p>
+<figure>
+<svg viewBox="0 0 700 250" role="img" aria-label="PWM com CCR de 0 a 3">
+  <text x="10" y="18" font-size="12" class="mut">CNT:</text>
+  <g font-size="11" class="mut"><text x="120" y="18">0</text><text x="160" y="18">1</text><text x="200" y="18">2</text><text x="240" y="18">0</text><text x="280" y="18">1</text><text x="320" y="18">2</text><text x="360" y="18">0</text><text x="400" y="18">1</text><text x="440" y="18">2</text></g>
+  <text x="10" y="55" font-size="13">CCR1 = 0</text><path class="s blue" stroke-width="2" d="M110,60 H470"/><text x="490" y="55" font-size="13">média 0 V → nível 0</text>
+  <text x="10" y="105" font-size="13">CCR1 = 1</text><path class="s blue" stroke-width="2" d="M110,110 V80 H150 V110 H230 V80 H270 V110 H350 V80 H390 V110 H470"/><text x="490" y="105" font-size="13">⅓ → 1,1 V → nível 1</text>
+  <text x="10" y="155" font-size="13">CCR1 = 2</text><path class="s blue" stroke-width="2" d="M110,160 V130 H190 V160 H230 V130 H310 V160 H350 V130 H430 V160 H470"/><text x="490" y="155" font-size="13">⅔ → 2,2 V → nível 2</text>
+  <text x="10" y="205" font-size="13">CCR1 = 3</text><path class="s blue" stroke-width="2" d="M110,210 V180 H470"/><text x="490" y="205" font-size="13">sempre alto → 3,3 V → nível 3</text>
+  <text x="110" y="240" font-size="11" class="mut">← 30 ns por período (33,3 MHz). O filtro 330 Ω/390 pF tira a média; sobra ripple ≈ 150 mVpp em TP2.</text>
+</svg>
+<figcaption>Figura 3.1 — O "DAC de 2 bits": CCR1 = nível. No PAM-2 o firmware usa só 0 e 3.</figcaption>
+</figure>
+<p><b>Output compare preload Enable</b> faz o novo CCR1 valer só no próximo recomeço do contador (≤ 30 ns depois): nunca sai um pulso "cortado" no meio.</p>
+</div></details>
+
+<details class="como"><summary>Como funciona o TIM3 (o relógio de símbolo)</summary><div>
+<p>100 MHz / (4999+1) = <b>20 kHz</b> ⇒ um período = um símbolo de 50 µs. Pulse = 2500 ⇒ duty de 50 %: PB4 sobe quando o contador recomeça (CNT = 0) e desce no meio do símbolo. Esse recomeço também gera a interrupção de <i>update</i>: a ISR <code>PAM_TX_TIM3_IRQ()</code> escreve o nível do novo símbolo no <code>TIM1->CCR1</code> como <b>primeira instrução</b>. O atraso entre a subida do CLK e a troca de nível em TP2 é a latência da ISR (≈ 0,2–0,4 µs): é o "alinhamento" que você vai medir no osciloscópio.</p>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f4">
+<div class="kicker">Fase 4 <span class="tempo">≈ 1 h</span></div>
+<h2>CubeMX do RX (gerar o projeto)</h2>
+<div class="meta"><p><b>Meta:</b> projeto <code>PAM_RX</code> em que cada borda do CLK em PA0 zera o TIM2, o TIM2 dispara o ADC 8 vezes por símbolo sem a CPU, o DMA guarda as amostras num buffer circular e a USART1 manda o relatório a 460 800 baud.</p></div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f4-1"><span class="t"><span class="lbl">Novo projeto STM32F411CEU6 <code>PAM_RX</code> · repetir <b>SYS = Serial Wire</b>, <b>RCC = HSE</b> e o <b>mesmo Clock Configuration</b> (100 MHz, APB1 /2, APB2 /1)</span></span></li>
+<li><input type="checkbox" data-id="f4-2"><span class="t"><span class="lbl"><b>TIM2</b>: Slave Mode = <b>Reset Mode</b> · Trigger Source = <b>TI1FP1</b> (vira PA0 = TIM2_CH1) · Clock Source = Internal · Channel2 = <b>PWM Generation No Output</b></span>
+<small>Parameter Settings: Prescaler <b>0</b> · Period <b>624</b> · Trigger Polarity <b>Rising Edge</b> · Trigger Filter <b>3</b> <span class="ex">[extra]</span> · Channel 2: Mode <b>PWM mode 2</b>, Pulse <b>312</b>. NVIC: TIM2 global interrupt ✔ (prioridade 0). GPIO PA0: Pull-down <span class="ex">[extra]</span>.</small></span></li>
+<li><input type="checkbox" data-id="f4-3"><span class="t"><span class="lbl"><b>ADC1</b>: marcar <b>IN1</b> (PA1)</span>
+<small>Clock Prescaler PCLK2/4 (25 MHz) · 12 bits · Right alignment · Scan Disabled · <b>Continuous Disabled</b> · <b>DMA Continuous Requests Enabled</b> · EOC at end of single channel · <b>External Trigger = Timer 2 Capture Compare 2 event</b> · <b>Edge = rising</b> · Rank 1: Channel 1, Sampling Time <b>15 Cycles</b>.</small></span></li>
+<li><input type="checkbox" data-id="f4-4"><span class="t"><span class="lbl"><b>ADC1 → DMA Settings → Add</b>: DMA2 Stream 0 · Peripheral to Memory · Priority High · <b>Mode Circular</b> · incrementa só a memória · <b>Half Word / Half Word</b></span><small>NVIC: DMA2 stream0 global interrupt ✔ com prioridade <b>1</b> (abaixo do TIM2).</small></span></li>
+<li><input type="checkbox" data-id="f4-5"><span class="t"><span class="lbl"><b>USART1</b> <span class="ex">[extra]</span>: Asynchronous (PA9 = TX, PA10 = RX) · <b>460800</b> · 8 bits · sem paridade · 1 stop · sem interrupção</span><small>É por aqui que sai o relatório e entram os comandos (2/4/d/c/x/m/r/p). Esses dois pinos vão para o Pico: PA9 → GP5, PA10 ← GP4 (Fase 7).</small></span></li>
+<li><input type="checkbox" data-id="f4-6"><span class="t"><span class="lbl">GPIO: PC13 Output (inicial High) · PB0 Input Pull-up · <b>Generate Code</b></span></span></li>
+<li><input type="checkbox" data-id="f4-7"><span class="t"><span class="lbl">Prints: Pinout, Clock, <b>TIM2</b>, <b>ADC1</b>, <b>DMA</b> → <code>prints_cubemx/RX_*.png</code></span></span></li>
+</ul>
+
+<details class="como" open><summary>Como funciona a aquisição: CLK → TIM2 → ADC → DMA (sem a CPU)</summary><div>
+<figure>
+<svg viewBox="0 0 760 300" role="img" aria-label="Diagrama de tempo da amostragem">
+  <text x="6" y="40" font-size="12">CLK</text>
+  <path class="s org" stroke-width="2" d="M30,60 H50 V30 H375 V60 H700 V30 H720"/>
+  <text x="6" y="160" font-size="12">TP3</text>
+  <path class="s" stroke-dasharray="2 4" d="M50,200 H710"/><path class="s" stroke-dasharray="2 4" d="M50,110 H710"/>
+  <text x="712" y="114" font-size="11" class="mut">A</text><text x="712" y="204" font-size="11" class="mut">0</text>
+  <path class="s blue" stroke-width="2.2" d="M50,200 L63,191.6 L76,180.8 L89,171.5 L102,163.4 L115,156.4 L128,150.3 L141,145 L154,140.4 L167,136.4 L180,133 L193,129.9 L206,127.3 L219,125 L232,123.1 L245,121.4 L258,119.9 L271,118.6 L284,117.4 L297,116.5 L310,115.6 L336,114.2 L362,113.2 L388,112.4 L414,111.8 L440,111.4 L466,111 L518,110.6 L570,110.3 L622,110.2 L700,110.1"/>
+  <g class="s" stroke-dasharray="3 3" opacity=".6"><path d="M90.6,70 V215"/><path d="M171.8,70 V215"/><path d="M253.1,70 V215"/><path d="M334.3,70 V215"/><path d="M415.6,70 V215"/><path d="M496.8,70 V215"/><path d="M578.1,70 V215"/></g>
+  <path class="s red" stroke-width="2" d="M659.3,70 V215"/>
+  <g class="fb"><circle cx="90.6" cy="170.5" r="4.5"/><circle cx="171.8" cy="135.1" r="4.5"/><circle cx="253.1" cy="120.4" r="4.5"/><circle cx="334.3" cy="114.3" r="4.5"/><circle cx="415.6" cy="111.8" r="4.5"/><circle cx="496.8" cy="110.7" r="4.5"/><circle cx="578.1" cy="110.3" r="4.5"/></g>
+  <circle class="fr" cx="659.3" cy="110.1" r="6"/>
+  <g font-size="11" text-anchor="middle"><text x="90.6" y="230">k=0</text><text x="171.8" y="230">k=1</text><text x="253.1" y="230">k=2</text><text x="334.3" y="230">k=3</text><text x="415.6" y="230">k=4</text><text x="496.8" y="230">k=5</text><text x="578.1" y="230">k=6</text><text x="659.3" y="230" font-weight="700">k*=7</text></g>
+  <g font-size="10" text-anchor="middle" class="mut"><text x="90.6" y="82">3,12 µs</text><text x="659.3" y="82">46,87 µs</text></g>
+  <text x="6" y="270" font-size="12">TIM2</text><text x="6" y="284" font-size="10" class="mut">CNT</text>
+  <path class="s grn" stroke-width="1.5" d="M50,285 L131.2,245 V285 L212.5,245 V285 L293.8,245 V285 L375,245 V285 L456.2,245 V285 L537.5,245 V285 L618.8,245 V285 L700,245 V285"/>
+  <text x="705" y="250" font-size="10" class="mut">624</text>
+  <text x="705" y="288" font-size="10" class="mut">0</text>
+  <text x="390" y="20" font-size="11" class="mut" text-anchor="middle">borda do CLK zera o TIM2 (Reset Mode) · cada CNT = 312 dispara uma conversão (TIM2_CC2)</text>
+</svg>
+<figcaption>Figura 4.1 — Um símbolo de 50 µs no canal RC (curva real com τ = 7,1 µs). As 8 amostras caem em 3,12 + 6,25·k µs. Em k = 0 o nível percorreu só ~1/3 do caminho; em k = 7 já chegou (resíduo &lt; 0,1 %): por isso k* = 7 no RC.</figcaption>
+</figure>
+<ol>
+<li><b>Reset Mode + TI1FP1</b>: cada subida do CLK em PA0 zera o contador do TIM2. Assim as amostras ficam sempre na mesma posição dentro do símbolo, mesmo que os cristais das duas placas difiram um pouco.</li>
+<li><b>Period 624</b>: 625 contagens de 10 ns = 6,25 µs ⇒ 8 períodos por símbolo de 50 µs ⇒ 160 000 amostras/s.</li>
+<li><b>Canal 2 em PWM mode 2, Pulse 312</b>: o sinal interno OC2REF fica baixo enquanto CNT &lt; 312 e sobe em CNT = 312. Essa <b>borda de subida</b> é o evento que dispara o ADC (External Trigger = TIM2 CC2, rising). Com "Frozen/No output" poderia não haver borda.</li>
+<li><b>ADC</b>: 15 ciclos de amostragem + 12 de conversão = 27 ciclos a 25 MHz = <b>1,08 µs</b> &lt; 6,25 µs. Continuous Disabled: converte só quando o TIM2 manda.</li>
+<li><b>DMA circular de 512 posições</b>: o DMA copia cada resultado para a RAM. A cada 256 amostras (32 símbolos = 1,6 ms) ele avisa a CPU (meia/inteira transferência). A CPU nunca é interrompida por amostra.</li>
+<li><b>Trigger Filter 3</b> <span class="ex">[extra]</span>: o TIM2 só aceita a borda se ela durar 8 ciclos de 50 MHz (~80 ns): rejeita glitches no fio do CLK.</li>
+</ol>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f5">
+<div class="kicker">Fase 5 <span class="tempo">≈ 2 h</span></div>
+<h2>Integrar e entender o código</h2>
+<div class="meta"><p><b>Meta:</b> os dois projetos compilam sem erros nem warnings no CubeIDE, e você sabe dizer o que cada arquivo faz.</p></div>
+
+<h3>Mapa dos arquivos</h3>
+<div class="tw"><table>
+<tr><th>Arquivo (<code>firmware/</code>)</th><th>Usa HAL?</th><th>Papel</th></tr>
+<tr><td><code>common/pam_config.h</code></td><td>não</td><td>Todos os números do enunciado: R<sub>s</sub>, ARR/CCR dos timers, tamanhos do quadro, 8 192 amostras de PSD. Mude só aqui.</td></tr>
+<tr><td><code>common/pam_frame.c/.h</code></td><td>não</td><td>Gera o quadro símbolo a símbolo: treinamento, início de quadro, PRBS-15, Gray. <b>O mesmo código roda no TX e no RX</b> (o RX sabe o que deveria ter chegado).</td></tr>
+<tr><td><code>tx/pam_tx.c/.h</code></td><td>sim</td><td>Liga os timers, inicia o quadro (1 s após o reset ou no botão KEY) e a ISR que troca o nível a cada borda.</td></tr>
+<tr><td><code>rx/pam_rx.c/.h</code></td><td>sim</td><td>Arma TIM2+ADC+DMA, conta bordas, confere 8 amostras/borda, entrega grupos de 8 ao núcleo, lê os comandos da serial.</td></tr>
+<tr><td><code>rx/pam_rx_core.c/.h</code></td><td>não</td><td>A matemática: treinamento (b<sub>c</sub>, p<sub>c</sub>, k*, centros, limiares, margens), decisão e contagem de erros.</td></tr>
+<tr><td><code>rx/pam_rx_report.c/.h</code></td><td>não</td><td>Imprime o relatório <code>#BEGIN_REPORT … #END_PSD</code> (mesmo formato no simulador do PC e na placa).</td></tr>
+</table></div>
+
+<h3>Integração no CubeIDE</h3>
+<ul class="chk">
+<li><input type="checkbox" data-id="f5-1"><span class="t"><span class="lbl"><b>TX</b>: copiar <code>pam_config.h</code>, <code>pam_frame.h</code>, <code>pam_tx.h</code> → <code>Core/Inc/</code> e <code>pam_frame.c</code>, <code>pam_tx.c</code> → <code>Core/Src/</code></span></span></li>
+<li><input type="checkbox" data-id="f5-2"><span class="t"><span class="lbl"><b>TX</b> <code>main.c</code>: incluir <code>pam_tx.h</code>, chamar <code>PAM_TX_Init()</code> no USER CODE 2 e <code>PAM_TX_Loop()</code> dentro do <code>while(1)</code></span>
+<pre><code>/* USER CODE BEGIN Includes */
+#include "pam_tx.h"
+/* USER CODE END Includes */
+  /* USER CODE BEGIN 2 */
+  PAM_TX_Init();
+  /* USER CODE END 2 */
+  while (1) {
+    /* USER CODE BEGIN 3 */
+    PAM_TX_Loop();
+  }</code></pre></span></li>
+<li><input type="checkbox" data-id="f5-3"><span class="t"><span class="lbl"><b>TX</b> <code>stm32f4xx_it.c</code>: <code>PAM_TX_TIM3_IRQ();</code> como <b>primeira linha</b> de <code>TIM3_IRQHandler</code> (bloco USER CODE TIM3_IRQn 0) + o include</span></span></li>
+<li><input type="checkbox" data-id="f5-4"><span class="t"><span class="lbl"><b>RX</b>: copiar <code>pam_config.h pam_frame.h pam_rx.h pam_rx_core.h pam_rx_report.h</code> → Inc e <code>pam_frame.c pam_rx.c pam_rx_core.c pam_rx_report.c</code> → Src</span></span></li>
+<li><input type="checkbox" data-id="f5-5"><span class="t"><span class="lbl"><b>RX</b> <code>main.c</code>: <code>PAM_RX_Init()</code> / <code>PAM_RX_Loop()</code> e os 3 callbacks do ADC no USER CODE 4</span>
+<pre><code>/* USER CODE BEGIN 4 */
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *h){ if (h->Instance == ADC1) PAM_RX_DMA_HalfOrFull(); }
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *h)    { if (h->Instance == ADC1) PAM_RX_DMA_HalfOrFull(); }
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *h)       { if (h->Instance == ADC1) PAM_RX_ADC_Error(); }
+/* USER CODE END 4 */</code></pre></span></li>
+<li><input type="checkbox" data-id="f5-6"><span class="t"><span class="lbl"><b>RX</b> <code>stm32f4xx_it.c</code>: <code>PAM_RX_TIM2_IRQ();</code> como primeira linha de <code>TIM2_IRQHandler</code></span></span></li>
+<li><input type="checkbox" data-id="f5-7"><span class="t"><span class="lbl">Compilar os dois (martelo). Os handles devem se chamar <code>htim1</code>, <code>htim3</code>, <code>htim2</code>, <code>hadc1</code>, <code>huart1</code> (padrão do CubeMX)</span><small>Para gerar .bin (gravação por DFU/UART): Project → Properties → C/C++ Build → Settings → MCU Post build outputs → <i>Convert to binary file</i>.</small></span></li>
+</ul>
+<div class="aviso"><p>Escreva seu código <b>só entre</b> <code>/* USER CODE BEGIN */</code> e <code>/* USER CODE END */</code>. Se você regenerar o código no CubeMX, tudo fora desses blocos é apagado.</p></div>
+
+<details class="como"><summary>Como funciona o TX, linha a linha</summary><div>
+<ol>
+<li><b>Depois do reset</b>, <code>PAM_TX_Loop()</code> espera 1 s (tempo para você armar o RX) e chama <code>PAM_TX_StartFrame()</code> com o modo lido no jumper PB0 (GND = PAM-4). Depois disso, o botão KEY (PA0) retransmite.</li>
+<li><code>StartFrame</code> calcula o nível do símbolo 0 e já o coloca em <code>TIM1->CCR1</code>; calcula também o símbolo 1 (fica pronto em <code>s_next_ccr</code>); zera o TIM3 e liga o CLK. PB4 sobe = início do símbolo 0. LED PC13 acende.</li>
+<li>A cada recomeço do TIM3 (= subida do CLK), <code>PAM_TX_TIM3_IRQ()</code>:
+<pre><code>TIM1->CCR1 = s_next_ccr;       // 1º: troca o nível (alinhado à borda)
+int32_t c = next_ccr();        // 2º: só então calcula o próximo símbolo
+if (c &lt; 0) { TIM3->CCR1 = 0; s_last_loaded = 1; }  // era o último: sem nova borda
+else s_next_ccr = c;</code></pre>
+Calcular <i>antes</i> e escrever <i>primeiro</i> é o que mantém a latência baixa e constante.</li>
+<li><code>pam_symgen_next()</code> (em <code>pam_frame.c</code>) devolve o nível do próximo símbolo: 140 do pulso, 256 de níveis, 48 bits de início (24 símbolos em PAM-4) e o payload. A PRBS-15 é um registrador de 15 bits: <code>novo = b14 xor b0</code>. Em PAM-4 cada par de bits vira um nível Gray.</li>
+<li>No último símbolo o CCR1 do TIM3 vai a 0 (não há nova subida). Na atualização seguinte a ISR para o TIM3 e põe PA8 em 0 V.</li>
+</ol>
+</div></details>
+
+<details class="como"><summary>Como funciona o RX: aquisição e verificação de perdas (<code>pam_rx.c</code>)</summary><div>
+<ol>
+<li><b>Armar</b> (<code>rx_arm</code>, ao ligar ou com os comandos 2/4/d/c/x/m/r): zera os contadores, liga ADC+DMA e depois o TIM2 (ordem do enunciado). Imprime <code>#ARMADO PAM-x canal=…</code>. O TIM2 já roda livre, disparando conversões que serão descartadas.</li>
+<li><b>Primeira borda do CLK</b> (<code>PAM_RX_TIM2_IRQ</code>): o TIM2 é zerado; a ISR espera até CNT ≥ 200 (2 µs) — conversões antigas já terminaram e a k = 0 (3,12 µs) ainda não começou — e anota o índice absoluto da próxima amostra, <code>abs0</code>. Tudo antes é descartado (<code>amostras_descartadas_antes_CLK</code>).</li>
+<li><b>Bordas seguintes</b>: na borda n, o total de amostras escritas tem que ser <code>abs0 + 8·n</code>. Qualquer diferença soma 1 em <code>bordas_com_contagem_errada</code> ⇒ quadro inválido. É a <b>prova</b> de 8 amostras por símbolo sem perdas.</li>
+<li><b>Processamento</b> (<code>rx_process</code>, no loop principal): pega os grupos de 8 amostras já completos do buffer circular e chama <code>pam_rx_symbol()</code>. Se a CPU atrasar mais de 512 amostras, <code>overrun_processamento=1</code>.</li>
+<li><b>Fim</b>: quando chegam todos os símbolos esperados, ou 5 ms sem borda (aí <code>perda_CLK=1</code> se faltou símbolo), ele para e imprime o relatório.</li>
+</ol>
+</div></details>
+
+<details class="como"><summary>Como funciona o RX: treinamento, decisão e BER (<code>pam_rx_core.c</code>)</summary><div>
+<ol>
+<li><b>Símbolos 0–139 (pulso)</b>: soma as 8 amostras dos 20 símbolos "A" e do último zero antes de cada A. No fim: <code>b_c</code> = média dos zeros (linha de base), <code>p_c[k]</code> = média dos A − b_c (o pulso visto pelo RX), <code>E_c = Σ p_c²</code>.</li>
+<li><b>Símbolos 140–395 (níveis)</b>: guarda as amostras. No fim: para cada k calcula a menor separação entre níveis vizinhos (<code>separacao_k[k]</code>), escolhe <b>k*</b> = a maior; calcula u = a[k*] e z = Σ p_c[k](a[k]−b_c)/E_c de cada símbolo; centros = médias por nível; limiares = pontos médios; margens. Verifica se os centros estão em ordem (<code>calibracao_ok</code>).</li>
+<li>A partir daqui <b>os parâmetros ficam congelados</b> (evita viés: não se "ajusta" o detector olhando o payload).</li>
+<li><b>Início de quadro (48 bits)</b>: decide e compara com o padrão. Qualquer erro ⇒ <code>sincronismo_ok=0</code> ⇒ o quadro não recebe BER.</li>
+<li><b>Payload</b>: para cada símbolo, decide com u e com z (nível = quantos limiares foram ultrapassados), compara com o que o gerador idêntico ao do TX diz que foi transmitido e conta erros de símbolo (N<sub>s</sub>) e de bit (N<sub>e</sub>, via Gray).</li>
+<li>Guarda 1024 símbolos × 8 amostras a partir do símbolo 1000 do payload: são o olho e a PSD.</li>
+</ol>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f6">
+<div class="kicker">Fase 6 <span class="tempo">≈ 30 min</span></div>
+<h2>Gravar as placas</h2>
+<div class="meta"><p><b>Meta:</b> TX e RX gravados; marque as placas com fita (<b>TX</b> / <b>RX</b>) para nunca trocar.</p></div>
+<p>Escolha <b>um</b> dos três caminhos:</p>
+<div class="grid2">
+<div class="card"><h4>A. ST-Link (recomendado)</h4><p>SWDIO, SWCLK e GND do ST-Link nos pinos de 4 vias da BlackPill (3V3 só como referência, se a placa já estiver no USB). No CubeIDE: <b>Run</b> (▶). Dá para depurar e ver variáveis.</p></div>
+<div class="card"><h4>B. USB-C (DFU, sem hardware extra)</h4><p>Segure <kbd>BOOT0</kbd>, aperte e solte <kbd>NRST</kbd>, solte BOOT0. Aparece "STM32 BOOTLOADER". No STM32CubeProgrammer: USB → Connect → abra o .elf/.bin → Download (endereço 0x08000000). Ou:</p>
+<pre><code>dfu-util -a 0 -s 0x08000000:leave -D PAM_TX.bin</code></pre></div>
+<div class="card"><h4>C. UART pelo Pico (bootloader serial)</h4><p>Use a UART0 livre do Pico: GP0 → PA10, GP1 ← PA9, GND da placa a gravar. Segure BOOT0 + reset na BlackPill. CubeProgrammer: <b>UART</b>, porta <code>/dev/ttyACM0</code>, 115200, paridade <b>Even</b> → Connect → Download. Se não conectar, use o caminho B (DFU).</p></div>
+</div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f6-1"><span class="t"><span class="lbl">Gravar o TX. Depois de 1 s do reset o LED PC13 acende por ~5 s (PAM-2) e apaga</span></span></li>
+<li><input type="checkbox" data-id="f6-2"><span class="t"><span class="lbl">Gravar o RX. O LED PC13 fica aceso (armado)</span></span></li>
+<li><input type="checkbox" data-id="f6-3"><span class="t"><span class="lbl">(Atalho de teste) Se seu projeto ainda não compila, dá para gravar <code>firmware/build_referencia/tx.bin</code> e <code>rx.bin</code> — mesmo código, compilado com a HAL oficial</span><small>Serve para testar a bancada. Os prints do CubeMX e o seu projeto continuam obrigatórios.</small></span></li>
+</ul>
+<div class="aviso"><p>Se o DFU não for reconhecido: tente outro cabo USB-C (alguns só carregam), segure BOOT0 por mais tempo, e solte fios ligados em PA9/PA10 (o bootloader também escuta a USART1 e pode "escolher" ela se houver ruído nesses pinos).</p></div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f7">
+<div class="kicker">Fase 7 <span class="tempo">≈ 30 min</span></div>
+<h2>Serial: usando o Raspberry Pi Pico (RP2040) como adaptador USB-serial</h2>
+<div class="meta"><p><b>Meta:</b> o PC enxerga a USART1 do RX pela porta <code>/dev/ttyACM1</code>: ao apertar o reset do RX, o app mostra <code>=== RX PAM banda base - BlackPill F411 ===</code> e <code>#ARMADO</code>, e o comando <kbd>?</kbd> responde.</p></div>
+
+<h3>A ideia</h3>
+<p>O firmware <b>pico-uart-bridge</b> (github.com/Noltari/pico-uart-bridge) transforma o Pico num adaptador USB-serial de 3,3 V com <b>duas</b> portas. No Linux elas aparecem como:</p>
+<div class="tw"><table>
+<tr><th>Porta no PC</th><th>UART do Pico</th><th>Pinos</th><th>Uso</th></tr>
+<tr><td><code>/dev/ttyACM0</code></td><td>UART0</td><td>GP0 (TX) · GP1 (RX)</td><td>sem uso</td></tr>
+<tr><td><code>/dev/ttyACM1</code></td><td>UART1</td><td><b>GP4 (TX) · GP5 (RX)</b></td><td><b>RX do projeto</b></td></tr>
+</table></div>
+<p>O baud não é fixo no Pico: ele usa o que o PC pedir ao abrir a porta (o app e o MATLAB pedem 460 800 8N1). Como os pinos do Pico são TX/RX <b>dele</b>, a ligação é <b>cruzada</b>: o TX de um vai no RX do outro.</p>
+
+<figure>
+<svg viewBox="0 0 860 330" role="img" aria-label="Ligação do Pico como ponte USB-serial">
+  <rect class="boxok" x="10" y="30" width="440" height="270" rx="12"/>
+  <text x="230" y="22" text-anchor="middle" font-weight="600" font-size="14">Raspberry Pi Pico (RP2040) — pico-uart-bridge</text>
+  <rect class="box" x="25" y="125" width="70" height="60" rx="6"/><text x="60" y="152" text-anchor="middle" font-size="12">USB</text><text x="60" y="168" text-anchor="middle" font-size="10" class="mut">ao PC</text>
+  <rect class="boxa" x="125" y="95" width="150" height="120" rx="6"/><text x="200" y="120" text-anchor="middle" font-size="12" font-weight="600">RP2040</text><text x="200" y="140" text-anchor="middle" font-size="11">ttyACM0 ↔ UART0</text><text x="200" y="158" text-anchor="middle" font-size="11" font-weight="600">ttyACM1 ↔ UART1</text><text x="200" y="180" text-anchor="middle" font-size="10" class="mut">baud = o que o PC pedir</text>
+  <path class="s" stroke-width="2" d="M95,155 H125"/>
+  <path class="s blue" stroke-width="2" d="M275,120 H340 V75 H450"/>
+  <path class="s grn" stroke-width="2" d="M275,165 H360 V110 H450"/>
+  <circle cx="450" cy="75" r="5" class="fb"/><text x="440" y="68" text-anchor="end" font-size="12" font-weight="600">GP4 · UART1 TX (pino 6)</text>
+  <circle cx="450" cy="110" r="5" class="fg"/><text x="440" y="128" text-anchor="end" font-size="12" font-weight="600">GP5 · UART1 RX (pino 7)</text>
+  <circle cx="450" cy="250" r="5"/><text x="440" y="243" text-anchor="end" font-size="12" font-weight="600">GND (pino 8)</text>
+  <text x="440" y="285" text-anchor="end" font-size="11" class="mut">GP0/GP1 (ttyACM0): nada · 3V3/VSYS: nada</text>
+  <rect class="boxa" x="640" y="40" width="210" height="260" rx="12"/>
+  <text x="745" y="32" text-anchor="middle" font-weight="600" font-size="14">BlackPill RX</text>
+  <circle cx="640" cy="75" r="5" class="fb"/><text x="652" y="80" font-size="12" font-weight="600">PA10 (USART1_RX)</text>
+  <circle cx="640" cy="110" r="5" class="fg"/><text x="652" y="115" font-size="12" font-weight="600">PA9 (USART1_TX)</text>
+  <circle cx="640" cy="250" r="5"/><text x="652" y="255" font-size="12" font-weight="600">GND</text>
+  <path class="s blue" stroke-width="2" d="M455,75 H635"/>
+  <path class="s grn" stroke-width="2" d="M455,110 H635"/>
+  <path class="s" stroke-width="2" d="M455,250 H635"/>
+  <text x="545" y="68" text-anchor="middle" font-size="11">comandos PC → RX</text>
+  <text x="545" y="130" text-anchor="middle" font-size="11">relatório RX → PC</text>
+  <text x="545" y="150" text-anchor="middle" font-size="12" font-weight="700">cruzado: TX→RX, RX←TX</text>
+  <text x="545" y="243" text-anchor="middle" font-size="11">GND comum</text>
+  <text x="652" y="285" font-size="11" class="mut">3V3/5V: NÃO ligar</text>
+</svg>
+<figcaption>Figura 7.1 — GP4 (TX do Pico) → PA10 (RX do STM32) e PA9 (TX do STM32) → GP5 (RX do Pico), mais o GND. A porta é a <b>/dev/ttyACM1</b>; a ttyACM0 é a outra UART do Pico e não tem nada ligado.</figcaption>
+</figure>
+
+<ul class="chk">
+<li><input type="checkbox" data-id="f7-1"><span class="t"><span class="lbl">Gravar o <b>pico-uart-bridge</b> no Pico (uma vez só)</span>
+<small>github.com/Noltari/pico-uart-bridge → Releases → v4.2 → baixe <code>uart_bridge.uf2</code>. Segure <kbd>BOOTSEL</kbd>, ligue o USB e solte: aparece o disco <b>RPI-RP2</b>. Arraste o <code>.uf2</code> para ele; o Pico reinicia sozinho como ponte. (Pico 2 / RP2350 precisa de um build próprio; o seu é RP2040, serve o da release.)</small></span></li>
+<li><input type="checkbox" data-id="f7-2"><span class="t"><span class="lbl">Ligar o Pico no USB do PC e conferir as duas portas</span>
+<pre><code>ls /dev/ttyACM*               # deve mostrar ttyACM0 e ttyACM1
+ls -l /dev/serial/by-id/      # nome fixo do Pico (útil se outro aparelho pegar ACM0/ACM1)
+python pam_app.py portas</code></pre><small>Se houver outro dispositivo ACM ligado antes do Pico, os números mudam: use o link de <code>/dev/serial/by-id/</code> da segunda interface do Pico (a UART1).</small></span></li>
+<li><input type="checkbox" data-id="f7-3"><span class="t"><span class="lbl"><b>Teste de laço</b> (antes de ligar na BlackPill): um fio entre <b>GP4</b> e <b>GP5</b> do Pico; abrir um terminal a 460800 e digitar — o que você digita tem que voltar</span>
+<pre><code>python -m serial.tools.miniterm /dev/ttyACM1 460800    # Ctrl+] sai</code></pre><small>Se voltar: a ponte e a UART1 funcionam. Se não voltar: confira se o fio está em GP4/GP5 (pinos 6 e 7) e se abriu a ttyACM<b>1</b>.</small></span></li>
+<li><input type="checkbox" data-id="f7-4"><span class="t"><span class="lbl">Tirar o laço e ligar <b>cruzado</b>: <b>GP4 → PA10</b>, <b>GP5 ← PA9</b>, <b>GND → GND</b>. Não ligar 3V3, VSYS nem VBUS entre as placas</span></span></li>
+<li><input type="checkbox" data-id="f7-5"><span class="t"><span class="lbl">No app: aba 1 → porta <code>/dev/ttyACM1</code> (já vem escolhida) → Conectar → apertar o reset do RX → ver o banner e <code>#ARMADO</code>. Clicar em <b>? ajuda</b> → aparece a lista de comandos</span></span></li>
+</ul>
+
+<details class="como"><summary>E a serial do TX? E a USB-C da BlackPill?</summary><div>
+<p>O firmware do <b>TX não usa serial</b> (ele só transmite; o modo é escolhido pelo jumper PB0). Então <b>uma ponte basta</b>, presa no RX. Se precisar gravar o TX pelo bootloader UART (Fase 6, caminho C), dá para usar a outra UART do Pico (<code>/dev/ttyACM0</code>: GP0 → PA10 do TX, GP1 ← PA9 do TX).</p>
+<p>Também não use a USB-C da BlackPill para o relatório: o firmware não configura USB-CDC; a USB-C só alimenta (e serve para DFU).</p>
+<p>O app abre a porta com <b>DTR ativo</b>: a pilha USB do Pico (TinyUSB) usa o DTR para saber que há um programa escutando. Num terminal qualquer isso já é o padrão.</p>
+</div></details>
+
+<details class="como"><summary>Como funciona o protocolo da serial</summary><div>
+<p>460 800 baud, 8N1 ≈ 46 kB/s. O RX lê <b>um caractere por vez</b> no loop principal (sem interrupção) e responde:</p>
+<div class="tw"><table>
+<tr><th>Tecla</th><th>Efeito</th></tr>
+<tr><td><kbd>2</kbd> / <kbd>4</kbd></td><td>PAM-2 / PAM-4 e rearma (tem que bater com o jumper PB0 do TX)</td></tr>
+<tr><td><kbd>d</kbd> <kbd>c</kbd> <kbd>x</kbd> <kbd>m</kbd></td><td>rótulo do canal: Dupont_direto / Dupont_RC_16n8 / Dupont_RC_33n / cabo_manga_200m (e rearma)</td></tr>
+<tr><td><kbd>r</kbd> · <kbd>p</kbd> · <kbd>?</kbd></td><td>rearmar · reimprimir o último relatório · ajuda</td></tr>
+</table></div>
+<p>Depois do quadro o RX imprime ~1 520 linhas (~3 s):</p>
+<pre><code>#BEGIN_REPORT
+modulacao=PAM-4             canal=Dupont_RC_16n8
+bordas_CLK=50420            simbolos_esperados=50420     ← prova de que nenhum CLK se perdeu
+amostras_processadas=403360 bordas_com_contagem_errada=0 ← prova de 8 amostras/símbolo
+aquisicao_valida=1
+b_c=…  E_c=…  p_c[0..7]=…  ISI_zero_apos_A[0..7]=…  separacao_k[0..7]=…  k_estrela=7
+centro_u/z[..]  limiar_u/z[..]  margem_u_ADC  margem_z  calibracao_ok=1
+inicio_quadro_erros_u=0  sincronismo_ok=1
+amostra_unica_Ne=0  filtro_casado_Ne=0  BER_amostra=0/100000 …
+janela a[k] x[k] p_c[k]     ← um símbolo real para a conta de z à mão
+#END_REPORT
+#BEGIN_TRAIN j,nivel,a0..a7,z      (396 linhas: dados brutos do treinamento)
+#BEGIN_PSD simbolo,nivel,a0..a7    (1024 linhas = 8 192 amostras)
+#END_PSD</code></pre>
+<p>O app junta tudo de <code>#BEGIN_REPORT</code> até <code>#END_PSD</code>, grava o arquivo e <b>recalcula tudo a partir dos dados brutos</b> (b<sub>c</sub>, p<sub>c</sub>, k*, limiares, olho, PSD), conferindo com o que o firmware calculou.</p>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f8">
+<div class="kicker">Fase 8 <span class="tempo">≈ 1–2 h</span></div>
+<h2>Montagem na protoboard</h2>
+<div class="meta"><p><b>Meta:</b> as duas BlackPills na protoboard, canal fácil de trocar (Dupont ↔ RC ↔ manga, 16,5 ↔ 33 nF com um jumper), pontos TP1–TP4 acessíveis para a ponta do osciloscópio e GND comum — sem unir os 3V3.</p></div>
+
+<h3>Regra de ouro da protoboard</h3>
+<p>Cada coluna de 5 furos (a–e ou f–j) é <b>um nó elétrico</b>. Monte pensando em nós: "a coluna 24 é TP2". Cada BlackPill vai <b>atravessando a canaleta central</b>, então cada pino dela ganha uma coluna própria — mas a placa cobre parte dos furos e sobram só 1–2 livres. Por isso os componentes ficam no meio e cada pino usado manda um fio até lá.</p>
+<div class="info"><p>Resumo pino a pino (TX, canal, RX, Pico): <code>docs/06_MONTAGEM_PROTOBOARD.md</code>.</p></div>
+<div class="info"><p><b>Capacitores da montagem real</b> (não havia 390 pF nem 6,8 nF): filtro do TX = <b>4 × 100 pF em paralelo = 400 pF</b> (τ = 0,132 µs, +2,6 %); canal 2 = <b>33 nF em série com 33 nF = 16,5 nF</b> (τ = 6,37 µs, −1,8 %). Na defesa, um jumper sobre um dos 33 nF deixa o canal com 33 nF.</p></div>
+
+<figure>
+<svg viewBox="0 0 900 380" role="img" aria-label="Disposição na protoboard">
+  <rect class="box" x="10" y="30" width="880" height="300" rx="10"/>
+  <path class="s red" stroke-width="3" d="M30,48 H870"/><text x="34" y="44" font-size="11" class="mut">trilho + : só "3V3 do RX" (lado direito) — NÃO ligue o 3V3 do TX aqui</text>
+  <path class="s blue" stroke-width="3" d="M30,312 H870"/><text x="34" y="328" font-size="11" class="mut">trilho − : GND comum (GND do TX, GND do RX, GND do Pico, garra do osciloscópio)</text>
+  <path class="s" stroke-dasharray="4 4" d="M30,180 H870"/><text x="450" y="176" font-size="10" class="mut" text-anchor="middle">canaleta central</text>
+  <!-- TX -->
+  <rect class="boxa" x="40" y="110" width="200" height="140" rx="6"/><text x="140" y="170" text-anchor="middle" font-weight="600">BlackPill TX</text><text x="140" y="188" text-anchor="middle" font-size="11">USB-C → PC/carregador</text>
+  <text x="140" y="128" text-anchor="middle" font-size="10" class="mut">lado: PA8 · PB4 · GND</text><text x="140" y="242" text-anchor="middle" font-size="10" class="mut">lado: PA0(KEY) · PB0 · 3V3</text>
+  <!-- zonas -->
+  <rect class="boxw" x="260" y="70" width="130" height="95" rx="6"/><text x="325" y="90" text-anchor="middle" font-size="12" font-weight="600">Filtro do TX</text><text x="325" y="107" text-anchor="middle" font-size="10.5">PA8 → 330 Ω → TP2</text><text x="325" y="122" text-anchor="middle" font-size="10.5">4×100 pF: TP2 → GND</text><text x="325" y="140" text-anchor="middle" font-size="10.5" class="mut">TP1 = coluna do PA8</text><text x="325" y="155" text-anchor="middle" font-size="10.5" class="mut">TP2 = coluna nó</text>
+  <rect class="boxw" x="410" y="70" width="140" height="95" rx="6"/><text x="480" y="90" text-anchor="middle" font-size="12" font-weight="600">Canal</text><text x="480" y="107" text-anchor="middle" font-size="10.5">Dupont 20 cm TP2→A</text><text x="480" y="122" text-anchor="middle" font-size="10.5">56 Ω: A → TP3 (ou fio)</text><text x="480" y="137" text-anchor="middle" font-size="10.5">TP3 ─33n─ N ─33n─ GND</text><text x="480" y="155" text-anchor="middle" font-size="10.5" class="mut">jumper N–GND = 33 nF</text>
+  <rect class="boxw" x="570" y="70" width="110" height="95" rx="6"/><text x="625" y="90" text-anchor="middle" font-size="12" font-weight="600">Proteção</text><text x="625" y="107" text-anchor="middle" font-size="10.5">TP3 → 1 kΩ → TP4</text><text x="625" y="122" text-anchor="middle" font-size="10.5">D+: TP4 → 3V3 RX</text><text x="625" y="137" text-anchor="middle" font-size="10.5">D−: GND → TP4</text><text x="625" y="155" text-anchor="middle" font-size="10.5" class="mut">TP4 → PA1</text>
+  <rect class="boxok" x="260" y="200" width="420" height="50" rx="6"/><text x="470" y="221" text-anchor="middle" font-size="12" font-weight="600">Fio do CLK (Dupont 20 cm): PB4 do TX → PA0 do RX</text><text x="470" y="239" text-anchor="middle" font-size="10.5">10 kΩ de PA0 (RX) para GND · fio de GND do TX ao GND do RX ao lado</text>
+  <!-- RX -->
+  <rect class="boxa" x="700" y="110" width="175" height="140" rx="6"/><text x="787" y="170" text-anchor="middle" font-weight="600">BlackPill RX</text><text x="787" y="188" text-anchor="middle" font-size="11">USB-C → PC</text>
+  <text x="787" y="128" text-anchor="middle" font-size="10" class="mut">lado: PA9 · PA10 · GND</text><text x="787" y="242" text-anchor="middle" font-size="10" class="mut">lado: PA0 · PA1 · PB0 · 3V3</text>
+  <!-- ESP -->
+  <rect class="boxok" x="700" y="345" width="175" height="30" rx="6"/><text x="787" y="365" text-anchor="middle" font-size="11">Pico (ponte serial)</text>
+  <path class="s grn" stroke-width="2" stroke-dasharray="5 3" d="M787,250 V345"/><text x="795" y="300" font-size="10" class="mut">PA9→GP5 · PA10←GP4 · GND</text>
+</svg>
+<figcaption>Figura 8.1 — Disposição sugerida (esquemática, sem escala). O sinal anda da esquerda para a direita; cada caixa amarela ocupa algumas colunas.</figcaption>
+</figure>
+
+<h3>Esquema elétrico completo</h3>
+<pre><code>            TX                                CANAL                               RX           3V3 (RX)
+                                                                                                 │
+                                                                                              D+ (catodo no 3V3)
+  PA8 ──[330 Ω]──●── TP2 ── Dupont 20 cm ──[56 Ω]──●── TP3 ──[1 kΩ]──●── TP4 ── PA1 (ADC1_IN1)
+  (TP1)          │                                 │                  │
+              [390 pF]                         [16,8 nF]           D− (anodo no GND)
+          (4×100p = 400p)            (33n série 33n = 16,5n)          │
+  GND ───────────●────────── Dupont GND ───────────●──────────────────●──── GND (RX)
+
+  PB4 (CLK) ─────────────── Dupont 20 cm ───────────────────────●──── PA0 (TIM2_CH1)
+                                                               [10 kΩ] → GND
+  PB0 (TX) ── jumper ao GND = PAM-4          PB0 (RX) ── jumper ao GND = PAM-4 (ou comando 2/4)</code></pre>
+
+<h3>Ordem de montagem</h3>
+<ul class="chk">
+<li><input type="checkbox" data-id="f8-1"><span class="t"><span class="lbl">Encaixar TX na esquerda e RX na direita, atravessando a canaleta. Ligar o <b>GND</b> de cada uma no trilho azul</span><small>Confira na serigrafia qual lado tem PA8/PA9/PA10/PB4 e qual tem PA0/PA1/PB0/3V3.</small></span></li>
+<li><input type="checkbox" data-id="f8-2"><span class="t"><span class="lbl">Trilho vermelho: ligar <b>só o 3V3 do RX</b> (vai receber o catodo do D+). Nada do TX nele</span></span></li>
+<li><input type="checkbox" data-id="f8-3"><span class="t"><span class="lbl">Filtro do TX: fio da coluna do PA8 → resistor 330 Ω → coluna livre = <b>TP2</b>; <b>4 capacitores de 100 pF em paralelo</b> (= 400 pF, no lugar do 390 pF) entre TP2 e o trilho azul (perninhas curtas)</span></span></li>
+<li><input type="checkbox" data-id="f8-4"><span class="t"><span class="lbl">Canal 1: fio Dupont de ~20 cm de TP2 até uma coluna = <b>TP3</b> (sem 56 Ω e sem capacitor)</span></span></li>
+<li><input type="checkbox" data-id="f8-5"><span class="t"><span class="lbl">Proteção: TP3 → 1 kΩ → coluna <b>TP4</b>; D− (1N5817) com <b>anodo no GND</b> e catodo (faixa) em TP4; D+ (1N5817) com <b>anodo em TP4</b> e catodo (faixa) no trilho 3V3 do RX; fio TP4 → <b>PA1</b> do RX — <i>só depois da Fase 9/10, item de verificação</i></span><small>Os Schottky normalmente nunca conduzem: só se TP4 sair de −0,3…3,6 V.</small></span></li>
+<li><input type="checkbox" data-id="f8-6"><span class="t"><span class="lbl">CLK: fio Dupont de PB4 (TX) até PA0 (RX); resistor 10 kΩ da coluna do PA0 ao trilho azul</span><small>Segura o PA0 em 0 quando o TX está em reset (evita bordas falsas).</small></span></li>
+<li><input type="checkbox" data-id="f8-7"><span class="t"><span class="lbl">Jumpers de modo: um fio que você possa encaixar/tirar de PB0 ao GND, em cada placa</span></span></li>
+<li><input type="checkbox" data-id="f8-8"><span class="t"><span class="lbl">Pontos de prova: deixe um pedaço de fio rígido em pé (ou laço) em TP1, TP2, TP3, TP4 e um GND perto, para a garra e o gancho da ponta ×10</span></span></li>
+<li><input type="checkbox" data-id="f8-9"><span class="t"><span class="lbl">Preparar o canal 2 sem montar ainda: 56 Ω e os <b>dois 33 nF em série</b> (TP3 → 33n → coluna N → 33n → GND = 16,5 nF), mais um fio pronto para o jumper N–GND da defesa</span><small>Meça o par no capacímetro se puder: o valor real explica o τ medido.</small></span></li>
+</ul>
+<div class="perigo"><p><b>Nunca</b> una os pinos 3V3 das duas placas (cada uma tem seu regulador e seu USB). <b>Não</b> aperte o botão KEY do RX: ele está em PA0, a entrada do CLK, e cada aperto vira uma borda falsa.</p></div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f9">
+<div class="kicker">Fase 9 · Etapas 1–2 do enunciado <span class="tempo">≈ 2 h</span></div>
+<h2>Verificar o TX no osciloscópio</h2>
+<div class="meta"><p><b>Meta:</b> CLK de 50,0 µs com 50 %, 2 e 4 níveis corretos em TP2, ordem Gray confirmada, ripple e atraso medidos — tudo salvo em <code>entrega/capturas/</code>.</p></div>
+<p>Osciloscópio: CH1 = PB4 (CLK), CH2 = TP2, pontas em <b>×10</b> (a ×1 tem ~100 pF e muda o τ). Aperte RESET no TX: 1 s depois o quadro sai.</p>
+<ul class="chk">
+<li><input type="checkbox" data-id="f9-1"><span class="t"><span class="lbl">Período do CLK = <b>50,0 µs</b> (20 kHz), duty 50 % (cursores) → <code>TX_CLK_50us.png</code></span></span></li>
+<li><input type="checkbox" data-id="f9-2"><span class="t"><span class="lbl">PAM-2 (PB0 aberto): níveis ≈ 0 e 3,3 V em TP2 → <code>TX_TP2_PAM2_niveis.png</code></span><small>No começo aparece o treinamento 0,0,0,A,0,0,0: um pulso a cada 350 µs.</small></span></li>
+<li><input type="checkbox" data-id="f9-3"><span class="t"><span class="lbl">PAM-4 (PB0 no GND): níveis ≈ 0 / 1,1 / 2,2 / 3,3 V, anotando o valor medido de cada um → <code>TX_TP2_PAM4_niveis.png</code></span></span></li>
+<li><input type="checkbox" data-id="f9-4"><span class="t"><span class="lbl">Ordem da calibração PAM-4: <b>0,1,0,3,2,3,1,2</b> identificada na tela → <code>TX_TP2_PAM4_gray.png</code></span></span></li>
+<li><input type="checkbox" data-id="f9-5"><span class="t"><span class="lbl">Ripple do PWM em TP2 no nível 1 (zoom ~50 ns/div, acoplamento AC): previsto ≈ 150 mVpp → <code>TX_TP2_ripple_PWM.png</code></span></span></li>
+<li><input type="checkbox" data-id="f9-6"><span class="t"><span class="lbl">Alinhamento: atraso entre a subida do CLK e o início da transição em TP2 (previsto 0,2–0,4 µs = latência da ISR) → <code>TX_alinhamento.png</code></span></span></li>
+<li><input type="checkbox" data-id="f9-7"><span class="t"><span class="lbl">TP1 (PA8 bruto): só qualitativo (pulsos de 10–20 ns são mais rápidos que os 60 MHz do TDS2002B)</span></span></li>
+</ul>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f10">
+<div class="kicker">Fase 10 · Etapa 3 <span class="tempo">≈ 1 h</span></div>
+<h2>Ligar e validar o RX</h2>
+<div class="meta"><p><b>Meta:</b> um quadro PAM-2 válido no canal Dupont, com o app mostrando os 9 critérios em verde. Isso prova 8 amostras/símbolo e 160 000 amostras/s sem perdas.</p></div>
+<h3>Antes de ligar TP4 no PA1</h3>
+<ul class="chk">
+<li><input type="checkbox" data-id="f10-1"><span class="t"><span class="lbl">Placas no USB, só os GND unidos: medir <b>0 V</b> entre GND do TX e GND do RX</span></span></li>
+<li><input type="checkbox" data-id="f10-2"><span class="t"><span class="lbl">Medir o <b>3V3 do RX</b> com o multímetro → este é o <b>Vref</b>. Anotar (ex.: 3,297 V) e digitar no campo "Vref medido" do app</span><small>Vref converte códigos em volts: entra na PSD, na abertura do olho e nas margens em mV.</small></span></li>
+<li><input type="checkbox" data-id="f10-3"><span class="t"><span class="lbl">Com o TX transmitindo, TP2 e TP3 ficam entre 0 e 3,3 V no osciloscópio. Só então ligar o fio TP4 → PA1</span></span></li>
+<li><input type="checkbox" data-id="f10-4"><span class="t"><span class="lbl">TP4 tem a mesma forma de TP3 (os diodos não estão conduzindo)</span></span></li>
+</ul>
+<h3>Primeiro quadro</h3>
+<ul class="chk">
+<li><input type="checkbox" data-id="f10-5"><span class="t"><span class="lbl">App, aba 1: Conectar → <b>PAM-2</b> + <b>d</b> → <b>ARMAR</b>. Status fica laranja "ARMADO"</span></span></li>
+<li><input type="checkbox" data-id="f10-6"><span class="t"><span class="lbl">Apertar <b>RESET do TX</b>. ~5 s de quadro + ~3 s de relatório → status verde "QUADRO VÁLIDO"</span></span></li>
+<li><input type="checkbox" data-id="f10-7"><span class="t"><span class="lbl">Na aba 2, conferir: <code>bordas_CLK = 100 444</code>, <code>amostras = 8 × símbolos</code>, <code>bordas_com_contagem_errada = 0</code>, <code>aquisicao_valida = 1</code></span></span></li>
+<li><input type="checkbox" data-id="f10-8"><span class="t"><span class="lbl">Repetir em PAM-4 (jumper PB0 no GND no <b>TX</b> + botão PAM-4 no app): <code>bordas_CLK = 50 420</code></span></span></li>
+</ul>
+<details class="como"><summary>Como argumentar os 160 000 amostras/s na defesa</summary><div>
+<p>"O TIM2 é zerado a cada borda do CLK (50,0 µs medidos no osciloscópio) e dispara o ADC a cada 625 ciclos de 10 ns = 6,25 µs. A contagem <code>amostras = 8 × bordas</code>, sem nenhuma borda com contagem errada em 100 444 bordas, fecha a conta: 8 / 50 µs = 160 kHz." Opcional: CH1 = CLK, CH2 = TP4 com zoom mostra o pequeno degrau de carga do capacitor de amostragem do ADC a cada 6,25 µs.</p>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f11">
+<div class="kicker">Fase 11 · Etapas 4–6 (canal 1) <span class="tempo">≈ 3 h</span></div>
+<h2>Canal 1 — Dupont direto, PAM-2 e PAM-4</h2>
+<div class="meta"><p><b>Meta:</b> 2 logs válidos (Dupont PAM-2 e PAM-4) + capturas do degrau e do olho + figuras do app.</p></div>
+<p>Faça tudo abaixo para <b>PAM-2</b> e depois para <b>PAM-4</b>:</p>
+<ul class="chk">
+<li><input type="checkbox" data-id="f11-1"><span class="t"><span class="lbl">Resposta a transições: CH1 = TP2, CH2 = TP3, trigger na subida 0→A do treinamento; medir t<sub>10–90</sub> (Measure → Rise Time) → <code>Dupont_PAMx_TP2_TP3_degrau.png</code></span><small>No Dupont a subida é ~0,3 µs: praticamente só o filtro do TX.</small></span></li>
+<li><input type="checkbox" data-id="f11-2"><span class="t"><span class="lbl">Olho no osciloscópio: CH1 = CLK (trigger na subida), CH2 = TP3, 10 µs/div, <b>Display → Persist → Infinite</b>; deixar acumular no payload → <code>Dupont_PAMx_olho_osc.png</code></span></span></li>
+<li><input type="checkbox" data-id="f11-3"><span class="t"><span class="lbl">Quadro completo pelo app (canal <b>d</b>): log salvo como <code>Dupont_PAMx_&lt;data&gt;.txt</code> (o log bruto é entregável)</span></span></li>
+<li><input type="checkbox" data-id="f11-4"><span class="t"><span class="lbl">Aba 2 → <b>Salvar figuras</b> e anotar: p<sub>c</sub>[k], k*, centros, limiares, margens, abertura, S(5 k) e S(10 k), N<sub>e</sub> e N<sub>s</sub></span><small>No Dupont todos os k empatam (o sinal estabiliza em &lt; 1 µs): k* sai do ruído e qualquer k serviria. Diga isso na defesa.</small></span></li>
+</ul>
+<details class="como"><summary>Como ler as 4 figuras da análise</summary><div>
+<ol>
+<li><b>Pulso medido e ISI</b> (azul): p<sub>c</sub>[k], o símbolo A visto pelo RX nas 8 amostras. Vermelho: o símbolo <i>seguinte</i> (que deveria ser 0). O que sobra ali é ISI.</li>
+<li><b>Olho</b>: as 8 amostras de cada símbolo e do seguinte, coloridas pelo nível transmitido. Linha vermelha = t<sub>k*</sub>. Abertura = menor distância entre nuvens vizinhas em k*.</li>
+<li><b>Amostra única na calibração</b>: u = a[k*] dos 256 símbolos de níveis conhecidos, com os limiares tracejados. Margem = folga entre nuvens.</li>
+<li><b>PSD</b>: medida (azul) × teoria (tracejado). Nulos em 20, 40, 60 kHz (sinc² do pulso de 50 µs); no PAM-4 um vale em 10 kHz que vem da PRBS + Gray, não do canal.</li>
+</ol>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f12">
+<div class="kicker">Fase 12 · Etapas 4–6 (canal 2) <span class="tempo">≈ 3 h</span></div>
+<h2>Canal 2 — RC (56 Ω + 16,5 nF) e medida de τ</h2>
+<div class="meta"><p><b>Meta:</b> 2 logs válidos do RC (PAM-2 e PAM-4), τ medido no degrau e comparado com o previsto (enunciado: 6,48 µs com 16,8 nF; com o seu 16,5 nF: 6,37 µs pelo modelo de 1 polo e ≈ 7,0 µs pelo de 2 polos), k* = 7.</p></div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f12-1"><span class="t"><span class="lbl">Inserir o <b>56 Ω em série</b> (no lugar do curto entre o fim do Dupont e TP3) e <b>33 nF em série com 33 nF</b> (16,5 nF) de TP3 para GND — <b>antes</b> do 1 kΩ</span></span></li>
+<li><input type="checkbox" data-id="f12-2"><span class="t"><span class="lbl">Repetir a Fase 11 com o canal <b>c</b> no app (degrau, olho, quadro, figuras) para PAM-2 e PAM-4</span></span></li>
+<li><input type="checkbox" data-id="f12-3"><span class="t"><span class="lbl">Medir τ: PAM-4, transição 0→3 do treinamento; CH1 = CLK, CH2 = TP3, 5 µs/div, trigger na borda do símbolo A</span>
+<small>À mão: V0 antes da subida, Vf no fim do símbolo, t0 = início da subida, t63 em V0 + 0,632(Vf − V0) ⇒ τ = t63 − t0. Confira τ ≈ t<sub>10–90</sub>/2,197.</small></span></li>
+<li><input type="checkbox" data-id="f12-4"><span class="t"><span class="lbl">Melhor: no TDS2002B <b>Save/Recall → Save → CSV</b> no pendrive → app aba 4 → abrir o CSV → <b>Calcular τ</b> → <b>Usar este τ na aba 3</b></span><small>Previsto: τ ≈ 6,5–7,2 µs; t<sub>10–90</sub> ≈ 14–16 µs.</small></span></li>
+<li><input type="checkbox" data-id="f12-5"><span class="t"><span class="lbl">Captura TP2 e TP3 juntos (CH1 = TP2, CH2 = TP3): entrada e saída do canal (sistema LIT) → <code>RC_PAM4_TP2_TP3.png</code></span></span></li>
+<li><input type="checkbox" data-id="f12-6"><span class="t"><span class="lbl">Escrever a causa da diferença τ medido × previsto (6,37 µs com 16,5 nF; 6,48 µs no enunciado) (escolha uma e diga como verificaria)</span><small>(a) os 400 pF do TX também carregam (+0,13 µs); (b) a resistência de saída do PA8, ~30 Ω × 16,5 nF ≈ +0,5 µs; (c) tolerância dos capacitores e a troca 16,8 → 16,5 nF (meça o par!); (d) ponta ×1 em vez de ×10.</small></span></li>
+</ul>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f13">
+<div class="kicker">Fase 13 · Etapa 6 <span class="tempo">≈ 1 h</span></div>
+<h2>PSD: comparação Dupont × RC</h2>
+<div class="meta"><p><b>Meta:</b> figuras <code>psd_comparacao_PAM2.png</code> e <code>PAM4.png</code> na mesma escala, e a razão S<sub>RC</sub>/S<sub>Dupont</sub> em 5 e 10 kHz comparada com |H|² do τ medido. Previsto: <b>≈ 0,95 em 5 kHz</b> e <b>≈ 0,82 em 10 kHz</b>.</p></div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f13-1"><span class="t"><span class="lbl">App, aba 3: Log Dupont PAM-2 + Log RC PAM-2 + τ medido → <b>Comparar</b> → <b>Salvar figura</b></span></span></li>
+<li><input type="checkbox" data-id="f13-2"><span class="t"><span class="lbl">Mesmo para PAM-4</span></span></li>
+<li><input type="checkbox" data-id="f13-3"><span class="t"><span class="lbl">Anotar S(5 kHz), S(10 kHz) dos 4 casos, as razões e |H|² (1 polo, 2 polos, τ medido) — a tabela sai pronta no texto</span></span></li>
+<li><input type="checkbox" data-id="f13-4"><span class="t"><span class="lbl">Saber explicar o vale do PAM-4 em 10 kHz (material §6.4) e por que se compara a <b>razão</b>, não o valor absoluto</span></span></li>
+</ul>
+<details class="como"><summary>Por que a razão das PSDs é |H(f)|²</summary><div>
+<p>As 8 192 amostras de cada log começam no <b>mesmo símbolo do payload</b> (nº 1000), então os bits transmitidos são idênticos nos dois ensaios. Para um sistema LIT, S<sub>y</sub>(f) = |H(f)|²·S<sub>x</sub>(f). Dividindo, a parte que depende dos bits (e a flutuação estatística da estimativa, ~15 médias) se cancela e sobra |H<sub>RC</sub>|². O app usa a média de 5 bins (±312 Hz) em torno de 5 e 10 kHz para reduzir a variância.</p>
+<p>Método (diga na defesa): <i>8 192 amostras a 160 kHz (51,2 ms) → volts com Vref medido → média retirada → 15 blocos de 1024 com 50 % de sobreposição → janela de Hann → PSD unilateral em V²/Hz → resolução 156,25 Hz</i>.</p>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f14">
+<div class="kicker">Fase 14 · Etapa 7 (exploratória) <span class="tempo">≈ 2 h</span></div>
+<h2>Canal 3 — cabo manga de 200 m</h2>
+<div class="meta"><p><b>Meta:</b> forma de onda e olho em TP3 com o cabo, um quadro tentado e o <b>retorno de GND desenhado</b>. Se não sincronizar, isso é um resultado — com evidência.</p></div>
+<pre><code>  TP2 ─── condutor A do cabo (200 m em bobina) ───> TP3 (sem 56 Ω e sem os 33n) → 1 kΩ → TP4
+  GND TX ─ condutor B do cabo ──────────────────── GND RX
+  PB4 ──── Dupont curto ───────────────────────── PA0
+  GND TX ─ Dupont curto (necessário p/ o CLK) ──── GND RX   ← retorno PARALELO: declare!</code></pre>
+<ul class="chk">
+<li><input type="checkbox" data-id="f14-1"><span class="t"><span class="lbl">Montar, fotografar e <b>desenhar o retorno real de GND</b> (inclua USB das duas placas no mesmo PC e o terra do osciloscópio)</span></span></li>
+<li><input type="checkbox" data-id="f14-2"><span class="t"><span class="lbl">Antes de ligar PA1: TP3 entre 0 e 3,3 V</span></span></li>
+<li><input type="checkbox" data-id="f14-3"><span class="t"><span class="lbl">Capturar forma de onda e olho em TP3; rodar o quadro com o canal <b>m</b></span></span></li>
+<li><input type="checkbox" data-id="f14-4"><span class="t"><span class="lbl">Se <code>sincronismo_ok=1</code>: anotar erros e BER. Se não: escrever <b>"sem sincronismo"</b> + a evidência (olho fechado? <code>inicio_quadro_erros</code>? <code>perda_CLK</code>?). <b>Não invente BER</b></span></span></li>
+<li><input type="checkbox" data-id="f14-5"><span class="t"><span class="lbl">Explicar: 200 m × ~50–100 pF/m ≈ 10–20 nF + resistência dos condutores finos ⇒ efeito parecido com o RC; mais acoplamento e retorno compartilhado</span><small>Frase para o relatório: "o ensaio representa principalmente um condutor longo de dados com referência próxima, não um enlace isolado de 200 m".</small></span></li>
+</ul>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f15">
+<div class="kicker">Fase 15 · Ensaio da defesa <span class="tempo">≈ 1 h</span></div>
+<h2>Ensaio ao vivo: trocar 16,5 nF por 33 nF</h2>
+<div class="meta"><p><b>Meta:</b> em ~5 minutos, trocar o capacitor, rodar o quadro, medir t<sub>10–90</sub>, abertura do olho e PSD, e explicar em 1 minuto.</p></div>
+<div class="tw"><table>
+<tr><th>Grandeza</th><th>16,5 nF (seu)</th><th>33 nF previsto</th><th>33 nF medido</th></tr>
+<tr><td>τ</td><td>≈ 7,0 µs</td><td>12,7 (1 polo) – 13,9 µs (2 polos)</td><td></td></tr>
+<tr><td>t<sub>10–90</sub></td><td>≈ 15 µs</td><td>27–28 µs</td><td></td></tr>
+<tr><td>abertura PAM-4 em k*</td><td>≈ 1,08 V</td><td>≈ 0,95 V (−13 %)</td><td></td></tr>
+<tr><td>razão PSD 5 / 10 kHz</td><td>0,95 / 0,83</td><td>0,84 / 0,57</td><td></td></tr>
+<tr><td>k*</td><td>7</td><td>7</td><td></td></tr>
+</table></div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f15-1"><span class="t"><span class="lbl">Colocar o <b>jumper N–GND</b> (curto num dos 33 nF; fica um 33 nF) ou trocar o par por um 33 nF; no app canal <b>x</b> (RC 33 nF) → ARMAR → RESET no TX</span></span></li>
+<li><input type="checkbox" data-id="f15-2"><span class="t"><span class="lbl">Medir t<sub>10–90</sub> e τ (CSV → aba 4), abertura (aba 2) e PSD (aba 3, Dupont × RC33)</span></span></li>
+<li><input type="checkbox" data-id="f15-3"><span class="t"><span class="lbl">Treinar a fala: "C dobrou ⇒ τ dobrou ⇒ f<sub>c</sub> caiu à metade (12,5 kHz) ⇒ em 10 kHz a potência cai para ~0,6. No tempo, sobram ~2 % do degrau no fim do símbolo, que viram ISI e fecham o olho ~13 %. Ainda 0 erros porque 0,95 V ≫ ruído (~1 mV)."</span></span></li>
+<li><input type="checkbox" data-id="f15-4"><span class="t"><span class="lbl">Cronometrar o ciclo completo (meta: ≤ 5 min)</span></span></li>
+</ul>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f16">
+<div class="kicker">Fase 16 <span class="tempo">≈ 1 dia</span></div>
+<h2>Relatório e entrega</h2>
+<div class="meta"><p><b>Meta:</b> relatório de 4–6 páginas + pasta <code>entrega/</code> com logs brutos, capturas, prints e figuras, todos nomeados com canal e modulação.</p></div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f16-1"><span class="t"><span class="lbl">App, aba 5: adicionar os 4 logs (+ manga), aplicar τ às linhas do RC → <b>Gerar tabela</b> → <code>tabela_resultados.csv</code> + Markdown para colar</span></span></li>
+<li><input type="checkbox" data-id="f16-2"><span class="t"><span class="lbl">Seções: 1) objetivo e arquitetura · 2) montagem real (esquema, fotos, valores medidos, Vref) · 3) verificação do TX · 4) verificação do RX (8 amostras, 160 kS/s, 0 perdas)</span></span></li>
+<li><input type="checkbox" data-id="f16-3"><span class="t"><span class="lbl">5) canais: degrau, τ previsto × medido e causa; olhos com k*; ISI no 1º zero depois de A · 6) PSD: método, figuras na mesma escala, valores em 5/10 kHz e razões × |H|²</span></span></li>
+<li><input type="checkbox" data-id="f16-4"><span class="t"><span class="lbl">7) detectores: p<sub>c</sub>[k], k*, centros, limiares, margens (cada uma na sua unidade), conta à mão de um z, BER/SER, conclusão por canal · 8) cabo manga com o retorno de GND desenhado</span></span></li>
+<li><input type="checkbox" data-id="f16-5"><span class="t"><span class="lbl">9) <b>Uso de IA</b>: onde foi usada (firmware base, scripts MATLAB/Python, modelos Simulink, material de estudo), o que veio do enunciado (parâmetros) e o que depende das medições da equipe (todas as conclusões numéricas)</span></span></li>
+<li><input type="checkbox" data-id="f16-6"><span class="t"><span class="lbl">Declarar os <span class="ex">[extras]</span> da solução: USART1 + Pico (pico-uart-bridge), jumper PB0, pull-downs/10 kΩ, Trigger Filter do TIM2</span></span></li>
+<li><input type="checkbox" data-id="f16-7"><span class="t"><span class="lbl">Passar o checklist da pág. 8 do enunciado item por item</span></span></li>
+</ul>
+<div class="info"><p>"0 erros em 100 000 bits" é o jeito certo de escrever. Isso não prova BER nula: com 95 % de confiança, BER &lt; 3/100 000 = 3·10<sup>−5</sup>.</p></div>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f17">
+<div class="kicker">Fase 17 <span class="tempo">dia da defesa</span></div>
+<h2>Defesa (4 dos 10 pontos, individual)</h2>
+<div class="meta"><p><b>Meta:</b> cada integrante responde com <b>número medido → teoria da aula → conclusão verificável</b>. Roteiros completos em <code>docs/05_DEFESA_PERGUNTAS.md</code>.</p></div>
+<ul class="chk">
+<li><input type="checkbox" data-id="f17-1"><span class="t"><span class="lbl">Levar: as duas placas gravadas e testadas, o Pico com o pico-uart-bridge e os fios GP4/GP5/GND, a protoboard com o canal 2 (jumper N–GND pronto), 33 nF de reserva</span></span></li>
+<li><input type="checkbox" data-id="f17-2"><span class="t"><span class="lbl">Notebook com o app aberto, Vref preenchido, logs e figuras prontos</span></span></li>
+<li><input type="checkbox" data-id="f17-3"><span class="t"><span class="lbl">Impressos: tabela de resultados; saída da análise de cada condição; <b>uma janela real (a[k], x[k], p<sub>c</sub>[k]) por integrante</b> para a conta de z à mão; tabela de previsões do 33 nF</span></span></li>
+<li><input type="checkbox" data-id="f17-4"><span class="t"><span class="lbl">P1 (PSD em 5 e 10 kHz, razão e |H|²) — treinado</span></span></li>
+<li><input type="checkbox" data-id="f17-5"><span class="t"><span class="lbl">P2 (τ previsto × medido e uma causa verificável) — treinado</span></span></li>
+<li><input type="checkbox" data-id="f17-6"><span class="t"><span class="lbl">P4 (8 amostras e justificativa de k*) e P5 (coeficientes e um z à mão) — treinados</span></span></li>
+<li><input type="checkbox" data-id="f17-7"><span class="t"><span class="lbl">P6 (o que significa N<sub>e</sub> em 100 000 bits; erro de bit × falha de sincronismo) — treinado</span></span></li>
+</ul>
+<details class="como"><summary>Conta de z à mão (exemplo com o log simulado RC PAM-4)</summary><div>
+<div class="tw"><table>
+<tr><th>k</th><th>a[k]</th><th>x = a − b<sub>c</sub></th><th>p<sub>c</sub>[k]</th><th>p<sub>c</sub>·x</th></tr>
+<tr><td>0</td><td>3187</td><td>3185,65</td><td>1369,20</td><td>4 361 792</td></tr>
+<tr><td>1</td><td>3721</td><td>3719,65</td><td>2971,30</td><td>11 052 196</td></tr>
+<tr><td>2</td><td>3942</td><td>3940,65</td><td>3631,10</td><td>14 308 894</td></tr>
+<tr><td>3</td><td>4038</td><td>4036,65</td><td>3903,70</td><td>15 757 871</td></tr>
+<tr><td>4</td><td>4069</td><td>4067,65</td><td>4014,90</td><td>16 331 208</td></tr>
+<tr><td>5</td><td>4084</td><td>4082,65</td><td>4062,50</td><td>16 585 766</td></tr>
+<tr><td>6</td><td>4089</td><td>4087,65</td><td>4080,35</td><td>16 679 043</td></tr>
+<tr><td>7</td><td>4095</td><td>4093,65</td><td>4087,80</td><td>16 734 023</td></tr>
+<tr><td colspan="4"><b>Σ</b></td><td><b>111 810 792</b></td></tr>
+</table></div>
+<p>b<sub>c</sub> = 1,35 · E<sub>c</sub> = Σp<sub>c</sub>² = 105 109 787 · <b>z = 111 810 792 / 105 109 787 = 1,0638</b>. Limiares z = 0,213 / 0,555 / 0,881 ⇒ z &gt; 0,881 ⇒ <b>nível 3</b> ⇒ bits Gray <b>10</b>. Correto (nível TX = 3). Faça a sua com o seu log!</p>
+</div></details>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f18">
+<div class="kicker">Apêndice A</div>
+<h2>App Python <code>python/pam_app.py</code> — referência</h2>
+<p>Porta em Python dos scripts MATLAB (<code>le_log_rx</code>, <code>pam_detectores</code>, <code>pam_psd</code>, <code>analisa_ensaio</code>, <code>compara_psd_canais</code>, <code>tau_osciloscopio</code>, <code>gera_tabela_resultados</code>). Testado nos logs de <code>matlab/exemplo_logs/</code>: mesmos k*, margens, limiares e aberturas do MATLAB e do firmware.</p>
+<div class="tw"><table>
+<tr><th>Aba</th><th>Para quê</th><th>Fase</th></tr>
+<tr><td>1 · Serial / captura</td><td>conectar ao Pico (<code>/dev/ttyACM1</code>), escolher modulação/canal, ARMAR, ver o terminal; ao chegar <code>#END_PSD</code> grava o log em <code>entrega/logs/</code> e analisa. "Modo demonstração" simula o RX com os logs de exemplo</td><td>7, 10–15</td></tr>
+<tr><td>2 · Análise do ensaio</td><td>9 critérios de validade, texto completo da análise, 4 figuras (pulso/ISI, olho, calibração, PSD) + gráfico z; salvar figuras em <code>entrega/figuras/</code></td><td>11–15</td></tr>
+<tr><td>3 · PSD Dupont × RC</td><td>duas PSDs na mesma escala, razão × |H|² (1 polo, 2 polos, τ medido)</td><td>13, 15</td></tr>
+<tr><td>4 · τ do osciloscópio</td><td>lê o CSV do TDS2002B, calcula V0, Vf, t0, t10, t63, t90, τ e t<sub>10–90</sub></td><td>12, 15</td></tr>
+<tr><td>5 · Tabela</td><td>tabela da Seção 5.1 em Markdown + CSV</td><td>16</td></tr>
+</table></div>
+<p>Pela linha de comando (sem janela):</p>
+<pre><code>python pam_app.py portas
+python pam_app.py capturar --porta /dev/ttyACM1 --mod 4 --canal c --vref 3.297
+python pam_app.py capturar --simular --mod 4 --canal x            # treino sem placa
+python pam_app.py analisar entrega/logs/RC16n8_PAM4_....txt --vref 3.297
+python pam_app.py comparar Dupont_PAM4.txt RC16n8_PAM4.txt --vref 3.297 --tau 7.1
+python pam_app.py tau F0001CH2.CSV
+python pam_app.py tabela D2.txt D4.txt RC2.txt RC4.txt --vref 3.297 --tau nan,nan,7.1,7.1</code></pre>
+<p>Arquivos: <code>pam_core.py</code> (toda a matemática, sem interface — leia para entender as contas) e <code>pam_app.py</code> (serial, janela, linha de comando). O Vref, a porta e o último τ ficam lembrados em <code>~/.config/pam_app.json</code>.</p>
+</section>
+
+<!-- ===================================================================== -->
+<section class="fase" id="f19">
+<div class="kicker">Apêndice B</div>
+<h2>Problemas comuns</h2>
+<div class="tw"><table>
+<tr><th>Sintoma</th><th>Causa provável</th><th>O que fazer</th></tr>
+<tr><td>CLK a 10 ou 40 kHz</td><td>timers não estão a 100 MHz</td><td>refazer a Clock Configuration (APB1 /2, APB2 /1)</td></tr>
+<tr><td>Nada chega na serial</td><td>porta errada (ttyACM0 em vez de ttyACM1); GP4/GP5 trocados; GND solto</td><td>teste de laço GP4–GP5 (Fase 7); ligação <b>cruzada</b> PA9→GP5, PA10←GP4</td></tr>
+<tr><td>Lixo na serial / caracteres estranhos</td><td>baud errado</td><td>abrir a porta a 460800 8N1</td></tr>
+<tr><td>"Permission denied" em /dev/ttyACM1</td><td>usuário fora do grupo dialout</td><td><code>sudo usermod -aG dialout $USER</code> e relogar</td></tr>
+<tr><td>ttyACM0/ttyACM1 não aparecem</td><td>Pico ainda sem o pico-uart-bridge, ou cabo USB só de carga</td><td>regravar o <code>uart_bridge.uf2</code> (BOOTSEL); trocar o cabo</td></tr>
+<tr><td><code>bordas_com_contagem_errada &gt; 0</code></td><td>borda falsa no CLK (reset do TX, KEY do RX)</td><td>10 kΩ em PA0; não tocar no KEY do RX; rearmar e repetir</td></tr>
+<tr><td><code>perda_CLK=1</code></td><td>fio do CLK solto, TX resetou no meio</td><td>repetir</td></tr>
+<tr><td><code>calibracao_ok=0</code></td><td>modulação diferente no TX e no RX, TP3 saturando</td><td>conferir jumper PB0 do TX × botão PAM-2/4 do app</td></tr>
+<tr><td><code>sincronismo_ok=0</code></td><td>erro nos 48 bits de início</td><td>repetir; olhar <code>inicio_quadro_erros_u/z</code></td></tr>
+<tr><td>Nível 3 sempre = 4095</td><td>3V3 do TX &gt; 3V3 do RX: ADC satura</td><td>normal; registre. Os limiares continuam válidos</td></tr>
+<tr><td>ADC lê ~0 o tempo todo</td><td>PA1 sem sinal, D− invertido</td><td>medir TP4; faixa do diodo no lado de TP4 (D−)</td></tr>
+<tr><td>τ medido bem maior que o previsto</td><td>ponta ×1 (~100 pF), capacitor fora da tolerância</td><td>usar ×10; medir os capacitores</td></tr>
+</table></div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var KEY = "pam-guia-v1";
+  var st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { st = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('ul.chk input[type=checkbox]'));
+  function refresh(){
+    var tot = boxes.length, ok = 0;
+    boxes.forEach(function(b){ b.closest('li').classList.toggle('ok', b.checked); if (b.checked) ok++; });
+    document.getElementById('ptxt').textContent = ok + " / " + tot + " (" + Math.round(100*ok/Math.max(tot,1)) + "%)";
+    document.getElementById('pbar').style.width = (100*ok/Math.max(tot,1)) + "%";
+    document.querySelectorAll('nav.side a').forEach(function(a){
+      var sec = document.querySelector(a.getAttribute('href'));
+      if (!sec) return;
+      var bs = sec.querySelectorAll('ul.chk input'), n = 0;
+      bs.forEach(function(b){ if (b.checked) n++; });
+      var span = a.querySelector('.n');
+      span.textContent = bs.length ? (n + "/" + bs.length) : "";
+      a.classList.toggle('done', bs.length > 0 && n === bs.length);
+    });
+  }
+  boxes.forEach(function(b){
+    b.checked = !!st[b.dataset.id];
+    b.addEventListener('change', function(){ st[b.dataset.id] = b.checked; save(); refresh(); });
+  });
+  document.getElementById('bt-zerar').addEventListener('click', function(){
+    if (!confirm("Desmarcar todas as caixas?")) return;
+    st = {}; save(); boxes.forEach(function(b){ b.checked = false; }); refresh();
+  });
+  var aberto = false;
+  document.getElementById('bt-abrir').addEventListener('click', function(){
+    aberto = !aberto;
+    document.querySelectorAll('details.como').forEach(function(d){ d.open = aberto; });
+    this.textContent = aberto ? "fechar tudo" : "abrir tudo";
+  });
+  var TK = "pam-guia-tema";
+  function tema(t){ if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme'); }
+  try { tema(localStorage.getItem(TK)); } catch (e) {}
+  document.getElementById('bt-tema').addEventListener('click', function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+      (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var t = dark ? 'light' : 'dark'; tema(t); try { localStorage.setItem(TK, t); } catch (e) {}
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>

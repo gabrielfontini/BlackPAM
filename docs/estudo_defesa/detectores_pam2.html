@@ -1,0 +1,637 @@
+<title>Detectores e sincronismo PAM-2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: caderno de bancada em coluna única; cada etapa tem um "palco" animado com botões Voltar/Próximo/Animar.
+   Mesma identidade das outras páginas de estudo: nível 0 roxo, nível 1 vermelho, CLK ciano, molde p_c verde. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#151a21; --muted:#596270; --rule:#d8dde4;
+  --accent:#0d5c78; --accent-soft:#e3eff4;
+  --n0:#6250d6; --n1:#d43f3e; --clk:#00808a; --molde:#1b8a5a; --molde-soft:#e1f3ea;
+  --good:#1d7a3e; --good-soft:#e2f3e7; --warn:#9a5b00; --warn-soft:#fbefd9; --bad:#b4233a; --bad-soft:#fbe4e8;
+  --ch1-soft:#fff3cf; --ch1:#a87400;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1317; --surface:#161b21; --ink:#e5e9ee; --muted:#9aa4b1; --rule:#2a323c;
+  --accent:#6cc4e3; --accent-soft:#132a33;
+  --n0:#9085e9; --n1:#ff7470; --clk:#4fd2da; --molde:#5fcf9a; --molde-soft:#12291f;
+  --good:#5fcf86; --good-soft:#12291a; --warn:#f0b357; --warn-soft:#2c220f; --bad:#ff7b8f; --bad-soft:#2e141a;
+  --ch1-soft:#2b2410; --ch1:#f2c14b;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1317; --surface:#161b21; --ink:#e5e9ee; --muted:#9aa4b1; --rule:#2a323c;
+  --accent:#6cc4e3; --accent-soft:#132a33;
+  --n0:#9085e9; --n1:#ff7470; --clk:#4fd2da; --molde:#5fcf9a; --molde-soft:#12291f;
+  --good:#5fcf86; --good-soft:#12291a; --warn:#f0b357; --warn-soft:#2c220f; --bad:#ff7b8f; --bad-soft:#2e141a;
+  --ch1-soft:#2b2410; --ch1:#f2c14b;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.62;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+.wrap{max-width:940px;margin:0 auto}
+.read{max-width:70ch}
+header.hero{padding-block:32px 8px}
+.eyebrow{font-family:var(--f-display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:14px;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,5.5vw,54px);line-height:1.02;margin:.2em 0 .3em;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:32px;line-height:1.1;margin:0 0 .3em;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:23px;line-height:1.15;margin:1.3em 0 .3em}
+p{margin:.55em 0}
+a{color:var(--accent)}
+.lead{font-size:19px}
+.muted{color:var(--muted)}
+.mono,code{font-family:var(--f-mono);font-size:.86em;font-variant-numeric:tabular-nums}
+code{background:var(--accent-soft);padding:.05em .35em;border-radius:3px}
+section.etapa{padding-block:40px 8px;border-top:1px solid var(--rule);scroll-margin-top:12px}
+.tag{font-family:var(--f-display);font-weight:600;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.tag b{color:var(--accent)}
+.simples{background:var(--accent-soft);padding:14px 18px;margin:14px 0;font-size:18px}
+.rot{display:block;font-family:var(--f-display);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:12.5px;color:var(--accent);margin-bottom:3px}
+.nota{background:var(--surface);border:1px solid var(--rule);padding:12px 18px;margin:14px 0}
+.nota .rot{color:var(--muted)}
+.medido{background:var(--ch1-soft);padding:12px 18px;margin:14px 0}
+.medido .rot{color:var(--ch1)}
+.say{background:var(--surface);border:1px solid var(--accent);padding:12px 18px;margin:16px 0}
+.say::before{content:"Fale assim na defesa";display:block;font-family:var(--f-display);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:12.5px;color:var(--accent);margin-bottom:4px}
+.n0{color:var(--n0);font-weight:600}.n1{color:var(--n1);font-weight:600}.clk{color:var(--clk);font-weight:600}.molde{color:var(--molde);font-weight:600}
+
+/* mapa do caminho */
+.mapa{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:18px 0;font-family:var(--f-display);font-size:16px}
+.mapa a{display:inline-block;padding:5px 11px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);text-decoration:none;line-height:1.2}
+.mapa a:hover,.mapa a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+.mapa span{color:var(--muted)}
+
+/* palco animado */
+.palco{background:var(--surface);border:1px solid var(--rule);margin:18px 0 10px}
+.palco-top{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--rule)}
+.passo-n{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.passo-n b{color:var(--accent);font-size:18px}
+.ctl{display:flex;flex-wrap:wrap;gap:6px}
+button{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.04em;color:var(--accent);background:var(--surface);border:1px solid var(--accent);padding:4px 12px;border-radius:3px;cursor:pointer}
+button:hover{background:var(--accent-soft)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+button:disabled{opacity:.4;cursor:default;background:var(--surface)}
+.casos{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 14px 0;font-family:var(--f-display);font-size:15px}
+.casos .lbl{color:var(--muted);margin-right:4px}
+.tela{overflow-x:auto;padding:6px 8px 0}
+.tela svg{display:block;width:100%;min-width:560px;height:auto}
+.fala{padding:10px 16px 14px;font-size:17px;min-height:4.6em;border-top:1px dashed var(--rule)}
+.fala b.t{display:block;font-family:var(--f-display);font-size:19px;letter-spacing:.01em;margin-bottom:2px}
+.pontos{display:flex;gap:5px;padding:0 16px 12px}
+.pontos i{display:block;height:4px;flex:1 1 0;background:var(--rule)}
+.pontos i.on{background:var(--accent)}
+
+svg .gr{stroke:var(--rule);stroke-width:1}
+svg .ax{fill:var(--muted);font:12px var(--f-mono)}
+svg .lb{fill:var(--ink);font:600 13px var(--f-display)}
+svg .lbg{fill:var(--ink);font:600 15px var(--f-display);paint-order:stroke;stroke:var(--surface);stroke-width:4px}
+svg .big{fill:var(--ink);font:700 22px var(--f-display);paint-order:stroke;stroke:var(--surface);stroke-width:5px}
+svg .val{fill:var(--ink);font:600 11.5px var(--f-mono)}
+
+/* tabela */
+.tw{overflow-x:auto;margin:12px 0;max-width:100%}
+table{border-collapse:collapse;font-size:15px;min-width:100%}
+th,td{border-bottom:1px solid var(--rule);padding:5px 10px;text-align:left;vertical-align:top}
+th{font-family:var(--f-display);font-weight:600;font-size:15px;color:var(--muted);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.vazio td.n{color:transparent}
+tr.soma td{font-weight:600;border-top:2px solid var(--rule)}
+.ok{color:var(--good);font-weight:600}.no{color:var(--bad);font-weight:600}
+.dois{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}
+.dois>div{min-width:0;background:var(--surface);border:1px solid var(--rule);padding:12px 16px}
+.dois h4{font-family:var(--f-display);font-size:20px;margin:0 0 4px}
+.dois ol{padding-left:20px;margin:.3em 0}
+/* origem dos termos */
+.quadro{display:flex;flex-wrap:wrap;gap:4px;margin:14px 0;font-family:var(--f-display);font-size:15px;line-height:1.2}
+.quadro>div{padding:8px 10px;min-width:0;flex:1 1 150px}
+.quadro b{display:block;font-size:16px}
+.quadro span{display:block;color:var(--muted);font-size:14px;margin-top:3px}
+.quadro .qp{background:var(--molde-soft)}.quadro .qc{background:var(--ch1-soft)}.quadro .qs{background:var(--accent-soft)}.quadro .qm{background:var(--good-soft);flex-grow:2}
+table.origem td{font-size:14.5px}
+.conta{padding:12px 16px 16px;font-size:16px}
+.conta .lst{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;font-family:var(--f-mono);font-size:13px}
+.conta .lst span{background:var(--bg);border:1px solid var(--rule);padding:1px 6px;font-variant-numeric:tabular-nums}
+.conta .res{font-family:var(--f-mono);font-size:15px;background:var(--accent-soft);padding:8px 12px;margin-top:8px;line-height:1.7;overflow-x:auto}
+@media (max-width:720px){body{font-size:16px}.simples{font-size:17px}.dois{grid-template-columns:minmax(0,1fr)}h2{font-size:28px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header class="hero read">
+  <div class="eyebrow">Defesa individual · Projeto PAM em banda base</div>
+  <h1>Amostra única, filtro casado e sincronismo</h1>
+  <p class="lead">Como o receptor decide se cada símbolo foi <span class="n0">0</span> ou <span class="n1">1</span>, e como ele descobre onde começa a mensagem. Tudo com as amostras reais do seu ensaio <b>RC 16,8 nF em PAM-2</b> (log <code>RC16n8_PAM2_20261103_154922</code>).</p>
+  <p class="muted">Cada etapa tem um quadro animado. Use <b>Próximo</b> para ir passo a passo ou <b>Animar</b> para ver tudo seguido.</p>
+  <nav class="mapa" aria-label="Etapas">
+    <a href="#e1">1 · O que chega</a><span>→</span>
+    <a href="#e2">2 · Treino</a><span>→</span>
+    <a href="#e3">3 · Calibração</a><span>→</span>
+    <a href="#e4">4 · Amostra única</a><span>/</span>
+    <a href="#e5">5 · Filtro casado</a><span>·</span><a href="#origem">de onde sai cada termo</a><span>→</span>
+    <a href="#e6">6 · Comparação</a><span>→</span>
+    <a href="#e7">7 · Sincronismo</a>
+  </nav>
+  <div class="simples"><span class="rot">A ideia em uma frase</span>Os dois detectores respondem à mesma pergunta, <b>"este símbolo é 0 ou 1?"</b>. A <b>amostra única</b> olha <b>uma vez</b>, no melhor instante, e compara com uma linha de corte. O <b>filtro casado</b> olha as <b>8 amostras</b> e mede o quanto o símbolo se parece com o formato de um "1" que ele aprendeu. O <b>sincronismo</b> é outra coisa: usa os bits já decididos para achar <b>onde começa a mensagem</b>.</div>
+</header>
+
+<!-- ====================================================== 1 -->
+<section class="etapa" id="e1">
+  <div class="read">
+    <div class="tag"><b>Etapa 1</b> O ponto de partida</div>
+    <h2>O que chega no receptor</h2>
+    <div class="simples"><span class="rot">Em palavras simples</span>O TX manda degraus retos de 50 µs. O canal RC "amolece" esses degraus: a tensão sobe e desce em curva. O CLK, num fio separado, avisa quando cada símbolo começa. O RX tira <b>8 fotos</b> (amostras) de cada símbolo e depois precisa decidir o que foi enviado.</div>
+  </div>
+  <div class="palco" id="p1">
+    <div class="palco-top"><span class="passo-n">Passo <b class="pn">1</b> de <span class="pt">5</span></span>
+      <div class="ctl"><button type="button" data-a="prev">Voltar</button><button type="button" data-a="next">Próximo</button><button type="button" data-a="play">Animar</button></div></div>
+    <div class="tela"></div><div class="fala" aria-live="polite"></div><div class="pontos"></div>
+  </div>
+  <div class="read">
+    <div class="nota"><span class="rot">Os 8 instantes</span>Contados a partir da <b>subida</b> do CLK: t<sub>k</sub> = 3,12 + 6,25·k µs, ou seja, 3,12 · 9,37 · 15,62 · 21,87 · 28,12 · 34,37 · 40,62 · <b>46,87 µs</b>. O número k (0 a 7) é só a posição da foto dentro do símbolo.</div>
+  </div>
+</section>
+
+<!-- ====================================================== 2 -->
+<section class="etapa" id="e2">
+  <div class="read">
+    <div class="tag"><b>Etapa 2</b> Antes de decidir</div>
+    <h2>Treino: o RX aprende o formato de um "1"</h2>
+    <div class="simples"><span class="rot">Em palavras simples</span>No começo de todo quadro, o TX manda um padrão que o RX já conhece: <b>0, 0, 0, A, 0, 0, 0</b>, repetido 20 vezes (A é o nível alto). O RX tira a média desses 20 pulsos e guarda as 8 alturas. Esse é o <b class="molde">molde</b>, ou <b>p<sub>c</sub>[k]</b>: o formato que um "1" tem depois de passar por <i>este</i> canal.</div>
+  </div>
+  <div class="palco" id="p2">
+    <div class="palco-top"><span class="passo-n">Passo <b class="pn">1</b> de <span class="pt">5</span></span>
+      <div class="ctl"><button type="button" data-a="prev">Voltar</button><button type="button" data-a="next">Próximo</button><button type="button" data-a="play">Animar</button></div></div>
+    <div class="tela"></div><div class="fala" aria-live="polite"></div><div class="pontos"></div>
+  </div>
+  <div class="read">
+    <div class="medido"><span class="rot">Seus números</span>Linha de base b<sub>c</sub> = <b>4,68 códigos</b> (≈ 0,004 V). Molde p<sub>c</sub>[k] = 1501 · 3022 · 3646 · 3906 · 4016 · 4063 · 4084 · 4090 códigos. Energia do molde E<sub>c</sub> = soma dos 8 valores ao quadrado = <b>105.983.952</b>.</div>
+  </div>
+</section>
+
+<!-- ====================================================== 3 -->
+<section class="etapa" id="e3">
+  <div class="read">
+    <div class="tag"><b>Etapa 3</b> Antes de decidir</div>
+    <h2>Calibração: onde olhar e onde cortar</h2>
+    <div class="simples"><span class="rot">Em palavras simples</span>Logo depois do treino, o TX manda <b>256 símbolos conhecidos</b> (0,1,0,0,1,1,0,1 repetido 32 vezes). Como o RX sabe o que foi enviado, ele separa as leituras dos zeros e dos uns e responde duas perguntas: <b>em qual das 8 fotos os zeros e os uns ficam mais longe um do outro</b> (esse é o k*) e <b>onde passar a linha de corte</b> (o limiar).</div>
+  </div>
+  <div class="palco" id="p3">
+    <div class="palco-top"><span class="passo-n">Passo <b class="pn">1</b> de <span class="pt">5</span></span>
+      <div class="ctl"><button type="button" data-a="prev">Voltar</button><button type="button" data-a="next">Próximo</button><button type="button" data-a="play">Animar</button></div></div>
+    <div class="tela"></div><div class="fala" aria-live="polite"></div><div class="pontos"></div>
+  </div>
+  <div class="read">
+    <div class="tw"><table>
+      <tr><th></th><th class="n">Amostra única</th><th class="n">Filtro casado</th></tr>
+      <tr><td>Centro do <span class="n0">0</span></td><td class="n">10,8 códigos (0,009 V)</td><td class="n">z = 0,072</td></tr>
+      <tr><td>Centro do <span class="n1">1</span></td><td class="n">4094,9 códigos (3,297 V)</td><td class="n">z = 1,024</td></tr>
+      <tr><td><b>Limiar</b> (metade do caminho)</td><td class="n"><b>2052,9 códigos (1,653 V)</b></td><td class="n"><b>z = 0,548</b></td></tr>
+      <tr><td>Folga (margem)</td><td class="n">4076 códigos (3,28 V)</td><td class="n">0,901</td></tr>
+    </table></div>
+    <p class="muted">Tudo isso é calculado e <b>congelado antes</b> da mensagem começar. Depois não muda mais.</p>
+  </div>
+</section>
+
+<!-- ====================================================== 4 -->
+<section class="etapa" id="e4">
+  <div class="read">
+    <div class="tag"><b>Etapa 4</b> Detector 1</div>
+    <h2>Amostra única: olhar uma vez só</h2>
+    <div class="simples"><span class="rot">Em palavras simples</span>É como decidir se um copo está cheio ou vazio olhando <b>uma vez</b>, no momento em que a água já parou de mexer. O RX ignora 7 das 8 fotos, fica só com a <b>k* = 7</b> (46,87 µs, perto do fim do símbolo) e pergunta: <b>está acima ou abaixo de 1,653 V?</b> Acima é 1, abaixo é 0.</div>
+  </div>
+  <div class="palco" id="p4">
+    <div class="palco-top"><span class="passo-n">Passo <b class="pn">1</b> de <span class="pt">4</span></span>
+      <div class="ctl"><button type="button" data-a="prev">Voltar</button><button type="button" data-a="next">Próximo</button><button type="button" data-a="play">Animar</button></div></div>
+    <div class="casos" role="group" aria-label="Escolha o símbolo"><span class="lbl">Símbolo real:</span>
+      <button type="button" data-caso="1d0">1 depois de 0</button><button type="button" data-caso="0d1">0 depois de 1</button><button type="button" data-caso="1d1">1 depois de 1</button><button type="button" data-caso="0d0">0 depois de 0</button></div>
+    <div class="tela"></div><div class="fala" aria-live="polite"></div><div class="pontos"></div>
+  </div>
+  <div class="read">
+    <div class="say">"O detector de amostra única usa só a amostra k* = 7, a 46,87 µs da subida do CLK. Escolhi k* na calibração: é a posição onde a menor leitura dos uns fica mais longe da maior leitura dos zeros, com folga de 4076 códigos. O limiar é a metade do caminho entre os centros: 2052,9 códigos, ou 1,653 V. Acima é 1, abaixo é 0."</div>
+  </div>
+</section>
+
+<!-- ====================================================== 5 -->
+<section class="etapa" id="e5">
+  <div class="read">
+    <div class="tag"><b>Etapa 5</b> Detector 2</div>
+    <h2>Filtro casado: comparar com o molde</h2>
+    <div class="simples"><span class="rot">Em palavras simples</span>Em vez de uma foto, o filtro usa as <b>8</b>. Ele mede <b>o quanto o símbolo se parece com o molde</b> de um "1". A conta é uma média ponderada: cada amostra é multiplicada pelo peso do molde naquela posição, e tudo é somado. No começo do símbolo a tensão ainda está subindo, então o peso é menor; no fim, o peso é maior. No final divide-se por E<sub>c</sub>. Assim, um símbolo <b>igual ao molde dá z = 1</b>, e um símbolo <b>todo em zero dá z = 0</b>.</div>
+    <div class="nota"><span class="rot">A conta</span><span class="mono">x[k] = a[k] − 4,68 · soma = Σ p<sub>c</sub>[k]·x[k] · z = soma ÷ 105.983.952</span><br>Depois, compara z com o limiar 0,548: acima é 1, abaixo é 0.</div>
+  </div>
+  <div class="palco" id="p5">
+    <div class="palco-top"><span class="passo-n">Passo <b class="pn">1</b> de <span class="pt">6</span></span>
+      <div class="ctl"><button type="button" data-a="prev">Voltar</button><button type="button" data-a="next">Próximo</button><button type="button" data-a="play">Animar</button></div></div>
+    <div class="casos" role="group" aria-label="Escolha o símbolo"><span class="lbl">Símbolo real:</span>
+      <button type="button" data-caso="1d0">1 depois de 0</button><button type="button" data-caso="0d1">0 depois de 1</button><button type="button" data-caso="1d1">1 depois de 1</button><button type="button" data-caso="0d0">0 depois de 0</button></div>
+    <div class="tela"></div><div class="fala" aria-live="polite"></div><div class="pontos"></div>
+    <div class="tw" style="padding:0 14px 6px;margin:0"><table id="tabFC"></table></div>
+  </div>
+  <div class="read" id="origem">
+    <h3>De onde sai cada coisa da conta</h3>
+    <p>A conta do filtro tem 6 ingredientes. Três são medidos <b>uma vez só</b>, no começo do quadro, antes da mensagem: b<sub>c</sub>, p<sub>c</sub>[k] e E<sub>c</sub>. Os outros três são calculados <b>em cada símbolo</b> da mensagem: a[k], x[k] e z.</p>
+  </div>
+  <div class="quadro" aria-label="Partes do quadro e o que sai de cada uma">
+    <div class="qp"><b>Símbolos 0 a 139</b>Treino com pulsos<span>daqui saem b<sub>c</sub>, p<sub>c</sub>[k], E<sub>c</sub></span></div>
+    <div class="qc"><b>140 a 395</b>Calibração<span>daqui saem os centros e o limiar de z</span></div>
+    <div class="qs"><b>48 bits</b>Início<span>sincronismo</span></div>
+    <div class="qm"><b>Mensagem</b>100.000 bits<span>em cada símbolo: a[k] → x[k] → z → 0 ou 1</span></div>
+  </div>
+  <div class="read">
+    <div class="tw"><table class="origem">
+      <tr><th>Termo</th><th>O que é</th><th>De onde vem</th><th>Como calcula</th><th>Quando</th><th class="n">No seu ensaio</th></tr>
+      <tr><td><b>a[k]</b></td><td>As 8 leituras do ADC do símbolo que está sendo decidido</td><td>Pino PA1. O TIM2 dispara o ADC a 3,12 + 6,25·k µs depois da subida do CLK</td><td>Lida direto, em códigos de 0 a 4095</td><td>Em cada símbolo</td><td class="n">1519, 3036, …, 4095</td></tr>
+      <tr><td><b>b<sub>c</sub></b></td><td>Linha de base: quanto vale um "zero" medido</td><td>O zero <b>logo antes</b> de cada A do treino: símbolos 2, 9, 16, …, 135 (20 zeros)</td><td>Média das 20 × 8 = 160 leituras: 748 ÷ 160</td><td>Uma vez, no treino</td><td class="n">4,68 códigos</td></tr>
+      <tr><td><b>x[k]</b></td><td>A leitura sem o "chão"</td><td>a[k] e b<sub>c</sub></td><td>x[k] = a[k] − b<sub>c</sub></td><td>Em cada símbolo</td><td class="n">1519 − 4,68 = 1514,3</td></tr>
+      <tr><td><b>p<sub>c</sub>[k]</b></td><td>O molde: o formato de um "1" neste canal</td><td>Os 20 pulsos A do treino: símbolos 3, 10, 17, …, 136</td><td>Em cada k: média das 20 leituras de A, menos b<sub>c</sub></td><td>Uma vez, no treino</td><td class="n">1501,38 … 4090,27</td></tr>
+      <tr><td><b>E<sub>c</sub></b></td><td>Energia do molde: o "tamanho" dele</td><td>Os 8 valores de p<sub>c</sub>[k]</td><td>E<sub>c</sub> = p<sub>c</sub>[0]² + … + p<sub>c</sub>[7]²</td><td>Uma vez, no fim do treino</td><td class="n">105.983.952</td></tr>
+      <tr><td><b>z</b></td><td>A nota do filtro: o quanto o símbolo parece um "1"</td><td>x[k], p<sub>c</sub>[k] e E<sub>c</sub></td><td>z = (p<sub>c</sub>[0]·x[0] + … + p<sub>c</sub>[7]·x[7]) ÷ E<sub>c</sub></td><td>Em cada símbolo</td><td class="n">1,001 (1 depois de 0)</td></tr>
+      <tr><td><b>Centros de z</b></td><td>O z típico de um 0 e de um 1</td><td>Os 256 símbolos da calibração (140 a 395), que o RX conhece</td><td>Média dos z dos 128 zeros; média dos z dos 128 uns</td><td>Uma vez, na calibração</td><td class="n">0,072 e 1,024</td></tr>
+      <tr><td><b>Limiar de z</b></td><td>A linha de corte entre 0 e 1</td><td>Os dois centros</td><td>(0,072 + 1,024) ÷ 2</td><td>Uma vez, na calibração</td><td class="n">0,548</td></tr>
+    </table></div>
+    <p class="muted">A conta exata dá E<sub>c</sub> = 105.983.946. O firmware guarda o número em ponto flutuante de 32 bits e imprime 105.983.952. A diferença (0,000006 %) não muda nenhum z.</p>
+  </div>
+
+  <div class="palco" id="calcPc">
+    <div class="palco-top"><span class="passo-n">Faça a conta você mesmo</span>
+      <div class="ctl" role="group" aria-label="Escolha o que calcular"><button type="button" data-q="bc">b<sub>c</sub></button><button type="button" data-q="0">p<sub>c</sub>[0]</button><button type="button" data-q="3">p<sub>c</sub>[3]</button><button type="button" data-q="7">p<sub>c</sub>[7]</button><button type="button" data-q="ec">E<sub>c</sub></button></div></div>
+    <div class="conta" id="contaOut" aria-live="polite"></div>
+  </div>
+
+  <div class="read">
+    <div class="nota"><span class="rot">Por que dividir por E<sub>c</sub></span>Se o símbolo for <b>igual ao molde</b> (x[k] = p<sub>c</sub>[k]), a soma vira p<sub>c</sub>[0]² + … + p<sub>c</sub>[7]², que é exatamente E<sub>c</sub>. Então z = E<sub>c</sub> ÷ E<sub>c</sub> = <b>1</b>.<br>Se o símbolo for <b>zero</b> (x[k] = 0), a soma é 0 e z = <b>0</b>.<br>Se o símbolo tiver <b>metade</b> da altura do molde, z = <b>0,5</b>.<br>Dividir por E<sub>c</sub> só muda a escala: transforma uma soma gigante (cerca de 10<sup>8</sup>) numa nota fácil de ler, perto de 0 ou de 1.</div>
+    <div class="nota"><span class="rot">Por que tirar b<sub>c</sub></span>O "zero" medido não é exatamente 0 código: vale 4,68 por causa de pequenos offsets do circuito e do ADC. Se não descontar, esse resto entraria nas 8 multiplicações e deslocaria o z de todos os símbolos. Tirando b<sub>c</sub>, um zero dá z ≈ 0.</div>
+    <div class="nota"><span class="rot">Por que o molde vem de pulsos isolados</span>No padrão 0, 0, 0, A, 0, 0, 0, o A sempre vem depois de zeros. Assim o pulso medido é o formato "limpo" de um 1, sem resto do símbolo anterior. É por isso também que, na mensagem, um "1 depois de 1" dá z maior que 1 (1,093): as primeiras amostras já começam altas, e o molde não espera isso.</div>
+  </div>
+  <div class="read">
+    <div class="say">"O filtro casado usa as 8 amostras. No treino, com 20 pulsos 0,0,0,A,0,0,0, medi a linha de base, 4,68 códigos, e o molde p<sub>c</sub>[k], que é a média dos 20 pulsos A menos a linha de base. Para cada símbolo, tiro a linha de base, multiplico cada amostra pelo peso do molde, somo e divido pela energia do molde, E<sub>c</sub> = 1,06·10⁸. Se o símbolo for igual ao molde, z dá 1; se for zero, dá 0. O limiar é 0,548, a metade entre os centros 0,072 e 1,024."</div>
+  </div>
+</section>
+
+<!-- ====================================================== 6 -->
+<section class="etapa" id="e6">
+  <div class="read">
+    <div class="tag"><b>Etapa 6</b> Lado a lado</div>
+    <h2>Os dois detectores nos mesmos símbolos</h2>
+    <div class="tw"><table>
+      <tr><th>Símbolo real</th><th class="n">Amostra única (k = 7)</th><th>Decide</th><th class="n">Filtro casado (z)</th><th>Decide</th></tr>
+      <tbody id="tabComp"></tbody>
+    </table></div>
+    <div class="dois">
+      <div><h4>Amostra única</h4><ol><li>Pega a foto k* = 7.</li><li>Compara com 1,653 V.</li><li>Acima: 1. Abaixo: 0.</li></ol><p class="muted" style="margin:.3em 0 0">Simples e rápida. Olha quando o RC já acomodou, então o símbolo anterior quase não atrapalha.</p></div>
+      <div><h4>Filtro casado</h4><ol><li>Tira a linha de base das 8 fotos.</li><li>Multiplica pelo molde e soma.</li><li>Divide por E<sub>c</sub>: dá z.</li><li>Compara com 0,548.</li></ol><p class="muted" style="margin:.3em 0 0">Usa o símbolo inteiro, então "apaga" melhor o ruído. Mas as primeiras fotos ainda carregam o símbolo anterior.</p></div>
+    </div>
+    <div class="medido"><span class="rot">O que os seus números mostram</span>No "<b>0 depois de 1</b>", a foto k = 7 vale só 13 códigos (0,01 V), bem longe do limiar. Já o z vale 0,098, porque as primeiras fotos ainda estão altas: a tensão está descendo do 1 anterior. É a <b>ISI</b>, interferência entre símbolos. No "<b>1 depois de 1</b>" acontece o contrário: z = 1,093, maior que 1. Por isso, nos seus dados, a folga do filtro foi um pouco menor: 0,95 da distância entre os centros, contra 1,00 da amostra única. Com 33 nF a diferença cresce: 0,86 contra 0,97. Mesmo assim, os <b>dois detectores tiveram 0 erros em 100.000 bits</b>.</div>
+    <div class="nota"><span class="rot">Quando o filtro casado ganharia</span>Ele é o melhor detector quando o problema é <b>ruído</b> (chiado aleatório), porque somar 8 fotos faz o ruído se cancelar. Na sua bancada quase não há ruído (alguns códigos), e o que mais pesa é a ISI. Por isso a amostra única no fim do símbolo ficou com mais folga.</div>
+  </div>
+</section>
+
+<!-- ====================================================== 7 -->
+<section class="etapa" id="e7">
+  <div class="read">
+    <div class="tag"><b>Etapa 7</b> Depois de decidir</div>
+    <h2>Sincronismo: achar onde começa a mensagem</h2>
+    <div class="simples"><span class="rot">Em palavras simples</span>Existem <b>dois tipos de sincronismo</b>. O de <b>símbolo</b> é o CLK: ele diz <b>quando cada símbolo começa</b>, para o RX saber onde tirar as 8 fotos. O de <b>quadro</b> diz <b>em qual símbolo começa a mensagem</b>. Para isso, depois do treino e da calibração, o TX manda <b>48 bits que o RX já conhece</b>. O RX decide esses 48 bits com os dois detectores e confere um por um. Se baterem todos, ele sabe que o próximo bit é o primeiro da mensagem (b<sub>0</sub> da PRBS-15).</div>
+  </div>
+  <div class="palco" id="p7">
+    <div class="palco-top"><span class="passo-n">Passo <b class="pn">1</b> de <span class="pt">5</span></span>
+      <div class="ctl"><button type="button" data-a="prev">Voltar</button><button type="button" data-a="next">Próximo</button><button type="button" data-a="play">Animar</button><button type="button" id="erro48" aria-pressed="false">E se 1 bit vier errado?</button></div></div>
+    <div class="tela"></div><div class="fala" aria-live="polite"></div><div class="pontos"></div>
+  </div>
+  <div class="read">
+    <div class="tw"><table>
+      <tr><th>Situação</th><th>O que o RX faz</th><th>Tem BER?</th></tr>
+      <tr><td>Os 48 bits batem</td><td><code>sincronismo_ok = 1</code>. Compara os 100.000 bits seguintes com a PRBS-15 e conta os erros.</td><td class="ok">Sim</td></tr>
+      <tr><td>Algum dos 48 não bate</td><td><b>Falha de sincronismo</b>. O quadro é descartado e o ensaio é repetido.</td><td class="no">Não</td></tr>
+      <tr><td>Faltou CLK ou amostra</td><td><b>Quadro incompleto</b> (<code>perda_CLK</code>, contagem errada). Descarta e repete.</td><td class="no">Não</td></tr>
+      <tr><td>Um bit da mensagem decidido errado</td><td>É um <b>erro de bit</b>. Entra na conta: N<sub>e</sub> sobe 1.</td><td class="ok">Sim</td></tr>
+    </table></div>
+    <div class="medido"><span class="rot">No seu ensaio</span><code>inicio_quadro_erros_u = 0</code> e <code>inicio_quadro_erros_z = 0</code>: os 48 bits bateram nos dois detectores. Depois, <b>0 erros em 100.000 bits</b> na amostra única e no filtro casado.</div>
+    <div class="say">"O CLK dá o sincronismo de símbolo: a borda de subida marca o início de cada símbolo e zera o timer das 8 amostras. O sincronismo de quadro vem dos 48 bits conhecidos depois do treino: 16 bits alternados e a palavra D391C5A7. O RX decide esses bits com os dois detectores e confere. Se todos baterem, o próximo bit é b<sub>0</sub> da PRBS e começa a contagem de erros. Se não baterem, é falha de sincronismo, e o quadro não recebe BER. Isso é diferente de um erro de bit, que é uma decisão errada num quadro válido."</div>
+  </div>
+</section>
+</div>
+
+<script type="application/json" id="dados">{"bc":4.68,"pc":[1501.38,3021.52,3645.72,3906.22,4016.08,4063.38,4084.12,4090.27],"Ec":105983946.1,"ex":{"1d0":{"j":221,"prev":0,"lvl":1,"a":[1519,3036,3656,3915,4021,4070,4090,4095],"aprev":[2651,1102,468,203,92,43,22,13],"z":1.00094},"0d1":{"j":220,"prev":1,"lvl":0,"a":[2651,1102,468,203,92,43,22,13],"aprev":[1513,3038,3657,3915,4021,4070,4090,4095],"z":0.09779},"0d0":{"j":223,"prev":0,"lvl":0,"a":[8,12,6,6,4,5,4,4],"aprev":[2611,1083,461,201,90,43,22,12],"z":0.00029},"1d1":{"j":225,"prev":1,"lvl":1,"a":[4095,4095,4095,4095,4095,4095,4095,4095],"aprev":[1513,3033,3652,3914,4021,4069,4088,4095],"z":1.09331}},"sc":{"0":[[4,5,4,5,5,5,4,5],[2607,1092,465,201,90,44,24,13],[8,8,6,6,5,5,5,5],[2613,1090,461,201,92,43,24,13],[2612,1092,464,202,91,43,24,12],[2605,1088,463,200,91,44,21,13],[10,5,7,6,4,5,5,3],[2614,1096,463,202,91,42,23,11],[2609,1090,461,200,90,43,22,13],[2609,1092,461,200,89,44,21,11],[9,5,8,7,4,6,6,4],[2607,1092,462,203,91,43,22,14],[2600,1090,461,200,90,43,22,13],[2610,1094,463,203,89,43,23,13],[9,8,5,5,5,5,4,4],[2614,1092,462,202,91,44,21,13],[2613,1094,462,200,90,43,22,13],[2606,1093,462,200,91,43,21,13],[8,8,6,6,5,4,3,5],[2615,1096,464,200,90,43,22,15],[2655,1110,469,204,93,43,22,14],[2611,1090,460,200,91,42,23,13],[9,6,5,5,5,5,4,5],[2614,1095,461,202,91,44,21,13],[2602,1091,462,200,90,42,22,12],[2611,1093,465,202,89,44,23,13],[10,7,4,4,4,5,5,4],[2611,1091,462,202,89,43,22,14],[2610,1088,462,202,86,42,23,13],[2609,1092,462,201,90,43,21,13],[10,7,8,6,5,5,5,5],[2617,1090,465,202,93,40,22,12],[2607,1086,463,203,89,43,22,13],[2605,1085,462,200,90,43,23,14],[8,7,5,6,5,5,5,4],[2618,1093,464,203,91,43,23,8],[2607,1085,461,200,91,43,22,12],[2612,1088,463,202,91,44,22,14],[11,7,5,6,4,5,6,4],[2616,1088,464,204,92,43,23,13],[2651,1102,468,203,92,43,22,13],[2611,1083,461,201,90,43,22,12],[8,12,6,6,4,5,4,4],[2614,1095,465,203,90,40,23,14],[2612,1088,463,208,92,44,23,13],[2606,1085,462,203,91,44,21,12],[9,10,6,5,5,4,6,5],[2619,1089,463,202,91,44,23,14],[2611,1086,463,201,90,44,23,14],[2615,1089,464,202,91,45,23,13],[8,8,5,6,6,5,5,5],[2597,1089,463,202,91,43,22,13],[2602,1091,464,201,90,44,22,13],[2615,1088,463,202,90,44,22,13],[10,7,6,5,4,5,5,3],[2623,1091,464,201,92,44,25,13],[2599,1088,462,201,90,43,24,13],[2596,1088,462,201,90,43,22,12],[9,6,6,6,6,5,8,6],[2607,1094,465,202,91,41,23,14],[2636,1103,469,205,92,42,23,12],[2605,1090,464,202,91,43,20,14],[9,6,6,4,6,4,5,5],[2598,1089,464,203,91,44,23,13],[2600,1090,465,201,91,43,22,13],[2601,1085,464,201,89,42,22,13],[10,7,6,6,6,5,5,4],[2605,1094,465,201,90,44,24,13],[2598,1090,463,202,91,43,22,14],[2595,1088,463,202,90,43,22,13],[8,6,6,6,6,6,5,4],[2611,1091,465,202,91,43,23,14],[2599,1088,461,202,90,44,22,14],[2602,1090,464,201,90,43,23,14],[8,7,6,5,3,5,4,5],[2600,1088,463,201,92,44,23,14],[2609,1090,465,201,92,44,22,13],[2602,1090,464,200,90,43,21,13],[10,8,5,6,4,5,5,4],[2612,1093,465,200,92,44,24,14],[2645,1109,471,203,92,44,22,14],[2599,1088,464,200,89,44,23,14],[9,4,5,6,5,4,6,5],[2605,1092,465,201,91,44,23,13],[2600,1088,465,200,88,42,23,12],[2613,1092,464,201,89,42,22,13],[9,6,6,4,6,5,5,5],[2603,1090,464,201,91,45,24,13],[2606,1092,466,199,90,44,23,12],[2604,1090,464,201,90,42,22,14],[9,7,5,6,4,6,5,4],[2615,1097,466,201,91,44,23,13],[2600,1090,462,201,91,46,19,13],[2599,1090,463,201,92,42,24,14],[9,6,6,6,5,5,4,4],[2608,1092,465,201,91,42,23,13],[2603,1090,462,201,90,43,22,13],[2603,1092,462,202,90,43,23,13],[8,8,8,9,4,5,4,5],[2605,1092,463,200,92,44,22,14],[2643,1105,468,204,92,43,23,13],[2610,1095,462,200,91,43,22,13],[9,8,6,7,5,4,5,4],[2615,1096,464,202,91,45,22,13],[2607,1091,462,201,90,44,21,14],[2600,1089,464,200,91,42,23,12],[9,8,6,6,4,4,6,5],[2616,1094,464,203,91,43,24,9],[2602,1088,463,201,91,43,22,14],[2613,1092,464,201,91,43,22,14],[10,8,6,6,5,4,6,4],[2612,1093,464,202,91,44,24,14],[2610,1092,464,200,91,44,21,14],[2605,1092,462,201,90,42,19,13],[8,6,6,4,4,4,4,4],[2613,1096,464,203,91,44,22,14],[2604,1091,463,200,90,42,23,14],[2609,1091,461,200,90,44,21,13],[9,7,6,5,4,5,5,4],[2611,1093,467,202,92,44,23,12],[2647,1108,470,204,89,44,23,13],[2608,1088,464,201,91,42,23,13],[9,7,7,5,6,4,3,4],[2617,1091,464,202,90,43,22,13],[2613,1088,463,203,91,44,21,14],[2615,1086,461,202,90,42,23,12],[9,7,5,7,5,6,4,4],[2616,1090,465,203,91,44,22,14]],"1":[[1517,3029,3650,3912,4022,4069,4087,4095],[1519,3029,3650,3912,4024,4071,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1518,3033,3657,3915,4022,4068,4089,4095],[1520,3034,3657,3913,4022,4070,4091,4095],[1517,3032,3656,3915,4022,4069,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1522,3033,3656,3916,4023,4070,4088,4095],[1515,3032,3657,3915,4023,4067,4089,4095],[1478,3016,3648,3911,4023,4070,4083,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1517,3027,3648,3908,4030,4071,4085,4094],[1519,3032,3656,3914,4024,4071,4088,4095],[1516,3029,3653,3911,4021,4070,4091,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1518,3030,3655,3915,4021,4069,4092,4095],[1526,3035,3654,3912,4024,4072,4091,4095],[1515,3030,3656,3914,4020,4070,4091,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1520,3032,3659,3916,4025,4069,4089,4095],[1513,3029,3658,3915,4023,4069,4090,4095],[1509,3028,3653,3912,4023,4069,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1509,3030,3652,3912,4024,4071,4091,4095],[1517,3030,3653,3914,4022,4071,4090,4095],[1511,3027,3656,3913,4022,4070,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4091],[1521,3022,3649,3914,4034,4067,4084,4095],[1517,3032,3657,3911,4021,4071,4090,4095],[1468,3018,3646,3912,4021,4067,4087,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1521,3038,3656,3914,4026,4072,4091,4095],[1512,3034,3653,3914,4023,4071,4089,4095],[1507,3032,3651,3912,4023,4069,4091,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1511,3034,3654,3918,4021,4070,4091,4095],[1517,3035,3653,3914,4024,4070,4091,4095],[1508,3032,3653,3914,4023,4069,4091,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1513,3038,3657,3915,4021,4070,4090,4095],[1519,3036,3656,3915,4021,4070,4090,4095],[1513,3033,3652,3914,4021,4069,4088,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1519,3032,3649,3922,4029,4065,4085,4095],[1511,3033,3653,3913,4022,4072,4091,4095],[1518,3030,3653,3912,4019,4069,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1507,3034,3653,3913,4022,4068,4091,4095],[1513,3033,3655,3912,4021,4070,4091,4095],[1462,3017,3648,3909,4019,4069,4088,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1527,3036,3654,3916,4024,4069,4089,4095],[1529,3036,3656,3917,4020,4070,4089,4095],[1528,3035,3652,3913,4023,4070,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1529,3035,3654,3914,4020,4070,4091,4095],[1511,3034,3654,3915,4024,4070,4089,4095],[1518,3029,3650,3912,4021,4070,4091,4095],[4095,4095,4095,4095,4095,4095,4095,4094],[1524,3028,3649,3912,4031,4069,4083,4093],[1524,3034,3653,3914,4021,4069,4091,4095],[1519,3032,3654,3916,4024,4068,4086,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1527,3033,3650,3912,4027,4071,4090,4095],[1529,3036,3658,3917,4025,4071,4086,4095],[1526,3034,3648,3912,4022,4071,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1532,3036,3652,3910,4024,4071,4090,4095],[1524,3029,3652,3912,4025,4071,4088,4095],[1484,3015,3642,3909,4022,4070,4091,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1519,3032,3654,3916,4023,4069,4092,4095],[1522,3033,3653,3914,4024,4072,4092,4095],[1519,3032,3654,3913,4022,4068,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1522,3041,3653,3912,4020,4076,4095,4095],[1529,3034,3656,3917,4025,4069,4085,4095],[1525,3032,3648,3914,4024,4070,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1524,3033,3653,3916,4024,4071,4093,4095],[1520,3032,3651,3913,4023,4071,4091,4095],[1513,3028,3653,3914,4021,4069,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1518,3032,3656,3915,4025,4071,4089,4095],[1521,3033,3655,3916,4021,4069,4089,4095],[1517,3030,3651,3912,4023,4069,4087,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1523,3032,3654,3914,4025,4071,4089,4095],[1526,3033,3657,3915,4023,4069,4089,4095],[1475,3012,3641,3912,4023,4070,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1525,3028,3649,3920,4031,4066,4086,4095],[1516,3031,3652,3913,4022,4071,4091,4095],[1511,3028,3652,3913,4020,4069,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1516,3030,3656,3916,4025,4069,4089,4095],[1517,3028,3655,3913,4021,4070,4091,4095],[1514,3031,3658,3915,4022,4069,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1521,3030,3654,3916,4025,4069,4089,4095],[1521,3035,3657,3917,4024,4068,4089,4095],[1519,3032,3654,3913,4024,4071,4091,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1520,3034,3657,3914,4021,4070,4090,4095],[1514,3031,3653,3915,4022,4069,4091,4095],[1507,3028,3655,3912,4021,4067,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1517,3027,3650,3914,4032,4071,4083,4095],[1517,3031,3657,3915,4025,4069,4083,4095],[1469,3008,3645,3908,4023,4070,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1515,3030,3657,3913,4021,4070,4092,4095],[1520,3032,3659,3913,4022,4071,4093,4095],[1514,3028,3656,3917,4021,4069,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1522,3038,3654,3914,4025,4073,4089,4095],[1510,3028,3656,3917,4021,4068,4088,4095],[1509,3026,3653,3913,4025,4069,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1514,3027,3653,3914,4025,4070,4092,4095],[1519,3033,3652,3912,4024,4073,4091,4095],[1508,3033,3655,3913,4020,4072,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1517,3029,3650,3912,4031,4071,4083,4095],[1517,3038,3659,3916,4023,4068,4089,4095],[1510,3036,3653,3914,4024,4071,4089,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[1515,3037,3658,3915,4025,4071,4089,4095]]},"zs":{"0":[-0.0,0.0967,0.0003,0.0967,0.0968,0.0964,0.0001,0.0968,0.0964,0.0964,0.0003,0.0967,0.0963,0.0967,0.0002,0.0967,0.0966,0.0965,0.0002,0.0969,0.0982,0.0965,0.0001,0.0967,0.0963,0.0968,0.0001,0.0966,0.0963,0.0965,0.0004,0.0967,0.0964,0.0963,0.0002,0.0967,0.0963,0.0967,0.0002,0.0968,0.0978,0.0962,0.0003,0.0968,0.0969,0.0964,0.0003,0.0968,0.0966,0.0968,0.0003,0.0964,0.0965,0.0966,0.0001,0.097,0.0964,0.0962,0.0004,0.0968,0.0977,0.0965,0.0002,0.0966,0.0965,0.0962,0.0003,0.0968,0.0965,0.0963,0.0003,0.0968,0.0964,0.0965,0.0001,0.0965,0.0967,0.0964,0.0002,0.0969,0.0981,0.0964,0.0002,0.0967,0.0963,0.0966,0.0002,0.0967,0.0966,0.0965,0.0002,0.097,0.0964,0.0965,0.0002,0.0967,0.0964,0.0965,0.0004,0.0966,0.0978,0.0967,0.0003,0.097,0.0965,0.0964,0.0003,0.0968,0.0964,0.0968,0.0003,0.0969,0.0967,0.0963,0.0,0.097,0.0965,0.0965,0.0002,0.0969,0.098,0.0965,0.0002,0.0967,0.0967,0.0964,0.0002,0.0969],"1":[1.0003,1.0006,1.0933,1.0008,1.0009,1.0008,1.0933,1.0009,1.0007,0.9992,1.0933,1.0003,1.0009,1.0005,1.0933,1.0008,1.0011,1.0007,1.0933,1.0011,1.0008,1.0004,1.0933,1.0006,1.0007,1.0005,1.0932,1.0004,1.0007,0.999,1.0933,1.0013,1.0007,1.0004,1.0933,1.0008,1.0009,1.0006,1.0933,1.0009,1.0009,1.0005,1.0933,1.0008,1.0007,1.0004,1.0933,1.0005,1.0007,0.9989,1.0933,1.0011,1.0011,1.0009,1.0933,1.0009,1.0008,1.0004,1.0933,1.0004,1.0008,1.0007,1.0933,1.0009,1.0013,1.0006,1.0933,1.001,1.0007,0.9992,1.0933,1.0009,1.001,1.0006,1.0933,1.0013,1.001,1.0007,1.0933,1.0011,1.0007,1.0004,1.0933,1.001,1.0008,1.0004,1.0933,1.0009,1.001,0.999,1.0933,1.0008,1.0007,1.0003,1.0933,1.0008,1.0006,1.0008,1.0933,1.0008,1.001,1.0009,1.0933,1.0009,1.0007,1.0003,1.0933,1.0006,1.0006,0.9989,1.0933,1.0007,1.0011,1.0006,1.0933,1.0012,1.0005,1.0004,1.0933,1.0007,1.0009,1.0006,1.0933,1.0005,1.0011,1.0008,1.0933,1.0011]},"sep":[-1193,1898,3170,3700,3926,4019,4058,4076],"tr":{"lv":[0,0,0,1,0,0,0,0,0,0,1,0,0,0],"a":[[3,4,3,4,5,4,0,4],[4,4,5,3,4,4,3,3],[3,5,3,6,4,5,5,4],[1535,3042,3658,3911,4022,4067,4088,4095],[2627,1099,464,204,92,45,23,16],[9,8,7,6,5,6,4,6],[4,4,5,5,5,5,4,5],[4,4,5,5,4,5,5,4],[5,5,4,3,5,6,4,6],[5,5,3,5,5,4,4,5],[1496,3021,3650,3913,4019,4067,4088,4095],[2596,1086,458,200,90,44,23,16],[8,7,8,6,6,6,5,5],[4,6,2,5,5,4,6,4]],"pulses":[[1535,3042,3658,3911,4022,4067,4088,4095],[1496,3021,3650,3913,4019,4067,4088,4095],[1492,3025,3651,3907,4018,4067,4089,4095],[1532,3041,3657,3912,4021,4068,4089,4095],[1494,3026,3651,3910,4019,4069,4088,4095],[1488,3022,3652,3914,4021,4067,4087,4095],[1529,3041,3656,3915,4023,4067,4086,4095],[1492,3027,3648,3912,4021,4069,4088,4095],[1501,3025,3649,3909,4020,4066,4090,4095],[1547,3024,3654,3911,4024,4065,4092,4095],[1506,3024,3647,3909,4020,4068,4089,4095],[1480,3013,3642,3907,4021,4069,4091,4095],[1498,3022,3647,3909,4020,4069,4089,4095],[1508,3026,3648,3910,4022,4071,4087,4095],[1533,3036,3656,3913,4021,4068,4088,4094],[1495,3022,3649,3913,4021,4067,4088,4095],[1502,3023,3649,3912,4021,4068,4091,4095],[1497,3020,3649,3910,4020,4070,4090,4095],[1497,3020,3645,3908,4020,4070,4090,4095],[1499,3024,3650,3913,4021,4069,4088,4095]],"zeros":[[3,5,3,6,4,5,5,4],[5,5,3,5,5,4,4,5],[6,4,5,5,5,5,5,6],[9,5,5,4,5,5,5,4],[6,3,5,6,4,5,7,5],[4,5,4,5,4,4,4,5],[4,4,4,4,6,5,6,6],[4,4,5,6,5,4,5,6],[6,4,6,4,4,5,5,4],[5,4,4,5,5,4,5,6],[4,4,5,4,5,6,5,5],[8,4,4,5,5,5,2,4],[5,5,4,4,5,3,5,5],[5,4,4,4,5,5,5,4],[5,6,5,4,3,5,4,4],[5,5,4,5,4,5,4,5],[4,4,6,5,4,4,5,5],[4,5,5,3,5,5,4,4],[4,4,4,4,6,5,4,5],[4,4,5,5,4,4,5,5]]},"pay":{"lv":[0,1,0,0,1,1,1,0,0,1,1,1,0,1,0,0,1,1,1,0,1,0,0,0],"a":[[2588,1088,461,201,91,44,24,12],[1536,3034,3657,3915,4023,4070,4091,4095],[2581,1081,457,198,91,43,24,14],[9,7,6,6,5,5,4,4],[1529,3036,3658,3916,4022,4068,4088,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[2599,1088,461,201,91,44,22,15],[8,9,7,6,5,7,7,5],[1533,3036,3656,3915,4023,4070,4086,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[2591,1086,460,201,92,44,23,13],[1534,3036,3657,3914,4024,4070,4090,4095],[2583,1081,458,199,91,44,22,13],[9,8,6,8,6,6,6,6],[1495,3021,3652,3912,4021,4067,4090,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[4095,4095,4095,4095,4095,4095,4095,4095],[2599,1088,462,201,91,44,22,13],[1540,3039,3661,3916,4021,4069,4091,4095],[2587,1085,460,201,92,44,18,14],[9,7,8,7,5,3,5,4],[4,4,5,5,4,5,6,4]]},"vref":3.297}</script>
+<script>
+(function(){
+  var D=JSON.parse(document.getElementById('dados').textContent);
+  var VREF=3.297, BC=4.675, PC=D.pc, EC=D.Ec, KS=7, LIM_U=2052.88, LIM_Z=0.54781, CZ0=0.07181, CZ1=1.02381, CU0=10.83, CU1=4094.94;
+  var reduz=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function nf(v,d){return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+  function V(c){return c*VREF/4095}
+  function tk(k){return 3.125+6.25*k}
+  function cl(x,a,b){return Math.max(a,Math.min(b,x))}
+  function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+  function svg(W,H,inner,lab){return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+lab+'">'+inner+'</svg>'}
+  function ln(x1,y1,x2,y2,st,ex){return '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" style="'+st+'"'+(ex||'')+'/>'}
+  function tx(x,y,s,cls,ex){return '<text class="'+(cls||'ax')+'" x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'"'+(ex||'')+'>'+s+'</text>'}
+  function dot(x,y,r,fill,op){return '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r+'" fill="'+fill+'"'+(op!=null?' opacity="'+op.toFixed(2)+'"':'')+'/>'}
+  function rect(x,y,w,h,fill,op){if(h<0){y+=h;h=-h}return '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+Math.max(0,w).toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" fill="'+fill+'"'+(op!=null?' opacity="'+op.toFixed(2)+'"':'')+'/>'}
+  function poly(pts,st){return '<polyline fill="none" style="'+st+'" points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1)}).join(' ')+'"/>'}
+  var C0='var(--n0)',C1='var(--n1)',CK='var(--clk)',CM='var(--molde)',CA='var(--accent)',MU='var(--muted)',INK='var(--ink)',RU='var(--rule)',BAD='var(--bad)',GOOD='var(--good)';
+
+  /* motor de palco */
+  function Palco(id,passos,render){
+    var el=document.getElementById(id),tela=el.querySelector('.tela'),fala=el.querySelector('.fala'),pn=el.querySelector('.pn'),pt=el.querySelector('.pt'),pts=el.querySelector('.pontos');
+    var bPrev=el.querySelector('[data-a=prev]'),bNext=el.querySelector('[data-a=next]'),bPlay=el.querySelector('[data-a=play]');
+    var i=0,raf=null,auto=null,self={};
+    pt.textContent=passos.length;pts.innerHTML=passos.map(function(){return '<i></i>'}).join('');
+    function frame(t){tela.innerHTML=render(i,t)}
+    function go(n){
+      i=cl(n,0,passos.length-1);pn.textContent=i+1;
+      fala.innerHTML='<b class="t">'+passos[i][0]+'</b>'+passos[i][1];
+      [].forEach.call(pts.children,function(e,k){e.className=k<=i?'on':''});
+      bPrev.disabled=i===0;bNext.disabled=i===passos.length-1;
+      if(raf)cancelAnimationFrame(raf);
+      if(reduz){frame(1);return}
+      var t0=null,dur=1100;
+      (function step(ts){if(t0===null)t0=ts;var t=cl((ts-t0)/dur,0,1);frame(ease(t));if(t<1)raf=requestAnimationFrame(step);else raf=null})(performance.now());
+    }
+    function para(){if(auto){clearTimeout(auto);auto=null}bPlay.textContent='Animar';bPlay.setAttribute('aria-pressed','false')}
+    function tocar(){go(i===passos.length-1?0:i);bPlay.textContent='Parar';bPlay.setAttribute('aria-pressed','true');
+      (function nxt(){auto=setTimeout(function(){if(i<passos.length-1){go(i+1);nxt()}else para()},reduz?2600:3000)})()}
+    bPrev.addEventListener('click',function(){para();go(i-1)});
+    bNext.addEventListener('click',function(){para();go(i+1)});
+    bPlay.addEventListener('click',function(){auto?para():tocar()});
+    self.redraw=function(){frame(1);fala.innerHTML='<b class="t">'+passos[i][0]+'</b>'+passos[i][1]};
+    self.refresh=function(){go(i)};
+    self.passos=passos;
+    go(0);return self;
+  }
+
+  /* ------------------------------------------------------ 1: o que chega */
+  (function(){
+    var NS=8,lv=D.pay.lv.slice(0,NS),A=D.pay.a.slice(0,NS);
+    var W=720,H=300,L=58,R=12,T=46,B=34,tmax=NS*50;
+    var X=function(t){return L+t/tmax*(W-L-R)},Y=function(c){return T+(1-c/4095)*(H-T-B)};
+    var curva=[],v=lv[0]*4095;
+    for(var s=0;s<NS;s++){var alvo=lv[s]*4095;for(var u=0;u<=50;u+=0.5){var vv=alvo+(v-alvo)*Math.exp(-u/7.3);curva.push([s*50+u,vv])}v=alvo+(v-alvo)*Math.exp(-50/7.3)}
+    function base(){var g='';[0,1,2,3].forEach(function(vt){var c=vt/VREF*4095;g+=ln(L,Y(c),W-R,Y(c),'stroke:'+RU)+tx(L-8,Y(c)+4,vt+' V','ax',' text-anchor="end"')});
+      for(var s=0;s<=NS;s++)g+=tx(X(s*50),H-12,(s*50)+(s===NS?' µs':''),'ax',' text-anchor="'+(s===NS?'end':'middle')+'"');return g}
+    var passos=[
+      ['O TX manda degraus retos','Cada bit vira um nível que dura 50 µs: <span class="n0">0 V</span> para o bit 0 e <span class="n1">3,3 V</span> para o bit 1. Estes são 8 símbolos reais da mensagem.'],
+      ['O canal RC transforma os degraus em curvas','Em TP3 a tensão não pula: ela sobe e desce em exponencial, com τ ≈ 7,3 µs. No começo de cada símbolo, a tensão ainda "lembra" o símbolo anterior.'],
+      ['O CLK marca o início de cada símbolo','O CLK vem por outro fio. Cada <b>borda de subida</b> (seta) diz ao RX: "começou um símbolo novo". O nível do CLK não importa, só a subida.'],
+      ['8 fotos por símbolo','A cada subida do CLK, o RX zera um relógio e tira uma amostra a cada 6,25 µs: k = 0, 1, …, 7. São 160.000 fotos por segundo. Os pontos são as leituras reais do ADC.'],
+      ['Agora vem a pergunta','Para cada símbolo, o RX tem 8 números. Ele precisa decidir: <b>foi 0 ou foi 1?</b> Antes disso, ele precisa aprender como o canal deforma os símbolos (etapas 2 e 3).']
+    ];
+    Palco('p1',passos,function(i,t){
+      var g=base(),cut=i===0?t:1;
+      var degr=[];for(var s=0;s<NS;s++){degr.push([X(s*50),Y(lv[s]*4095)]);degr.push([X(s*50+50),Y(lv[s]*4095)])}
+      var clip='<clipPath id="c1"><rect x="0" y="0" width="'+(L+(W-L-R)*cut).toFixed(1)+'" height="'+H+'"/></clipPath>';
+      g+=clip+'<g clip-path="url(#c1)">'+poly(degr,'stroke:'+MU+';stroke-width:2;stroke-dasharray:6 4')+'</g>';
+      for(var s=0;s<NS;s++)g+=tx(X(s*50+25),T-8,lv[s],'lbg',' text-anchor="middle" style="fill:'+(lv[s]?C1:C0)+'"');
+      if(i>=1){var c2=i===1?t:1;var pc=curva.filter(function(p){return p[0]<=tmax*c2}).map(function(p){return [X(p[0]),Y(p[1])]});g+=poly(pc,'stroke:'+CA+';stroke-width:2.4')}
+      if(i>=2){var c3=i===2?t:1,yH=14,yL=28,pk=[];for(var s=0;s<NS;s++){if(s*50>tmax*c3)break;pk.push([X(s*50),yL],[X(s*50),yH],[X(s*50+25),yH],[X(s*50+25),yL],[X(s*50+50),yL])}
+        g+=poly(pk,'stroke:'+CK+';stroke-width:2');g+=tx(L-8,24,'CLK','lb',' text-anchor="end" style="fill:'+CK+'"');
+        for(var s=0;s<NS;s++){if(s*50>tmax*c3)break;g+=ln(X(s*50),yL+4,X(s*50),H-B,'stroke:'+CK+';stroke-width:1;stroke-dasharray:2 4;opacity:.7')}}
+      if(i>=3){var n=i===3?Math.round(t*NS*8):NS*8,c=0;for(var s=0;s<NS;s++)for(var k=0;k<8;k++){if(c++>=n)break;g+=dot(X(s*50+tk(k)),Y(A[s][k]),3.6,lv[s]?C1:C0)}
+        if(n>=8)for(var k=0;k<8;k++)g+=tx(X(tk(k)),Y(A[0][k])-9,'k'+k,'ax',' text-anchor="middle" style="font-size:10px"')}
+      if(i>=4){var s=3,op=t;g+='<rect x="'+X(s*50).toFixed(1)+'" y="'+(T-26)+'" width="'+(X(50)-X(0)).toFixed(1)+'" height="'+(H-B-T+26)+'" fill="none" stroke="'+INK+'" stroke-width="2" opacity="'+op.toFixed(2)+'"/>';
+        g+=tx(X(s*50+25),Y(2050),'0 ou 1?','big',' text-anchor="middle" opacity="'+op.toFixed(2)+'"')}
+      return svg(W,H,g,'Oito símbolos reais: degraus do TX, curva em TP3, CLK e oito amostras por símbolo');
+    });
+  })();
+
+  /* ------------------------------------------------------ 2: treino */
+  (function(){
+    var W=720,H=300,L=58,R=12,T=50,B=34;
+    var tr=D.tr,seq=tr.a.slice(0,7),lvs=tr.lv.slice(0,7);
+    var passos=[
+      ['O padrão de treino: 0, 0, 0, A, 0, 0, 0','O TX manda 3 zeros, um pulso alto (A) e mais 3 zeros. Isso se repete 20 vezes, logo no começo do quadro. Repare que o zero logo depois do A ainda começa alto: é a tensão descendo.'],
+      ['Linha de base: quanto vale um "zero" de verdade','O RX pega as 8 fotos do zero que vem <b>logo antes</b> de cada A (destacado). São 20 × 8 = 160 leituras. A média dá <b>b<sub>c</sub> = 4,68 códigos</b>, quase 0 V. É o "chão" do sinal.'],
+      ['Sobrepondo os 20 pulsos A','Agora o RX coloca os 20 pulsos A um em cima do outro, alinhados pela subida do CLK. Eles quase coincidem: o formato do pulso é sempre o mesmo, porque o canal é sempre o mesmo.'],
+      ['O molde p<sub>c</sub>[k]','Em cada posição k, faz a média dos 20 pulsos e tira a linha de base. Resultado: 8 números, as barras verdes. Esse é o <b>molde</b> de um "1" neste canal: começa em 1501 (a tensão ainda subindo) e termina em 4090.'],
+      ['A energia do molde: E<sub>c</sub>','Por último, o RX calcula E<sub>c</sub> = p<sub>c</sub>[0]² + p<sub>c</sub>[1]² + … + p<sub>c</sub>[7]² = <b>105.983.952</b>. Ele vai servir para "normalizar" o filtro: dividir por E<sub>c</sub> faz um símbolo igual ao molde dar exatamente z = 1.']
+    ];
+    Palco('p2',passos,function(i,t){
+      var g='';
+      if(i<=1){
+        var tmax=350,X=function(u){return L+u/tmax*(W-L-R)},Y=function(c){return T+(1-c/4095)*(H-T-B)};
+        [0,1,2,3].forEach(function(vt){var c=vt/VREF*4095;g+=ln(L,Y(c),W-R,Y(c),'stroke:'+RU)+tx(L-8,Y(c)+4,vt+' V','ax',' text-anchor="end"')});
+        for(var s=0;s<=7;s++)g+=ln(X(s*50),T,X(s*50),H-B,'stroke:'+CK+';stroke-dasharray:2 4;opacity:.6');
+        if(i===1)g+=rect(X(100),T,X(50)-X(0),H-B-T,'var(--accent-soft)',t);
+        var pts=[],n=i===0?Math.round(t*56):56,c=0;
+        for(var s=0;s<7;s++)for(var k=0;k<8;k++){pts.push([X(s*50+tk(k)),Y(seq[s][k])])}
+        g+=poly(pts.slice(0,Math.max(1,n)),'stroke:'+MU+';stroke-width:1.2');
+        for(var s=0;s<7;s++){for(var k=0;k<8;k++){if(c++>=n)break;g+=dot(X(s*50+tk(k)),Y(seq[s][k]),3.6,lvs[s]?C1:C0)}g+=tx(X(s*50+25),T-12,lvs[s]?'A':'0','lbg',' text-anchor="middle" style="fill:'+(lvs[s]?C1:C0)+'"')}
+        for(var s=0;s<=7;s++)g+=tx(X(s*50),H-12,(s*50)+(s===7?' µs':''),'ax',' text-anchor="'+(s===7?'end':'middle')+'"');
+        if(i===1){g+=tx(X(125),Y(900),'zero antes do A','lbg',' text-anchor="middle" opacity="'+t.toFixed(2)+'"');g+=tx(X(125),Y(600),'média = 4,68 códigos','lbg',' text-anchor="middle" opacity="'+t.toFixed(2)+'"')}
+        return svg(W,H,g,'Padrão de treino 0,0,0,A,0,0,0 com as amostras reais');
+      }
+      var X=function(k){return L+40+k*((W-L-R-80)/7)},Y=function(c){return T+(1-c/4095)*(H-T-B)};
+      [0,1,2,3].forEach(function(vt){var c=vt/VREF*4095;g+=ln(L,Y(c),W-R,Y(c),'stroke:'+RU)+tx(L-8,Y(c)+4,vt+' V','ax',' text-anchor="end"')});
+      for(var k=0;k<8;k++)g+=tx(X(k),H-12,'k = '+k,'ax',' text-anchor="middle"');
+      var bw=34;
+      if(i>=3){var f=i===3?t:1;for(var k=0;k<8;k++){var h=PC[k]*f;g+=rect(X(k)-bw/2,Y(h),bw,Y(0)-Y(h),CM,.85);if(f>.6)g+=tx(X(k),Y(h)-6,nf(PC[k],0),'val',' text-anchor="middle"')}}
+      var np=i===2?Math.max(1,Math.round(t*20)):20,op=i===2?1:.35;
+      for(var p=0;p<np;p++)for(var k=0;k<8;k++)g+=dot(X(k)+(p%5-2)*2.2,Y(tr.pulses[p][k]),2.6,C1,op);
+      if(i===2)g+=tx(W-R,T+14,np+' de 20 pulsos','lbg',' text-anchor="end"');
+      if(i===4){g+=rect(L+20,T+6,330,54,'var(--surface)',.92);g+=tx(L+30,T+28,'E_c = 1501² + 3022² + … + 4090²','lb');g+=tx(L+30,T+50,'= 105.983.952','big')}
+      return svg(W,H,g,'Vinte pulsos A sobrepostos e o molde p_c[k]');
+    });
+  })();
+
+  /* ------------------------------------------------------ 3: calibração */
+  (function(){
+    var W=720,H=310,L=58,R=12,T=24,B=36,sc=D.sc,sep=D.sep;
+    function jit(n){return ((n*9301+49297)%233280)/233280-.5}
+    var passos=[
+      ['256 símbolos que o RX já conhece','Cada coluna é uma das 8 fotos (k). Os pontos <span class="n0">roxos</span> são as leituras dos 128 zeros, e os <span class="n1">vermelhos</span>, dos 128 uns. Em k = 0 eles se misturam: a tensão ainda está no meio do caminho.'],
+      ['A folga em cada foto','Para cada k, mede-se a distância entre o <b>menor 1</b> e o <b>maior 0</b>. Em k = 0 a folga é negativa (−1193): as faixas se cruzam, e nenhuma linha de corte separa tudo. Ela cresce até k = 7.'],
+      ['k* = 7: a foto com a maior folga','A maior folga está em <b>k = 7</b> (46,87 µs): 4076 códigos, ou 3,28 V. Essa é a foto que a amostra única vai usar. Não é escolhida olhando: é a conta que decide.'],
+      ['Centros e limiar da amostra única','Em k* = 7, a média dos zeros é <b>10,8</b> e a média dos uns é <b>4094,9</b> códigos. São os <b>centros</b>. O <b>limiar</b> fica na metade do caminho: <b>2052,9 códigos = 1,653 V</b>.'],
+      ['O mesmo para o filtro casado, com z','O RX calcula z (etapa 5) para os 256 símbolos. Os zeros ficam perto de 0,07 e os uns perto de 1,02. O limiar do filtro também é a metade: <b>z = 0,548</b>. Note que alguns uns passam de 1 e alguns zeros ficam acima de 0: é o efeito do símbolo anterior.']
+    ];
+    Palco('p3',passos,function(i,t){
+      var g='';
+      if(i<=3){
+        var X=function(k){return L+40+k*((W-L-R-80)/7)},Y=function(c){return T+(1-cl(c,-100,4200)/4095)*(H-T-B)};
+        [0,1,2,3].forEach(function(vt){var c=vt/VREF*4095;g+=ln(L,Y(c),W-R,Y(c),'stroke:'+RU)+tx(L-8,Y(c)+4,vt+' V','ax',' text-anchor="end"')});
+        for(var k=0;k<8;k++)g+=tx(X(k),H-12,'k = '+k,'ax',' text-anchor="middle"');
+        if(i>=2)g+=rect(X(7)-30,T,60,H-B-T,'var(--accent-soft)',i===2?t:1);
+        var n=i===0?Math.round(t*128):128,op=i>=1?.45:.8;
+        for(var l=0;l<2;l++)for(var j=0;j<n;j++)for(var k=0;k<8;k++)g+=dot(X(k)+jit(j*8+k+l*999)*22,Y(sc[l][j][k]),2.2,l?C1:C0,op);
+        if(i>=1){var f=i===1?t:1;for(var k=0;k<8;k++){var mx0=Math.max.apply(null,sc[0].map(function(a){return a[k]})),mn1=Math.min.apply(null,sc[1].map(function(a){return a[k]}));
+          var col=sep[k]<0?BAD:GOOD,x=X(k)+18;g+=ln(x,Y(mx0),x,Y(mx0+(mn1-mx0)*f),'stroke:'+col+';stroke-width:3');
+          g+=ln(x-5,Y(mx0),x+5,Y(mx0),'stroke:'+col+';stroke-width:2')+ln(x-5,Y(mn1),x+5,Y(mn1),'stroke:'+col+';stroke-width:2');
+          if(f>.7)g+=tx(x+4,Y((mx0+mn1)/2)+4,(sep[k]<0?'−':'')+Math.abs(sep[k]),'val',' style="fill:'+col+'"')}}
+        if(i===2)g+=tx(X(7)-36,T+18,'k* = 7 · 46,87 µs','lbg',' text-anchor="end" opacity="'+t.toFixed(2)+'"');
+        if(i===3){var f=t;g+=ln(X(6)-30,Y(LIM_U),X(7)+34,Y(LIM_U),'stroke:'+INK+';stroke-width:2.4;stroke-dasharray:7 4;opacity:'+f.toFixed(2));
+          g+=ln(X(7)-28,Y(CU0),X(7)+28,Y(CU0),'stroke:'+C0+';stroke-width:3')+ln(X(7)-28,Y(CU1),X(7)+28,Y(CU1),'stroke:'+C1+';stroke-width:3');
+          g+=tx(X(6)-36,Y(LIM_U)+5,'limiar 1,653 V','lbg',' text-anchor="end" opacity="'+f.toFixed(2)+'"');
+          g+=tx(X(6)-36,Y(CU1)+16,'centro do 1: 4094,9','lbg',' text-anchor="end" style="fill:'+C1+'"')+tx(X(6)-36,Y(CU0)-6,'centro do 0: 10,8','lbg',' text-anchor="end" style="fill:'+C0+'"')}
+        return svg(W,H,g,'Leituras dos 256 símbolos de calibração em cada posição k, folgas e escolha de k*');
+      }
+      var zs=D.zs,X=function(j){return L+10+j/127*(W-L-R-20)},Y=function(z){return T+(1.2-z)/1.35*(H-T-B)};
+      [0,0.5,1].forEach(function(z){g+=ln(L,Y(z),W-R,Y(z),'stroke:'+RU)+tx(L-8,Y(z)+4,'z = '+nf(z,1),'ax',' text-anchor="end"')});
+      var n=Math.round(t*128);
+      for(var l=0;l<2;l++)for(var j=0;j<n;j++)g+=dot(X(j),Y(zs[l][j]),2.6,l?C1:C0,.8);
+      g+=ln(L,Y(LIM_Z),W-R,Y(LIM_Z),'stroke:'+INK+';stroke-width:2.4;stroke-dasharray:7 4');
+      g+=tx(W-R,Y(LIM_Z)-7,'limiar z = 0,548','lbg',' text-anchor="end"');
+      g+=tx(W-R,Y(CZ1)+18,'centro do 1: z = 1,024','lbg',' text-anchor="end" style="fill:'+C1+'"')+tx(W-R,Y(CZ0)-8,'centro do 0: z = 0,072','lbg',' text-anchor="end" style="fill:'+C0+'"');
+      g+=tx((L+W-R)/2,H-10,'os 128 zeros e os 128 uns da calibração, na ordem','ax',' text-anchor="middle"');
+      return svg(W,H,g,'Valores de z dos símbolos de calibração com o limiar 0,548');
+    });
+  })();
+
+  /* ------------------------------------------------------ casos */
+  var caso='1d0',palcos=[];
+  function nomeCaso(c){return {'1d0':'1 depois de 0','0d1':'0 depois de 1','1d1':'1 depois de 1','0d0':'0 depois de 0'}[c]}
+  document.querySelectorAll('[data-caso]').forEach(function(b){b.addEventListener('click',function(){caso=b.dataset.caso;marca();palcos.forEach(function(p){p.refresh()})})});
+  function marca(){document.querySelectorAll('[data-caso]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.caso===caso?'true':'false')})}
+  marca();
+  function zDe(a){var s=0;for(var k=0;k<8;k++)s+=PC[k]*(a[k]-BC);return s/EC}
+
+  /* ------------------------------------------------------ 4: amostra única */
+  (function(){
+    var W=720,H=310,L=58,R=150,T=52,B=34;
+    var passos=[
+      ['As 8 fotos do símbolo','À esquerda, o símbolo anterior (apagado). À direita, o símbolo que vamos decidir. Troque o caso nos botões acima para ver outros símbolos reais.'],
+      ['Ignora 7 fotos','A amostra única fica <b>só com a foto k* = 7</b>, a 46,87 µs da subida do CLK. As outras 7 são descartadas.'],
+      ['Compara com a linha de corte','A linha tracejada é o limiar de <b>1,653 V</b> (2052,9 códigos), calculado na calibração.'],
+      ['Decide','Se a foto está <b>acima</b> do limiar, o RX diz <span class="n1">1</span>. Se está <b>abaixo</b>, diz <span class="n0">0</span>. Só isso. Compare com o que o TX mandou.']
+    ];
+    palcos.push(Palco('p4',passos,function(i,t){
+      var e=D.ex[caso],g='',X=function(u){return L+u/100*(W-L-R)},Y=function(c){return T+(1-c/4095)*(H-T-B)};
+      [0,1,2,3].forEach(function(vt){var c=vt/VREF*4095;g+=ln(L,Y(c),W-R+10,Y(c),'stroke:'+RU)+tx(L-8,Y(c)+4,vt+' V','ax',' text-anchor="end"')});
+      [0,50,100].forEach(function(u){g+=ln(X(u),T,X(u),H-B,'stroke:'+CK+';stroke-dasharray:2 4');g+=tx(X(u),H-12,u+' µs','ax',' text-anchor="middle"')});
+      g+=tx(X(25),T-30,'anterior: '+e.prev,'lb',' text-anchor="middle" style="fill:'+MU+'"')+tx(X(75),T-30,'este: ?','lb',' text-anchor="middle"');
+      var pts=[];for(var k=0;k<8;k++)pts.push([X(tk(k)),Y(e.aprev[k])]);for(var k=0;k<8;k++)pts.push([X(50+tk(k)),Y(e.a[k])]);
+      g+=poly(pts,'stroke:'+MU+';stroke-width:1.2;opacity:.6');
+      for(var k=0;k<8;k++)g+=dot(X(tk(k)),Y(e.aprev[k]),3.2,e.prev?C1:C0,.3);
+      for(var k=0;k<8;k++){var op=1;if(i>=1&&k!==KS)op=i===1?1-.8*t:.2;var r=k===KS&&i>=1?6:4;g+=dot(X(50+tk(k)),Y(e.a[k]),r,INK,op);if(i===0)g+=tx(X(50+tk(k)),Y(e.a[k])-9,'k'+k,'ax',' text-anchor="middle" style="font-size:10px"')}
+      if(i>=1){g+='<circle cx="'+X(50+tk(KS)).toFixed(1)+'" cy="'+Y(e.a[KS]).toFixed(1)+'" r="11" fill="none" stroke="'+CA+'" stroke-width="2.4"/>';g+=tx(X(50+tk(KS)),Y(e.a[KS])+(e.a[KS]>2000?28:-16),'k* = 7','lbg',' text-anchor="middle"')}
+      if(i>=2){var f=i===2?t:1;g+=ln(X(0),Y(LIM_U),X(0)+(W-R+10-X(0))*f,Y(LIM_U),'stroke:'+INK+';stroke-width:2.4;stroke-dasharray:7 4');g+=tx(X(2),Y(LIM_U)-7,'limiar 1,653 V','lbg')}
+      if(i>=3){var u=e.a[KS],d=u>LIM_U?1:0,col=d?C1:C0,x0=W-R+30;
+        g+=tx(x0,T+40,'k* = 7 vale','lb')+tx(x0,T+62,u+' códigos','lbg')+tx(x0,T+82,nf(V(u),3)+' V','lb');
+        g+=tx(x0,T+120,(d?'acima':'abaixo')+' do limiar','lb')+tx(x0,T+160,'decide '+d,'big',' style="fill:'+col+'"');
+        g+=tx(x0,T+190,'TX mandou '+e.lvl,'lb')+tx(x0,T+212,d===e.lvl?'✓ certo':'✗ errado','lbg',' style="fill:'+(d===e.lvl?GOOD:BAD)+'"')}
+      return svg(W,H,g,'Amostra única: símbolo '+nomeCaso(caso)+', amostra k*=7 comparada com o limiar');
+    }));
+  })();
+
+  /* ------------------------------------------------------ 5: filtro casado */
+  (function(){
+    var W=720,H=330,L=58,R=12,T=24;
+    var tab=document.getElementById('tabFC');
+    function tabela(i,n){
+      var e=D.ex[caso],s=0,h='<tr><th class="n">k</th><th class="n">a[k]</th><th class="n">x[k] = a − 4,68</th><th class="n">peso p<sub>c</sub>[k]</th><th class="n">p<sub>c</sub>·x</th></tr>';
+      for(var k=0;k<8;k++){var x=e.a[k]-BC,p=PC[k]*x,vis=i>=3&&k<n;if(vis)s+=p;
+        h+='<tr'+(i<3||vis?'':' class="vazio"')+'><td class="n">'+k+'</td><td class="n">'+e.a[k]+'</td><td class="n">'+(i>=1?nf(x,2):'')+'</td><td class="n">'+(i>=2?nf(PC[k],2):'')+'</td><td class="n">'+(vis?nf(p,0):'·')+'</td></tr>'}
+      h+='<tr class="soma"><td></td><td colspan="3">Soma'+(i>=4?' ÷ E<sub>c</sub> (105.983.952) = z':'')+'</td><td class="n">'+(i>=3?nf(s,0):'')+(i>=4?'<br>z = '+nf(s/EC,4):'')+'</td></tr>';
+      tab.innerHTML=h;
+    }
+    var passos=[
+      ['As 8 fotos do símbolo','As barras cinza são as 8 leituras a[k] do ADC, em códigos (0 a 4095).'],
+      ['Tira a linha de base','De cada leitura, subtrai b<sub>c</sub> = 4,68 códigos (o "chão" medido no treino). Fica x[k]. A mudança é tão pequena que quase não se vê, mas entra na conta.'],
+      ['Coloca o molde do lado','As barras <span class="molde">verdes</span> são o molde p<sub>c</sub>[k], aprendido no treino: o formato de um "1" neste canal. Repare como ele é baixo em k = 0 e alto no fim.'],
+      ['Multiplica foto por foto e soma','Cada x[k] é multiplicado pelo peso p<sub>c</sub>[k] da mesma posição. Onde o molde é alto, a foto vale mais. Veja a soma crescer na barra da direita e na tabela.'],
+      ['Divide por E<sub>c</sub>: o resultado é z','A soma é dividida por E<sub>c</sub> = 105.983.952. Se o símbolo fosse idêntico ao molde, a soma seria igual a E<sub>c</sub> e z daria 1. Se fosse todo zero, z daria 0.'],
+      ['Decide','Compara z com o limiar <b>0,548</b>. Acima: <span class="n1">1</span>. Abaixo: <span class="n0">0</span>.']
+    ];
+    palcos.push(Palco('p5',passos,function(i,t){
+      var e=D.ex[caso],g='',x0=L,x1=470,X=function(k){return x0+30+k*((x1-x0-60)/7)},Y=function(c){return T+(1-c/4095)*(H-T-60)};
+      tabela(i,i===3?Math.ceil(t*8):8);
+      [0,1,2,3].forEach(function(vt){var c=vt/VREF*4095;g+=ln(x0,Y(c),x1,Y(c),'stroke:'+RU)+tx(x0-8,Y(c)+4,vt+' V','ax',' text-anchor="end"')});
+      for(var k=0;k<8;k++)g+=tx(X(k),H-40,'k'+k,'ax',' text-anchor="middle"');
+      var bw=i>=2?16:26;
+      for(var k=0;k<8;k++){var v=i>=1?e.a[k]-BC*(i===1?t:1):e.a[k];var xx=i>=2?X(k)-bw-1:X(k)-bw/2;g+=rect(xx,Y(v),bw,Y(0)-Y(v),MU,i===0?t*.9+.1:.9)}
+      if(i>=1)g+=ln(x0,Y(BC),x1,Y(BC),'stroke:'+CA+';stroke-width:1.5;stroke-dasharray:4 3');
+      if(i>=2){var f=i===2?t:1;for(var k=0;k<8;k++){var h=PC[k]*f;g+=rect(X(k)+1,Y(h),bw,Y(0)-Y(h),CM,.85)}}
+      g+=tx(x0+4,T+10,i>=2?'cinza = x[k] (este símbolo) · verde = molde p_c[k]':'a[k] em códigos do ADC','lb');
+      /* barra de soma / medidor de z */
+      var gx=540,gw=150,gy=T,gh=H-T-60,Z=function(z){return gy+(1.25-z)/1.45*gh};
+      if(i>=3){
+        var n=i===3?t*8:8,s=0;for(var k=0;k<8;k++){var w=cl(n-k,0,1);s+=PC[k]*(e.a[k]-BC)*w}
+        var z=s/EC;
+        [0,0.5,1].forEach(function(zz){g+=ln(gx,Z(zz),gx+gw,Z(zz),'stroke:'+RU)+tx(gx-6,Z(zz)+4,nf(zz,1),'ax',' text-anchor="end"')});
+        g+=rect(gx+45,Z(z),40,Z(0)-Z(z),CA,.8);
+        g+=ln(gx,Z(1),gx+gw,Z(1),'stroke:'+CM+';stroke-width:2');g+=tx(gx+gw,Z(1)-5,'= molde','ax',' text-anchor="end" style="fill:'+CM+'"');
+        g+=tx(gx+65,H-40,i===3?'soma ÷ E_c':'z','lb',' text-anchor="middle"');
+        g+=tx(gx+65,Z(z)-8,(i===3?'':'z = ')+nf(z,3),'lbg',' text-anchor="middle"');
+        if(i>=5){g+=ln(gx,Z(LIM_Z),gx+gw,Z(LIM_Z),'stroke:'+INK+';stroke-width:2.4;stroke-dasharray:7 4');g+=tx(gx+gw,Z(LIM_Z)+16,'limiar 0,548','lb',' text-anchor="end"');
+          var d=z>LIM_Z?1:0;g+=tx(gx+65,H-12,'decide '+d+(d===e.lvl?'  ✓':'  ✗'),'big',' text-anchor="middle" style="fill:'+(d?C1:C0)+'"')}
+      }
+      return svg(W,H,g,'Filtro casado: símbolo '+nomeCaso(caso)+', produto com o molde e valor de z');
+    }));
+  })();
+
+  /* ------------------------------------------------------ 6: tabela de comparação */
+  (function(){
+    var h='';['1d0','0d1','1d1','0d0'].forEach(function(c){var e=D.ex[c],u=e.a[KS],z=zDe(e.a),du=u>LIM_U?1:0,dz=z>LIM_Z?1:0;
+      h+='<tr><td>'+nomeCaso(c)+'</td><td class="n">'+u+' códigos · '+nf(V(u),3)+' V</td><td class="'+(du===e.lvl?'ok':'no')+'">'+du+(du===e.lvl?' ✓':' ✗')+'</td><td class="n">'+nf(z,3)+'</td><td class="'+(dz===e.lvl?'ok':'no')+'">'+dz+(dz===e.lvl?' ✓':' ✗')+'</td></tr>'});
+    document.getElementById('tabComp').innerHTML=h;
+  })();
+
+  /* ------------------------------------------------------ 7: sincronismo */
+  (function(){
+    var W=720,H=300,L=20,R=20;
+    var bits=[];for(var b=0;b<16;b++)bits.push(b%2);
+    var w=0xD391C5A7;for(var b=31;b>=0;b--)bits.push((w>>>b)&1);
+    var erro=false,bErr=document.getElementById('erro48');
+    var passos=[
+      ['O CLK separa os símbolos, mas não diz onde começa a mensagem','O RX sabe <b>quando</b> cada símbolo começa (CLK). Mas, se ele começar a contar no símbolo errado, vai comparar a mensagem com a PRBS fora de ordem e achar erros em tudo.'],
+      ['O quadro tem uma ordem fixa','Primeiro 140 símbolos de treino (pulsos), depois 256 de calibração, depois <b>48 bits conhecidos</b>, e só então os 100.000 bits da mensagem.'],
+      ['Os 48 bits conhecidos','São 16 bits alternados (0101…) e a palavra <b>D391C5A7</b> em binário. O TX sempre manda exatamente estes 48.'],
+      ['O RX decide e confere um por um','O RX decide cada um dos 48 com os dois detectores (amostra única e filtro casado) e compara com o padrão esperado.'],
+      ['48 de 48: sincronismo confirmado','Se todos baterem, <code>sincronismo_ok = 1</code>: o próximo bit é b<sub>0</sub> da PRBS-15. O RX reinicia sua PRBS local ali e compara bit a bit os 100.000 seguintes, contando os erros de cada detector.']
+    ];
+    var pal=Palco('p7',passos,function(i,t){
+      var g='';
+      if(i<=1){
+        var segs=[['treino: pulsos',140,'var(--accent-soft)'],['calibração',256,'var(--ch1-soft)'],['48 bits',24,'var(--molde-soft)'],['mensagem: 100.000 bits',380,'var(--good-soft)']];
+        var tot=800,X=function(s){return L+s/tot*(W-L-R)},s0=0,y=120;
+        if(i===0){for(var s=0;s<40;s++){var x=X(s*20);g+=ln(x,60,x,40,'stroke:'+CK+';stroke-width:2')+ln(x,40,x+(X(10)-X(0)),40,'stroke:'+CK+';stroke-width:2')+ln(x+(X(10)-X(0)),40,x+(X(10)-X(0)),60,'stroke:'+CK+';stroke-width:2')+ln(x+(X(10)-X(0)),60,X(s*20+20),60,'stroke:'+CK+';stroke-width:2')}
+          g+=tx(L,30,'CLK: uma subida por símbolo','lb',' style="fill:'+CK+'"');g+=tx((L+W-R)/2,170,'onde começa a mensagem?','big',' text-anchor="middle" opacity="'+t.toFixed(2)+'"');}
+        if(i===1){segs.forEach(function(sg,n){var f=cl(t*4-n,0,1);g+=rect(X(s0),y,(X(sg[1])-X(0))*f,60,sg[2],1);g+='<rect x="'+X(s0).toFixed(1)+'" y="'+y+'" width="'+((X(sg[1])-X(0))*f).toFixed(1)+'" height="60" fill="none" stroke="'+RU+'"/>';if(f>.8)g+=tx(X(s0+sg[1]/2),y+36,sg[0],'lb',' text-anchor="middle"');s0+=sg[1]});
+          g+=tx(X(140),y-10,'140','ax',' text-anchor="middle"')+tx(X(396),y-10,'396','ax',' text-anchor="middle"')+tx(X(420),y+80,'↑ aqui o RX confere','lb',' text-anchor="middle"')}
+        return svg(W,H,g,'Estrutura do quadro: treino, calibração, 48 bits e mensagem');
+      }
+      var cw=(W-L-R)/24,ch=34;
+      function cel(n,yy,txt,fill,col){var x=L+(n%24)*cw;return rect(x+1,yy,cw-2,ch,fill,1)+tx(x+cw/2,yy+23,txt,'lbg',' text-anchor="middle"'+(col?' style="fill:'+col+'"':''))}
+      for(var r=0;r<2;r++){g+=tx(L,26+r*130,r?'palavra D391C5A7 (32 bits)':'16 bits alternados  ·  esperado (em cima) e decidido pelo RX (embaixo)','lb')}
+      var nOk=0,nVis=i===3?Math.round(t*48):(i>3?48:0);
+      for(var n=0;n<48;n++){var row=n<24?0:1,yy=36+row*130;
+        g+=cel(n,yy,bits[n],'var(--accent-soft)');
+        if(n<nVis){var dec=bits[n];if(erro&&n===29)dec=1-dec;var ok=dec===bits[n];if(ok)nOk++;
+          g+=cel(n,yy+ch+4,dec,ok?'var(--good-soft)':'var(--bad-soft)',ok?GOOD:BAD)}}
+      if(i>=3){var y2=H-14;if(nVis===48){var tudo=nOk===48;
+        g+=tx((L+W-R)/2,y2,tudo?'48 de 48 certos → sincronismo_ok = 1 → próximo bit é b0 da PRBS':'47 de 48 → FALHA DE SINCRONISMO → quadro descartado, sem BER','lbg',' text-anchor="middle" style="fill:'+(tudo?GOOD:BAD)+'"')}
+        else g+=tx((L+W-R)/2,y2,'conferindo: '+nVis+' de 48','lbg',' text-anchor="middle"')}
+      return svg(W,H,g,'Os 48 bits de início do quadro, esperados e decididos');
+    });
+    bErr.addEventListener('click',function(){erro=!erro;bErr.setAttribute('aria-pressed',erro?'true':'false');bErr.textContent=erro?'Voltar ao caso certo':'E se 1 bit vier errado?';pal.refresh()});
+  })();
+  /* ------------------------------------------------------ conta de b_c, p_c, E_c */
+  (function(){
+    var out=document.getElementById('contaOut'),tr=D.tr,q='0';
+    function lista(v){return '<div class="lst">'+v.map(function(x){return '<span>'+x+'</span>'}).join('')+'</div>'}
+    function mostra(){
+      document.querySelectorAll('#calcPc [data-q]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.q===q?'true':'false')});
+      var h='';
+      if(q==='bc'){var tot=0,n=0;tr.zeros.forEach(function(r){r.forEach(function(v){tot+=v;n++})});
+        h='<b>b<sub>c</sub>: as 160 leituras do zero que vem logo antes de cada A</b> (20 zeros × 8 fotos). Cada linha é um zero:';
+        h+=tr.zeros.map(function(r,i){return '<div class="lst"><span>zero '+(i+1)+'</span>'+r.map(function(v){return '<span>'+v+'</span>'}).join('')+'</div>'}).join('');
+        h+='<div class="res">soma das 160 leituras = '+tot+'<br>b<sub>c</sub> = '+tot+' ÷ '+n+' = <b>'+nf(tot/n,3)+'</b> ≈ 4,68 códigos ≈ '+nf(V(tot/n)*1000,1)+' mV</div>';}
+      else if(q==='ec'){var s=0,lin=[];PC.forEach(function(p,k){s+=p*p;lin.push('p<sub>c</sub>['+k+']² = '+nf(p,2)+'² = '+nf(p*p,0))});
+        h='<b>E<sub>c</sub>: soma dos 8 pesos ao quadrado</b><div class="res">'+lin.join('<br>')+'<br><b>E<sub>c</sub> = '+nf(s,0)+'</b> (o firmware imprime 105.983.952)</div>';}
+      else{var k=+q,v=tr.pulses.map(function(r){return r[k]}),tot=v.reduce(function(a,b){return a+b},0),m=tot/20,bc=748/160;
+        h='<b>p<sub>c</sub>['+k+']: a foto k = '+k+' ('+nf(tk(k),2)+' µs) dos 20 pulsos A</b>'+lista(v);
+        h+='<div class="res">soma = '+tot+'<br>média = '+tot+' ÷ 20 = '+nf(m,2)+'<br>p<sub>c</sub>['+k+'] = média − b<sub>c</sub> = '+nf(m,2)+' − 4,675 = <b>'+nf(m-bc,2)+'</b> (log: '+nf(PC[k],2)+')</div>';
+        if(k===0)h+='<p class="muted" style="margin:.5em 0 0">Em k = 0 a tensão ainda está no começo da subida, por isso o peso é pequeno. As 20 leituras variam um pouco (1480 a 1547) por causa do ruído e da pequena variação do instante da borda; a média suaviza isso.</p>';
+        if(k===7)h+='<p class="muted" style="margin:.5em 0 0">Em k = 7 o RC já subiu tudo e o ADC está no máximo (4095) nas 20 vezes. Por isso o peso é o maior.</p>';}
+      out.innerHTML=h;
+    }
+    document.querySelectorAll('#calcPc [data-q]').forEach(function(b){b.addEventListener('click',function(){q=b.dataset.q;mostra()})});
+    mostra();
+  })();
+})();
+</script>

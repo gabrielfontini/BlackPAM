@@ -1,0 +1,1627 @@
+<title>Defesa PAM em Banda Base</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: caderno de bancada. Índice fixo à esquerda, coluna de leitura de ~68ch e, no meio do texto,
+   painéis escuros de instrumento com os guias para repetir cada medida. CH1 amarelo / CH2 ciano = cores do TDS2002B. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#151a21; --muted:#596270; --rule:#d8dde4;
+  --accent:#0d5c78; --accent-soft:#e3eff4;
+  --ch1:#a87400; --ch1-soft:#fff3cf; --ch2:#00808a; --ch2-soft:#d9f3f4;
+  --good:#1d7a3e; --good-soft:#e2f3e7; --warn:#9a5b00; --warn-soft:#fbefd9; --bad:#b4233a; --bad-soft:#fbe4e8;
+  --g-bg:#13212b; --g-panel:#1b2d39; --g-ink:#e9f0f4; --g-muted:#a3b6c2; --g-rule:#334a59; --g-ch1:#f5c542; --g-ch2:#4fd8e0; --g-acc:#86d5f2; --g-good:#7fe0a0; --g-warn:#f2bb66;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1317; --surface:#161b21; --ink:#e5e9ee; --muted:#9aa4b1; --rule:#2a323c;
+  --accent:#6cc4e3; --accent-soft:#132a33;
+  --ch1:#f2c14b; --ch1-soft:#2b2410; --ch2:#4fd2da; --ch2-soft:#0f2a2c;
+  --good:#5fcf86; --good-soft:#12291a; --warn:#f0b357; --warn-soft:#2c220f; --bad:#ff7b8f; --bad-soft:#2e141a;
+  --g-bg:#18262f; --g-panel:#21333f; --g-rule:#3a5262;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1317; --surface:#161b21; --ink:#e5e9ee; --muted:#9aa4b1; --rule:#2a323c;
+  --accent:#6cc4e3; --accent-soft:#132a33;
+  --ch1:#f2c14b; --ch1-soft:#2b2410; --ch2:#4fd2da; --ch2-soft:#0f2a2c;
+  --good:#5fcf86; --good-soft:#12291a; --warn:#f0b357; --warn-soft:#2c220f; --bad:#ff7b8f; --bad-soft:#2e141a;
+  --g-bg:#18262f; --g-panel:#21333f; --g-rule:#3a5262;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.62;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.shell{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:238px minmax(0,1fr);gap:44px}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow:auto;padding-block:28px 24px;font-family:var(--f-display);font-size:16px}
+nav.toc .tt{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px;color:var(--muted);margin:14px 0 6px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{color:var(--ink);text-decoration:none;display:block;padding:2px 8px;border-left:2px solid transparent}
+nav.toc a:hover,nav.toc a:focus-visible{border-left-color:var(--accent);color:var(--accent);outline:none}
+nav.toc .pts{color:var(--muted);font-size:13px}
+main{min-width:0;padding-block:28px 0}
+.read{max-width:70ch}
+header.hero{padding-bottom:24px;margin-bottom:24px}
+.eyebrow{font-family:var(--f-display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:14px;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1.02;margin:.25em 0 .3em;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:33px;line-height:1.1;margin:0 0 .35em;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:24px;line-height:1.15;margin:1.5em 0 .3em;text-wrap:balance}
+h4{font-family:var(--f-display);font-weight:600;font-size:18px;letter-spacing:.03em;margin:1.1em 0 .2em}
+p{margin:.55em 0}
+a{color:var(--accent)}
+section.blk{padding-block:40px 12px;border-top:1px solid var(--rule);scroll-margin-top:16px}
+.blk-tag{display:inline-flex;gap:8px;align-items:center;font-family:var(--f-display);font-weight:600;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.blk-tag b{color:var(--accent)}
+.lead{font-size:19px}
+.muted{color:var(--muted)}
+.num,code,.mono{font-family:var(--f-mono);font-size:.86em;font-variant-numeric:tabular-nums}
+code{background:var(--accent-soft);padding:.05em .35em;border-radius:3px;overflow-wrap:anywhere}
+.ch1{color:var(--ch1);font-weight:600}.ch2{color:var(--ch2);font-weight:600}
+.pill{display:inline-block;font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.05em;padding:1px 8px;border-radius:999px;vertical-align:1px}
+.pill.ok{background:var(--good-soft);color:var(--good)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* termo clicável */
+a.t{color:inherit;text-decoration:underline dotted var(--accent) 2px;text-underline-offset:3px;cursor:help}
+a.t:hover,a.t:focus-visible{color:var(--accent);outline:none}
+
+/* blocos de explicação */
+.simples{background:var(--accent-soft);padding:14px 18px;margin:14px 0;font-size:18px}
+.rot{display:block;font-family:var(--f-display);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:12.5px;color:var(--accent);margin-bottom:3px}
+.acontece{background:var(--surface);border:1px solid var(--rule);padding:12px 18px;margin:14px 0}
+.acontece .rot{color:var(--muted)}
+.medido{background:var(--ch1-soft);padding:12px 18px;margin:14px 0}
+.medido .rot{color:var(--ch1)}
+.atencao{background:var(--warn-soft);padding:12px 18px;margin:14px 0}
+.atencao .rot{color:var(--warn)}
+.say{background:var(--surface);border:1px solid var(--accent);padding:12px 18px;margin:16px 0}
+.say::before{content:"Fale assim na defesa";display:block;font-family:var(--f-display);font-weight:700;letter-spacing:.09em;text-transform:uppercase;font-size:12.5px;color:var(--accent);margin-bottom:4px}
+.formula{font-family:var(--f-mono);font-size:15px;background:var(--surface);border:1px solid var(--rule);padding:12px 16px;margin:12px 0;overflow-x:auto;line-height:1.75}
+.formula .c{color:var(--muted)}
+.tw{overflow-x:auto;margin:14px 0;max-width:100%}
+table{border-collapse:collapse;font-size:15px;min-width:100%}
+th,td{border-bottom:1px solid var(--rule);padding:6px 10px;text-align:left;vertical-align:top}
+th{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.03em;color:var(--muted);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.neg{color:var(--bad)}
+tr.hl td{background:var(--ch1-soft)}
+figure{margin:20px 0;max-width:100%}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--rule);background:#fff}
+figure.osc{max-width:620px}
+figcaption{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.45}
+figcaption b{color:var(--ink)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:16px 0}
+.grid2 figure{margin:0}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.stat{background:var(--surface);border:1px solid var(--rule);padding:10px 12px}
+.stat .k{font-family:var(--f-display);font-size:14px;letter-spacing:.03em;color:var(--muted)}
+.stat .v{font-family:var(--f-mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat .s{font-size:14px;color:var(--muted);line-height:1.35}
+ol.steps{padding-left:22px}ol.steps li{margin:5px 0}
+ul{padding-left:22px}ul li{margin:4px 0}
+button{font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.04em;color:var(--accent);background:var(--surface);border:1px solid var(--accent);padding:4px 12px;border-radius:3px;cursor:pointer}
+button:hover{background:var(--accent-soft)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.acoes{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+details.q{background:var(--surface);border:1px solid var(--rule);margin:8px 0}
+details.q summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none;display:flex;gap:10px}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);flex:0 0 auto}
+details.q[open] summary::before{content:"–"}
+details.q .a{padding:0 16px 12px 36px}
+
+/* quadro */
+.quadro{display:flex;min-height:62px;margin:14px 0 4px;font-family:var(--f-display);font-size:14px;line-height:1.15}
+.quadro div{padding:8px 6px;border:1px solid var(--rule);min-width:0;overflow-wrap:anywhere}
+.quadro b{display:block;font-size:15px}
+.q1{flex:0 0 17%;background:var(--ch2-soft)}.q2{flex:0 0 19%;background:var(--ch1-soft)}.q3{flex:0 0 13%;background:var(--warn-soft)}.q4{flex:1 1 0;background:var(--good-soft)}
+
+/* tela anotada */
+.tela{position:relative;max-width:640px;margin:18px 0 8px}
+.tela img{display:block;width:100%;height:auto;border:1px solid var(--rule);background:#fff}
+.pin{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--bad);color:#fff;font:600 13px/24px var(--f-mono);text-align:center;box-shadow:0 0 0 2px #fff}
+
+/* circuito */
+.svgbox{overflow-x:auto;margin:16px 0;background:var(--surface);border:1px solid var(--rule);padding:8px}
+.svgbox svg{display:block;min-width:720px;width:100%;height:auto}
+svg .fio{stroke:var(--ink);stroke-width:2;fill:none}
+svg .clk{stroke:var(--ch2);stroke-width:2;fill:none}
+svg .gnd{stroke:var(--muted);stroke-width:2;fill:none}
+svg .caixa{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+svg .comp{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+svg .tp{fill:var(--bad);stroke:none}
+svg .txt{fill:var(--ink);font:500 14px var(--f-display)}
+svg .pq{fill:var(--muted);font:500 13px var(--f-display)}
+svg .tpt{fill:var(--bad);font:700 15px var(--f-display)}
+svg .tit{fill:var(--accent);font:700 18px var(--f-display)}
+svg .clkt{fill:var(--ch2);font:600 14px var(--f-display)}
+
+/* guia de bancada */
+.guia{background:var(--g-bg);color:var(--g-ink);margin:26px 0;padding:0;max-width:900px;font-size:16px;scroll-margin-top:12px}
+.guia a{color:var(--g-acc)}
+.g-top{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:14px 18px 10px;border-bottom:1px solid var(--g-rule)}
+.g-num{font-family:var(--f-display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:14px;color:var(--g-acc)}
+.g-tit{font-family:var(--f-display);font-weight:700;font-size:25px;line-height:1.1;flex:1 1 300px;min-width:0}
+.g-tempo{font-family:var(--f-mono);font-size:13px;color:var(--g-muted)}
+.g-corpo{padding:12px 18px 16px}
+.guia h4{color:var(--g-acc);font-size:15px;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 4px}
+.guia h4:first-child{margin-top:2px}
+.guia p{margin:.4em 0}
+.guia code{background:var(--g-panel);color:var(--g-ink)}
+.pontas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.ponta{flex:1 1 200px;min-width:0;background:var(--g-panel);padding:7px 12px;font-family:var(--f-display);font-size:17px;line-height:1.2}
+.ponta b{display:block;font-size:13px;letter-spacing:.08em}
+.ponta.c1 b{color:var(--g-ch1)}.ponta.c2 b{color:var(--g-ch2)}.ponta.c0 b{color:var(--g-acc)}
+.ajustes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));background:var(--g-panel);margin:8px 0;padding:2px 0}
+.ajustes div{padding:6px 10px;min-width:0;box-shadow:inset 0 -1px 0 var(--g-rule)}
+.ajustes span{display:block;font-family:var(--f-display);font-size:13px;letter-spacing:.05em;color:var(--g-muted);line-height:1.2}
+.ajustes b{font-family:var(--f-mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+ol.passos{list-style:none;margin:6px 0;padding:0;display:grid;gap:5px;counter-reset:p}
+ol.passos li{counter-increment:p;display:grid;grid-template-columns:22px 26px minmax(0,1fr);gap:4px;align-items:start;line-height:1.45}
+ol.passos li::before{content:counter(p);grid-column:2;grid-row:1;font-family:var(--f-mono);font-size:14px;color:var(--g-muted);text-align:center}
+ol.passos li input{grid-column:1;grid-row:1;margin:4px 0 0;width:17px;height:17px;accent-color:#2d9ccb}
+ol.passos li .txt{grid-column:3;grid-row:1;min-width:0}
+ol.passos li:has(input:checked) .txt{color:var(--g-muted);text-decoration:line-through}
+.btn{display:inline-block;font-family:var(--f-mono);font-size:12.5px;font-weight:600;padding:0 6px;border:1px solid var(--g-muted);border-radius:3px;background:var(--g-panel);white-space:nowrap}
+.menu{font-family:var(--f-display);font-size:16px;color:var(--g-acc)}
+.guia figure{margin:10px 0}
+.guia figure img{border-color:var(--g-rule)}
+.guia figcaption,.guia figcaption b{color:var(--g-muted)}
+.deve{background:var(--g-panel);padding:8px 14px;margin:6px 0}
+.deve b.ok{color:var(--g-good)}
+.senao{border:1px solid var(--g-rule);padding:8px 14px;margin:8px 0}
+.senao b{color:var(--g-warn)}
+.senao ul{margin:.2em 0;padding-left:18px}
+.fig-guia{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.fig-guia>*{min-width:0}
+pre.cmd{position:relative;background:#091219;color:#d7e6ee;font:13.5px/1.5 var(--f-mono);padding:10px 72px 10px 12px;margin:6px 0;overflow-x:auto;white-space:pre}
+pre.cmd button{position:absolute;top:6px;right:6px;font-size:13px;padding:1px 8px;color:var(--g-acc);background:var(--g-panel);border-color:var(--g-rule)}
+.limpar{font-size:13px;color:var(--g-muted);background:transparent;border-color:var(--g-rule);margin-top:6px}
+.limpar:hover{background:var(--g-panel)}
+details.atalho{margin:8px 0;border:1px solid var(--g-rule)}
+details.atalho summary{cursor:pointer;padding:6px 12px;font-family:var(--f-display);font-weight:600;font-size:16px;color:var(--g-acc)}
+details.atalho>div{padding:2px 12px 10px}
+
+.guia .say::before{color:var(--g-acc)}
+.guia th,.guia td{border-color:var(--g-rule)}
+.guia td code{white-space:nowrap}
+
+/* laboratório de tau */
+.lab{background:var(--surface);border:1px solid var(--rule);padding:14px 16px;margin:20px 0;max-width:900px}
+.lab h3{margin-top:0}
+.lab-tela{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:10px 0}
+.lab-tela>div{min-width:0}
+.lab-tela canvas{display:block;width:100%;height:230px;background:var(--bg);border:1px solid var(--rule)}
+.lab-tela h4{margin:0 0 4px}
+.lab input[type=range]{width:100%;accent-color:#2d9ccb;margin:8px 0}
+.lab-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}
+.kbar{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;margin:8px 0;font-family:var(--f-mono);font-size:12px;text-align:center;font-variant-numeric:tabular-nums}
+.kbar div{padding:4px 0;min-width:0}
+.kbar .bom{background:var(--good-soft);color:var(--good)}
+.kbar .ruim{background:var(--bad-soft);color:var(--bad)}
+.kbar .melhor{outline:2px solid var(--good)}
+
+/* anotações */
+.anota input{width:100%;min-width:84px;font:14px var(--f-mono);padding:3px 6px;border:1px solid var(--rule);background:var(--bg);color:var(--ink)}
+
+/* dicionário */
+dl.dic{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:12px 0}
+dl.dic>div{padding:8px 0;border-bottom:1px solid var(--rule);min-width:0;scroll-margin-top:12px}
+dl.dic dt{font-family:var(--f-display);font-weight:700;font-size:18px;line-height:1.2}
+dl.dic dd{margin:2px 0 0;font-size:15.5px;line-height:1.45}
+dl.dic>div:target{background:var(--ch1-soft)}
+
+/* janela de definição */
+#dica{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:3px solid var(--accent);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -8px 24px rgba(0,0,0,.22)}
+#dica .in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:start}
+#dica b{font-family:var(--f-display);font-size:20px;display:block;line-height:1.2}
+#dica p{margin:2px 0 0;font-size:16px;line-height:1.45}
+
+/* modo só guias */
+body.so-guias section.blk>*:not(.guia):not(.cab){display:none}
+body.so-guias section.blk:not(:has(.guia)){display:none}
+body.so-guias .so-teoria{display:none}
+.cab{max-width:70ch}
+
+@media (max-width:980px){.shell{grid-template-columns:minmax(0,1fr);gap:0}nav.toc{position:static;max-height:none;border-bottom:1px solid var(--rule);padding-block:18px}nav.toc ol{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}}
+@media (max-width:720px){.grid2,.fig-guia,.lab-tela{grid-template-columns:minmax(0,1fr)}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}dl.dic{grid-template-columns:minmax(0,1fr)}body{font-size:16px}.simples{font-size:17px}.quadro{font-size:12.5px}.quadro b{font-size:13px}.g-corpo{padding-inline:12px}.g-top{padding-inline:12px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<div class="shell">
+<nav class="toc" aria-label="Índice">
+  <div class="acoes"><button type="button" id="modo" aria-pressed="false">Só os guias de bancada</button></div>
+  <div class="tt">Estudo</div>
+  <ol>
+    <li><a href="#prova">O que vai ser cobrado</a></li>
+    <li><a href="#ideia">O sistema em 2 minutos</a></li>
+    <li><a href="#scope">Usar o osciloscópio</a></li>
+    <li><a href="#pam">PAM, símbolo e quadro</a></li>
+    <li><a href="#tx">Transmissor (TP2)</a></li>
+    <li><a href="#canal">Canal, τ e ISI <span class="pts">Bloco A</span></a></li>
+    <li><a href="#psd">Fourier e PSD <span class="pts">Bloco A</span></a></li>
+    <li><a href="#amostragem">8 amostras e k* <span class="pts">Bloco B</span></a></li>
+    <li><a href="#casado">Filtro casado <span class="pts">Bloco B</span></a></li>
+    <li><a href="#ber">BER e sincronismo <span class="pts">Bloco B</span></a></li>
+    <li><a href="#vivo">Troca para 33 nF ao vivo</a></li>
+    <li><a href="#manga">Cabo manga</a></li>
+    <li><a href="#falhas">Falhas e pedidos do professor</a></li>
+    <li><a href="#perguntas">Perguntas e respostas</a></li>
+    <li><a href="#dicionario">Dicionário</a></li>
+    <li><a href="#cola">Cola: números e ajustes</a></li>
+  </ol>
+  <div class="tt">Guias de bancada</div>
+  <ol>
+    <li><a href="#g0">0 · Ligar tudo</a></li>
+    <li><a href="#g1">1 · Ver o CLK</a></li>
+    <li><a href="#g2">2 · Ver os níveis e o Gray</a></li>
+    <li><a href="#g3">3 · Rodar um quadro</a></li>
+    <li><a href="#g4">4 · Atraso e ripple</a></li>
+    <li><a href="#g5">5 · Degrau e τ</a></li>
+    <li><a href="#g6">6 · PSD</a></li>
+    <li><a href="#g7">7 · Olho e k*</a></li>
+    <li><a href="#g8">8 · Provar as 8 amostras</a></li>
+    <li><a href="#g9">9 · Conta do filtro à mão</a></li>
+    <li><a href="#g10">10 · Troca para 33 nF</a></li>
+    <li><a href="#g11">11 · Caçar falha de CLK</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero read">
+  <div class="eyebrow">Telecomunicações · Prof. Roberto Krauss · Projeto PAM em banda base</div>
+  <h1>Defesa PAM em Banda Base</h1>
+  <p class="lead">Cada assunto aqui vem em quatro partes: o que é em palavras simples, o que acontece no circuito, o que era esperado e o que vocês mediram. No meio do texto há guias para você mesmo configurar o osciloscópio e mostrar aquilo ao professor.</p>
+  <div class="acontece">
+    <span class="rot">Como usar esta página</span>
+    <ul>
+      <li>Palavra com <a class="t" href="#d-tau">sublinhado pontilhado</a>: clique e a explicação abre na hora. Todas estão também no <a href="#dicionario">dicionário</a>.</li>
+      <li>Painel escuro = guia de bancada, com pontas, ajustes, passos, o que tem que aparecer e o que fazer se não aparecer. Dá para marcar cada passo.</li>
+      <li>No dia da defesa, aperte <b>Só os guias de bancada</b> no índice. A teoria some e ficam só os passos.</li>
+    </ul>
+  </div>
+  <p class="muted">Números medidos em 03/11/2026 e bancada retestada em 04/11/2026 (Dupont, PAM-4: 0 erros em 100.000 bits). Tensão de referência medida: <span class="num">3,297 V</span>. Arquivos: <code>entrega/logs/</code>, <code>entrega/capturas/</code>, <code>entrega/CADERNO_BANCADA.md</code>.</p>
+</header>
+
+<!-- =================================================== PROVA -->
+<section class="blk" id="prova">
+<div class="cab">
+  <div class="blk-tag"><b>Mapa</b> Avaliação</div>
+  <h2>O que vai ser cobrado de você</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>A defesa vale <b>4 dos 10 pontos</b> e é <b>individual</b>. O professor quer ver medida da sua bancada, com unidade, e você explicando o porquê. Decorar não basta, e ele pode mexer na montagem na hora.</div>
+  <p>A regra para qualquer resposta: <b>número medido → teoria → conclusão</b>. Uma falha bem diagnosticada também ganha crédito, então não precisa ter medo de um quadro inválido se você souber explicar por que ele deu inválido.</p>
+  <div class="tw"><table>
+    <tr><th>Bloco</th><th>O que você precisa saber explicar</th><th>Onde estudar</th></tr>
+    <tr><td><b>A · Frequência e canal</b> (2,0)</td><td>O sinal no tempo e na frequência; como a PSD foi calculada; τ previsto × medido e por que diferem; tempo de subida, corte das altas frequências e ISI; a troca de 16,8 nF para 33 nF ao vivo.</td><td><a href="#canal">Canal</a>, <a href="#psd">PSD</a>, <a href="#vivo">33 nF</a></td></tr>
+    <tr><td><b>B · Amostragem, filtro, olho e BER</b> (2,0)</td><td>As 8 amostras por símbolo; como k* foi escolhido; k* no olho; os 8 pesos do filtro casado e uma conta à mão; centros, limiares e margens; BER e SER; erro de bit × falha de sincronismo; o que quer dizer "0 erros em 100.000 bits".</td><td><a href="#amostragem">Amostras</a>, <a href="#casado">Filtro</a>, <a href="#ber">BER</a></td></tr>
+  </table></div>
+  <h3>As 5 perguntas do enunciado (§5.1.1)</h3>
+  <ol class="steps">
+    <li>Quanta potência há perto de 5 e 10 kHz nos dois canais, qual a razão, e como o RC explica isso. Qual janela, duração e resolução da PSD → <a href="#psd">PSD</a>.</li>
+    <li>τ pelos componentes × τ medido no degrau, e uma causa para a diferença → <a href="#canal">Canal</a>.</li>
+    <li>k*, a menor distância entre níveis vizinhos, o par PAM-4 mais próximo e seus bits Gray → <a href="#amostragem">Amostras</a>.</li>
+    <li>Os 8 pesos do filtro casado, uma janela real, um produto interno à mão e a comparação com a margem da amostra única → <a href="#casado">Filtro</a>.</li>
+    <li>O que significa N<sub>e</sub> erros em 100.000 bits, por que 0 erros não prova BER nula, erro de bit × falha de sincronismo → <a href="#ber">BER</a>.</li>
+  </ol>
+  <h3>Sequência sugerida no dia (cerca de 40 min por equipe)</h3>
+  <p class="muted">Sugestão do roteiro da equipe (<code>docs/01_ROTEIRO.md</code>). A ordem real é o professor quem decide.</p>
+  <div class="tw"><table>
+    <tr><th class="n">min</th><th>O que acontece</th><th>Guia</th></tr>
+    <tr><td class="n">0–3</td><td>Liga tudo; mostra o CLK de 50 µs e TP2 em PAM-4</td><td><a href="#g0">0</a>, <a href="#g1">1</a>, <a href="#g2">2</a></td></tr>
+    <tr><td class="n">3–8</td><td>Roda um quadro PAM-4 no RC e mostra o relatório</td><td><a href="#g3">3</a></td></tr>
+    <tr><td class="n">8–13</td><td>Olho com persistência; explica a escolha de k*</td><td><a href="#g7">7</a></td></tr>
+    <tr><td class="n">13–18</td><td>Professor troca 16,8 → 33 nF; você mede subida, olho e PSD</td><td><a href="#g10">10</a></td></tr>
+    <tr><td class="n">18–30</td><td>Perguntas individuais</td><td><a href="#perguntas">Treino</a></td></tr>
+    <tr><td class="n">30–40</td><td>Alterações pedidas pelo professor e síntese</td><td><a href="#falhas">Pedidos</a></td></tr>
+  </table></div>
+</div>
+</section>
+
+<!-- =================================================== IDEIA -->
+<section class="blk" id="ideia">
+<div class="cab">
+  <div class="blk-tag"><b>Base</b> Visão geral</div>
+  <h2>O sistema inteiro em 2 minutos</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>Uma placa quer mandar bits para outra por um fio. A cada 50 µs ela coloca uma tensão no fio, e cada tensão representa alguns bits. Um segundo fio funciona como um metrônomo e avisa quando cada novo valor começa. A outra placa mede a tensão, decide qual valor foi enviado e confere se acertou.</div>
+  <p>O ponto interessante é o caminho entre elas. O <a class="t" href="#d-canal">canal</a> atrasa e arredonda o sinal, e o projeto mede esse estrago de várias formas.</p>
+</div>
+<div class="svgbox" role="img" aria-label="Esquema do enlace: TX, filtro do TX em TP2, canal com TP3, proteção com TP4 e RX, com o fio de CLK separado">
+<svg viewBox="0 0 900 290" xmlns="http://www.w3.org/2000/svg">
+  <rect class="caixa" x="14" y="24" width="96" height="226"/><text class="tit" x="46" y="50">TX</text>
+  <text class="pq" x="24" y="76">PB4</text><text class="pq" x="24" y="136">PA8</text><text class="pq" x="24" y="156">PWM</text>
+  <rect class="caixa" x="790" y="24" width="96" height="226"/><text class="tit" x="824" y="50">RX</text>
+  <text class="pq" x="842" y="76">PA0</text><text class="pq" x="842" y="136">PA1</text><text class="pq" x="842" y="156">ADC</text>
+
+  <path class="clk" d="M110 72H790"/><text class="clkt" x="300" y="62">fio de CLK, 20 kHz: marca o início de cada símbolo (PB4 → PA0)</text>
+  <path class="gnd" d="M110 256H790"/><text class="pq" x="400" y="276">GND comum entre TX e RX</text>
+
+  <path class="fio" d="M110 130H160"/><rect class="comp" x="160" y="118" width="58" height="24"/><text class="pq" x="170" y="135">330 Ω</text>
+  <path class="fio" d="M218 130H350"/><rect class="comp" x="350" y="118" width="54" height="24"/><text class="pq" x="363" y="135">56 Ω</text>
+  <path class="fio" d="M404 130H520"/><rect class="comp" x="520" y="118" width="54" height="24"/><text class="pq" x="534" y="135">1 kΩ</text>
+  <path class="fio" d="M574 130H790"/>
+  <text class="pq" x="262" y="122">fio de dados</text>
+
+  <circle class="tp" cx="134" cy="130" r="5"/><text class="tpt" x="122" y="112">TP1</text>
+  <circle class="tp" cx="250" cy="130" r="5"/><text class="tpt" x="238" y="112">TP2</text>
+  <path class="fio" d="M250 130V170"/><rect class="comp" x="228" y="170" width="44" height="26"/><text class="pq" x="231" y="188">400 pF</text><path class="fio" d="M250 196V256"/>
+
+  <circle class="tp" cx="450" cy="130" r="5"/><text class="tpt" x="438" y="112">TP3</text>
+  <path class="fio" d="M450 130V152"/><rect class="comp" x="428" y="152" width="44" height="24"/><text class="pq" x="434" y="169">33 nF</text>
+  <path class="fio" d="M450 176V192"/><circle cx="450" cy="192" r="4" fill="var(--ink)"/><text class="pq" x="430" y="197">N</text>
+  <rect class="comp" x="428" y="202" width="44" height="24"/><text class="pq" x="434" y="219">33 nF</text>
+  <path class="fio" d="M450 192V202M450 226V256"/>
+  <path class="clk" stroke-dasharray="5 4" d="M450 192H492V256"/><text class="clkt" x="498" y="230">jumper N→GND</text><text class="clkt" x="498" y="247">fica só 33 nF</text>
+
+  <circle class="tp" cx="630" cy="130" r="5"/><text class="tpt" x="618" y="112">TP4</text>
+  <path class="fio" d="M630 130V256"/><rect class="comp" x="610" y="178" width="40" height="24"/><text class="pq" x="620" y="195">D−</text>
+  <path class="fio" d="M690 130V98"/><rect class="comp" x="670" y="96" width="40" height="22"/><text class="pq" x="680" y="112">D+</text>
+  <text class="pq" x="716" y="104">para 3V3 do RX</text>
+</svg>
+</div>
+<div class="read">
+  <p class="muted">Os pontos vermelhos são onde você encosta a ponta do osciloscópio. Falta no desenho o resistor de 10 kΩ de PA0 para o GND. O desenho mostra o canal RC, com 33 nF em série com 33 nF. No <b>canal Dupont</b> tiram-se o 56 Ω e os capacitores.</p>
+  <div class="tw"><table>
+    <tr><th>Parte</th><th>O que faz</th><th>O que você mede ali</th></tr>
+    <tr><td><b>TX</b> (BlackPill)</td><td>Gera os bits, escolhe a tensão de cada símbolo e gera o CLK.</td><td>CLK em PB4</td></tr>
+    <tr><td><b>330 Ω + 400 pF</b></td><td>Transforma o <a class="t" href="#d-pwm">PWM</a> numa tensão quase contínua.</td><td><b>TP2:</b> o sinal que entra no canal</td></tr>
+    <tr><td><b>Canal</b></td><td>O caminho até o RX: fio Dupont, circuito RC ou cabo de 200 m.</td><td><b>TP3:</b> o sinal que sai do canal</td></tr>
+    <tr><td><b>1 kΩ + 2 diodos</b></td><td>Protege a entrada do RX contra tensão fora de 0 a 3,3 V.</td><td><b>TP4:</b> o que chega ao ADC</td></tr>
+    <tr><td><b>RX</b> (BlackPill)</td><td>Mede a tensão 8 vezes por símbolo com o <a class="t" href="#d-adc">ADC</a>, decide os bits e conta os erros.</td><td>O relatório pela serial</td></tr>
+    <tr><td><b>Pico</b></td><td>Só faz a ponte da serial do RX para o USB do PC (não aparece no desenho).</td><td><code>/dev/ttyACM1</code></td></tr>
+  </table></div>
+  <p>Três canais foram montados: <b>Dupont</b> (praticamente sem filtragem), <b>RC</b> (56 Ω + 16,8 nF do enunciado, que imita um cabo de 300 m) e <b>cabo manga</b> de 200 m (exploratório). Na defesa, o RC vira 33 nF.</p>
+  <div class="atencao"><span class="rot">Detalhe da sua montagem</span>O enunciado pede 16,8 nF, mas vocês não tinham esse valor e montaram 33 nF em série com 33 nF = <b>16,5 nF</b>, 1,8 % a menos. A página chama de "RC 16,8 nF" porque é o nome usado no enunciado e nos logs. Se perguntarem, conte isso. Da mesma forma, o enunciado pede 390 pF no TX e vocês usaram 4 × 100 pF = 400 pF.</div>
+</div>
+<div class="grid4">
+  <div class="stat"><div class="k">Duração de um símbolo</div><div class="v">50 µs</div><div class="s">T<sub>s</sub>. Dá 20.000 símbolos por segundo.</div></div>
+  <div class="stat"><div class="k">Taxa de bits</div><div class="v">20 / 40 kbit/s</div><div class="s">PAM-2 (1 bit por símbolo) / PAM-4 (2 bits)</div></div>
+  <div class="stat"><div class="k">Medidas do ADC</div><div class="v">160 mil/s</div><div class="s">8 por símbolo, uma a cada 6,25 µs</div></div>
+  <div class="stat"><div class="k">Frequência do PWM</div><div class="v">33,333 MHz</div><div class="s">100 MHz ÷ 3. Só gera a tensão, não é a taxa de dados.</div></div>
+</div>
+</section>
+
+<!-- =================================================== OSCILOSCÓPIO -->
+<section class="blk" id="scope">
+<div class="cab">
+  <div class="blk-tag"><b>Ferramenta</b> TDS2002B</div>
+  <h2>Usar o osciloscópio sem se perder</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O osciloscópio desenha tensão (eixo vertical) ao longo do tempo (eixo horizontal). Quase tudo o que você faz nele é responder três perguntas: <b>quantos volts cabem em cada quadradinho</b>, <b>quanto tempo cabe em cada quadradinho</b> e <b>a partir de qual momento começar a desenhar</b>.</div>
+  <div class="atencao"><span class="rot">O que mais confunde neste projeto</span>O TX não transmite o tempo todo. Depois do <b>RESET</b> ele espera cerca de 1 s, transmite um único quadro de <b>2,5 s em PAM-4</b> ou <b>5 s em PAM-2</b> e para. Fora disso o CLK e os dados ficam parados, e a tela não atualiza. Por isso: <b>primeiro configure, depois aperte RESET</b>. Pelo mesmo motivo o <span class="mono">AUTOSET</span> não ajuda aqui, porque não há sinal na hora de configurar.</div>
+  <h3>Como ler a tela</h3>
+</div>
+<div class="tela">
+  <img src="img/tela_olho_dupont.png" alt="Tela real do osciloscópio com o olho Dupont PAM-4 e marcadores numerados" width="960" height="720">
+  <span class="pin" style="left:30%;top:2.5%">1</span>
+  <span class="pin" style="left:54.5%;top:2.5%">2</span>
+  <span class="pin" style="left:15%;top:7%">3</span>
+  <span class="pin" style="left:5.5%;top:47%">4</span>
+  <span class="pin" style="left:5.5%;top:83.5%">5</span>
+  <span class="pin" style="left:18%;top:91%">6</span>
+  <span class="pin" style="left:39%;top:91%">7</span>
+  <span class="pin" style="left:70%;top:91%">8</span>
+  <span class="pin" style="left:76%;top:30%">9</span>
+</div>
+<div class="read">
+  <p class="muted">Tela real do teste de 04/11/2026: Dupont, PAM-4, <span class="ch1">CH1</span> em TP3, <span class="ch2">CH2</span> no CLK.</p>
+  <div class="tw"><table>
+    <tr><th class="n">#</th><th>O que é</th><th>O que dizer ou fazer</th></tr>
+    <tr><td class="n">1</td><td><b>Estado.</b> <code>Ready</code> = esperando o disparo. <code>Trig'd</code> = desenhando. <code>Acq Complete</code> = capturou no modo único. <code>Stop</code> = parado.</td><td>Antes do RESET, procure por <code>Ready</code>.</td></tr>
+    <tr><td class="n">2</td><td><b>M Pos.</b> Quanto o centro da tela está depois do disparo.</td><td>Aqui 40 µs. Ajuste com <span class="mono">HORIZONTAL POSITION</span>.</td></tr>
+    <tr><td class="n">3</td><td><b>Seta preta no topo.</b> O instante do disparo, ou seja, t = 0.</td><td>Tudo é medido a partir dela.</td></tr>
+    <tr><td class="n">4, 5</td><td><b>Marcadores 2→ e 1→.</b> Onde fica o 0 V de cada canal.</td><td>Conte os quadradinhos a partir deles. Ajuste com <span class="mono">POSITION</span> do canal.</td></tr>
+    <tr><td class="n">6</td><td><b>Escala vertical.</b> <span class="ch1">CH1 1,00 V</span> e <span class="ch2">CH2 1,00 V</span> = cada quadradinho vale 1 V.</td><td>Botão <span class="mono">VOLTS/DIV</span> de cada canal.</td></tr>
+    <tr><td class="n">7</td><td><b>Escala de tempo.</b> <code>M 10,0 µs</code> = cada quadradinho vale 10 µs. Um símbolo ocupa 5 quadradinhos.</td><td>Botão <span class="mono">SEC/DIV</span>.</td></tr>
+    <tr><td class="n">8, 9</td><td><b>Disparo.</b> Origem CH2, borda de subida, nível 1,60 V. A seta à direita mostra esse nível na tela.</td><td>Botões <span class="mono">TRIG MENU</span> e <span class="mono">TRIGGER LEVEL</span>.</td></tr>
+  </table></div>
+  <h3>Os controles que você vai usar</h3>
+  <p>Os nomes em <span class="mono">MAIÚSCULAS</span> são dos botões do painel. Os menus aparecem na tela em português. Confirmei nas suas capturas os menus de disparo e de medidas. Os outros nomes de menu podem estar um pouco diferentes. Se não achar, procure a mesma função.</p>
+  <div class="tw"><table>
+    <tr><th>Para…</th><th>Use</th><th>O que significa</th></tr>
+    <tr><td>Ligar ou desligar um canal</td><td><span class="mono">CH1 MENU</span> ou <span class="mono">CH2 MENU</span></td><td>O menu também tem acoplamento (use <b>CC</b>) e ponta (use <b>10X</b>).</td></tr>
+    <tr><td>Mudar a altura</td><td><span class="mono">VOLTS/DIV</span> e <span class="mono">POSITION</span></td><td>Volts por quadradinho e onde fica o 0 V.</td></tr>
+    <tr><td>Mudar o tempo</td><td><span class="mono">SEC/DIV</span> e <span class="mono">HORIZONTAL POSITION</span></td><td>Tempo por quadradinho e deslocamento.</td></tr>
+    <tr><td>Escolher quando desenhar</td><td><span class="mono">TRIG MENU</span> e <span class="mono">TRIGGER LEVEL</span></td><td><a class="t" href="#d-disparo">Disparo</a>: Tipo <b>Borda</b>, Origem, Inclinação <b>Subida</b>, Modo <b>Normal</b>, Acoplam. <b>CC</b>.</td></tr>
+    <tr><td>Capturar uma vez só</td><td><span class="mono">SINGLE SEQ</span></td><td>Desenha no primeiro disparo e para. Aparece <code>Acq Complete</code>.</td></tr>
+    <tr><td>Rodar ou congelar</td><td><span class="mono">RUN/STOP</span></td><td>Congela a tela para olhar com calma.</td></tr>
+    <tr><td>Acumular traços</td><td><span class="mono">DISPLAY</span> → Persist.</td><td><a class="t" href="#d-persist">Persistência</a> infinita, usada no olho e no atraso.</td></tr>
+    <tr><td>Ler um valor automático</td><td><span class="mono">MEASURE</span></td><td>Menu <b>Medidas</b>: Freqüência, Período, Pico a Pico, Tempo de subida.</td></tr>
+    <tr><td>Medir com linhas</td><td><span class="mono">CURSOR</span></td><td>Linhas de tempo ou de amplitude, movidas pelos botões <span class="mono">POSITION</span>.</td></tr>
+    <tr><td>Voltar ao padrão de fábrica</td><td><span class="mono">DEFAULT SETUP</span></td><td>Bom ponto de partida se o professor mexeu em tudo.</td></tr>
+  </table></div>
+</div>
+
+<article class="guia" id="g0">
+  <div class="g-top"><span class="g-num">Guia 0</span><span class="g-tit">Ligar tudo e deixar pronto</span><span class="g-tempo">≈ 3 min</span></div>
+  <div class="g-corpo">
+    <h4>No hardware</h4>
+    <ol class="passos">
+      <li><span class="txt">TX e RX ligados por USB. Entre as placas, só os <b>GND</b> ficam unidos, nunca os 3V3.</span></li>
+      <li><span class="txt">Fio de CLK firme de <b>PB4 (TX)</b> a <b>PA0 (RX)</b>, longe do fio de dados, de preferência com um fio de GND ao lado.</span></li>
+      <li><span class="txt">Jumper do TX: <b>PB0 no GND = PAM-4</b>, PB0 solto = PAM-2. Coloque <b>antes</b> do RESET.</span></li>
+      <li><span class="txt">Pico ligado no USB, com GP4 em PA10, GP5 em PA9 e GND em GND.</span></li>
+      <li><span class="txt">Chave das pontas em <b>×10</b>, com a garra de GND no GND da protoboard. Em cada canal: <span class="mono">CH MENU</span> → ponta <b>10X</b>. A chave e o menu têm que concordar, senão a tensão lida fica 10 vezes errada.</span></li>
+    </ol>
+    <h4>No osciloscópio, para conversar com o PC</h4>
+    <ol class="passos">
+      <li><span class="txt"><span class="mono">UTILITY</span> → <span class="menu">Options → Rear USB Port → Computer</span>.</span></li>
+    </ol>
+    <h4>No terminal do PC</h4>
+    <pre class="cmd">cd ~/Documents/EEL/8/Telecom/Projeto_PAM_BB
+lsusb | grep 0699
+sudo chmod 666 /dev/usbtmc*
+.venv/bin/python python/pam_app.py portas</pre>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> <code>0699:0364</code> no <code>lsusb</code> e a porta <code>/dev/ttyACM1</code> na lista de portas.</div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul>
+        <li><code>0699:036b</code> no lsusb: o scope está no modo USB errado (HID). Repita o passo do <span class="menu">Rear USB Port</span> e reconecte o cabo. Foi o que aconteceu em 04/11.</li>
+        <li><code>Sem permissão em /dev/usbtmc1</code>: a permissão se perde quando o cabo é reconectado. Rode o <code>chmod</code> de novo.</li>
+        <li>O número em <code>/dev/usbtmcN</code> pode mudar, por isso o comando usa <code>*</code>.</li>
+      </ul>
+    </div>
+    <div class="atencao" style="background:var(--g-panel);color:var(--g-ink)"><b>Não faça:</b> apertar o botão KEY do <b>RX</b> (ele está no PA0, a entrada do CLK, e cada aperto vira uma borda falsa); apertar RESET no meio de um quadro; usar <code>/dev/ttyACM0</code> (é a porta do Pico sem nada ligado).</div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- =================================================== PAM -->
+<section class="blk" id="pam">
+<div class="cab">
+  <div class="blk-tag"><b>Base</b> O sinal</div>
+  <h2>PAM, símbolo e quadro</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span><a class="t" href="#d-pam">PAM</a> é usar a <b>altura do pulso</b> para carregar informação. Pense numa lâmpada com vários brilhos: com 2 brilhos cada instante leva 1 bit, com 4 brilhos leva 2 bits. Cada instante desses é um <a class="t" href="#d-simbolo">símbolo</a>.</div>
+  <div class="tw"><table>
+    <tr><th></th><th>Níveis</th><th>Bits por símbolo</th><th>Símbolos/s</th><th>Bits/s</th><th>Custo</th></tr>
+    <tr><td><b>PAM-2</b></td><td>2 (0 e 3,3 V)</td><td class="n">1</td><td class="n">20.000</td><td class="n">20 kbit/s</td><td>Níveis bem separados</td></tr>
+    <tr><td><b>PAM-4</b></td><td>4 (0; 1,1; 2,2; 3,3 V)</td><td class="n">2</td><td class="n">20.000</td><td class="n">40 kbit/s</td><td>Níveis 3× mais próximos, menos folga contra ruído</td></tr>
+  </table></div>
+  <p><b>Banda base</b> quer dizer que o sinal vai direto no fio, sem ser jogado para uma frequência de rádio.</p>
+
+  <h3>O código Gray: por que os bits não estão em ordem</h3>
+  <div class="acontece"><span class="rot">O que acontece</span>Quando o RX erra, quase sempre confunde um nível com o vizinho. O <a class="t" href="#d-gray">código Gray</a> arruma os bits para que vizinhos sempre difiram em <b>um bit só</b>. Assim, um erro de nível custa 1 bit em vez de 2.</div>
+  <div class="tw"><table>
+    <tr><th>Nível</th><th>Bits (Gray)</th><th>PWM ligado</th><th class="n">Esperado</th><th class="n">Medido em TP2</th></tr>
+    <tr><td>0</td><td class="mono">00</td><td>0 %</td><td class="n">0 V</td><td class="n">−0,011 V</td></tr>
+    <tr><td>1</td><td class="mono">01</td><td>33 %</td><td class="n">1,1 V</td><td class="n">1,017 V</td></tr>
+    <tr><td>2</td><td class="mono">11</td><td>67 %</td><td class="n">2,2 V</td><td class="n">2,142 V</td></tr>
+    <tr><td>3</td><td class="mono">10</td><td>100 %</td><td class="n">3,3 V</td><td class="n">3,377 V</td></tr>
+  </table></div>
+
+  <h3>O quadro: o que é transmitido em cada RESET</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span>Um <a class="t" href="#d-quadro">quadro</a> é como uma carta: o <a class="t" href="#d-payload">payload</a> é o texto, com os dados, e o que vem antes prepara o RX para ler esse texto.</div>
+</div>
+<div class="quadro" aria-label="Partes do quadro PAM-4, fora de escala">
+  <div class="q1"><b>Pulso</b>140 símb.</div>
+  <div class="q2"><b>Calibração</b>256 símb.</div>
+  <div class="q3"><b>Início</b>24 símb.</div>
+  <div class="q4"><b>Payload: os dados</b>50.000 símbolos = 100.000 bits</div>
+</div>
+<p class="muted" style="margin-top:0;font-size:14px">Fora de escala: em PAM-4, o payload é 99,2 % do quadro.</p>
+<div class="read">
+  <div class="tw"><table>
+    <tr><th>Trecho</th><th>O que é enviado</th><th>Para que serve, em português claro</th><th class="n">PAM-2</th><th class="n">PAM-4</th></tr>
+    <tr><td><b>Pulso</b></td><td>20 vezes (0,0,0,A,0,0,0)</td><td>Um pulso isolado mostra como o canal deforma o sinal. Daí saem os pesos do filtro e a medida de ISI.</td><td class="n">140</td><td class="n">140</td></tr>
+    <tr><td><b>Calibração</b></td><td>32 vezes (0,1,0,0,1,1,0,1) ou (0,1,0,3,2,3,1,2)</td><td>Sequência conhecida para o RX aprender como cada nível chega e escolher quando medir.</td><td class="n">256</td><td class="n">256</td></tr>
+    <tr><td><b>Início</b></td><td>16 bits alternados + <code>0xD391C5A7</code></td><td>Uma senha de 48 bits. Se bater, o RX sabe exatamente onde começa o payload.</td><td class="n">48</td><td class="n">24</td></tr>
+    <tr><td><b>Payload</b></td><td>100.000 bits da <a class="t" href="#d-prbs">PRBS-15</a></td><td>É aqui que os erros são contados.</td><td class="n">100.000</td><td class="n">50.000</td></tr>
+    <tr><td><b>Total</b></td><td></td><td>Tem que bater com o número de bordas de CLK.</td><td class="n"><b>100.444</b><br>5,02 s</td><td class="n"><b>50.420</b><br>2,52 s</td></tr>
+  </table></div>
+  <div class="acontece"><span class="rot">Por que PRBS?</span>A PRBS parece aleatória, mas é calculada por uma fórmula: <code>b(n+15) = b(n+14) ⊕ b(n)</code>, começando com 15 bits em 1, e só se repete depois de 32.767 bits. O sinal se comporta como dado real, mas o RX consegue gerar a mesma sequência e saber qual bit <b>deveria</b> ter chegado. É assim que ele conta os erros.</div>
+  <div class="acontece"><span class="rot">Por que um fio só para o CLK?</span>Isso é a <a class="t" href="#d-sync">sincronização assistida</a> pedida no enunciado. O <a class="t" href="#d-clk">CLK</a> avisa o início de cada símbolo, e o RX não precisa adivinhar esse instante pelo sinal de dados.</div>
+</div>
+
+<article class="guia" id="g1">
+  <div class="g-top"><span class="g-num">Guia 1</span><span class="g-tit">Ver o CLK: a prova de que o símbolo dura 50 µs</span><span class="g-tempo">≈ 1 min</span></div>
+  <div class="g-corpo">
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP2</div><div class="ponta c2"><b>CH2</b>CLK (PB4)</div><div class="ponta c0"><b>Canal e PAM</b>qualquer um</div></div>
+    <div class="ajustes">
+      <div><span>CH1 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 POSITION</span><b>3,5 div abaixo do centro</b></div>
+      <div><span>CH2 VOLTS/DIV</span><b>1 V</b></div><div><span>CH2 POSITION</span><b>0,5 div acima do centro</b></div>
+      <div><span>SEC/DIV</span><b>10 µs</b></div><div><span>M Pos</span><b>40 µs</b></div>
+      <div><span>Disparo</span><b>Borda, CH2, Subida, Normal, CC</b></div><div><span>Nível</span><b>1,6 V</b></div>
+    </div>
+    <div class="fig-guia">
+      <div>
+        <h4>Passos</h4>
+        <ol class="passos">
+          <li><span class="txt">Ajuste tudo como na tabela. Confira <code>Ready</code> no topo.</span></li>
+          <li><span class="txt"><span class="mono">MEASURE</span>: escolha CH2 e <span class="menu">Freqüência</span>, depois <span class="menu">Período</span> e <span class="menu">Pico a Pico</span>.</span></li>
+          <li><span class="txt">Aperte <b>RESET no TX</b>. Depois de ≈ 1 s o sinal aparece e fica 2,5 s.</span></li>
+          <li><span class="txt">Aperte <span class="mono">RUN/STOP</span> para congelar e mostre: um período = <b>5 quadradinhos</b> × 10 µs = 50 µs.</span></li>
+        </ol>
+      </div>
+      <figure><img src="img/clk.png" alt="Captura do CLK a 20 kHz" loading="lazy"><figcaption><b>Sua captura:</b> CLK em ciano, f = 20,0 kHz. Em amarelo, TP2 com o canal RC ligado.</figcaption></figure>
+    </div>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> onda quadrada de 0 a 3,3 V, com 5 quadradinhos por período e 2,5 quadradinhos em alto.
+      <br><b>Esperado:</b> 20 kHz, 50 µs, 50 %. <b>Medido:</b> 20,0008 kHz, 49,998 µs, 50,0 %.</div>
+    <div class="say" style="background:var(--g-panel);color:var(--g-ink);border-color:var(--g-rule)">"O CLK marca o início de cada símbolo. Mede 50 µs, ou seja, 20.000 símbolos por segundo. É com ele que o RX se sincroniza."</div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul><li>Tela sem nada e <code>Ready</code> parado: o disparo está esperando sinal. Aperte RESET.</li>
+      <li>Traço correndo sem parar: Modo <b>Normal</b> em vez de Auto, nível 1,6 V, origem CH2.</li>
+      <li>10 kHz ou 40 kHz: clock configurado errado no firmware.</li></ul></div>
+    <details class="atalho"><summary>Atalho pelo terminal (mede e salva sozinho)</summary><div>
+      <pre class="cmd">.venv/bin/python python/bancada.py osc clk --canal d --mod 4 --sem-rx --nome treino_CLK</pre></div></details>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+
+<article class="guia" id="g2">
+  <div class="g-top"><span class="g-num">Guia 2</span><span class="g-tit">Ver os 4 níveis e a ordem do treinamento</span><span class="g-tempo">≈ 2 min</span></div>
+  <div class="g-corpo">
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP2</div><div class="ponta c2"><b>CH2</b>CLK</div><div class="ponta c0"><b>PAM</b>Jumper PB0 no GND = PAM-4</div></div>
+    <div class="ajustes">
+      <div><span>CH1 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 POSITION</span><b>3,5 div abaixo</b></div>
+      <div><span>CH2 VOLTS/DIV</span><b>2 V</b></div><div><span>CH2 POSITION</span><b>1 div acima</b></div>
+      <div><span>SEC/DIV</span><b>50 µs</b></div><div><span>M Pos</span><b>7,225 ms</b></div>
+      <div><span>Disparo</span><b>Borda, CH2, Subida, Normal</b></div><div><span>Captura</span><b>SINGLE SEQ</b></div>
+    </div>
+    <div class="acontece" style="background:var(--g-panel);border-color:var(--g-rule);color:var(--g-ink)"><b>Por que 7,225 ms?</b> O disparo pega a primeira borda do quadro. A calibração começa no símbolo 140: 140 × 50 µs = 7 ms. Os 0,225 ms a mais centralizam esse trecho na tela.</div>
+    <div class="fig-guia">
+      <div>
+        <h4>Passos</h4>
+        <ol class="passos">
+          <li><span class="txt">Ajuste as escalas. Para chegar a 7,225 ms mais rápido: ponha <span class="mono">SEC/DIV</span> em 1 ms, gire <span class="mono">HORIZONTAL POSITION</span> até perto de 7,2 ms e volte a 50 µs para o ajuste fino.</span></li>
+          <li><span class="txt">Aperte <span class="mono">SINGLE SEQ</span>. Espere ver <code>Ready</code>.</span></li>
+          <li><span class="txt">Aperte <b>RESET no TX</b>. A tela fica em <code>Acq Complete</code>.</span></li>
+          <li><span class="txt">Leia os degraus da esquerda para a direita, cada um com 1 quadradinho de largura.</span></li>
+        </ol>
+      </div>
+      <figure><img src="img/gray4.png" alt="Sequência de níveis do início da calibração PAM-4" loading="lazy"><figcaption><b>Sua captura:</b> 0,1,0,3,2,3,1,2,0,1 em amarelo.</figcaption></figure>
+    </div>
+    <div class="deve"><b class="ok">Tem que aparecer em PAM-4:</b> <b>0, 1, 0, 3, 2, 3, 1, 2, 0, 1</b>, com níveis perto de 0, 1, 2,1 e 3,4 V.<br><b>Em PAM-2:</b> 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, só com 2 alturas.</div>
+    <div class="say" style="background:var(--g-panel);color:var(--g-ink);border-color:var(--g-rule)">"Este é o início da calibração, uma sequência que o RX conhece. Cada degrau é um símbolo de 50 µs. A ordem é a do enunciado e os 4 níveis estão aqui, em cerca de 1,1 V de distância."</div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul><li>Só 2 alturas com o jumper colocado: o TX lê o PB0 no RESET. Confira o contato e aperte RESET de novo. Já aconteceu em 03/11.</li>
+      <li>Nada na tela: M Pos muito além do que aconteceu, ou o scope não estava em <code>Ready</code> antes do RESET.</li></ul></div>
+    <details class="atalho"><summary>Atalho pelo terminal (também confere a ordem e mede cada nível)</summary><div>
+      <pre class="cmd">.venv/bin/python python/bancada.py osc niveis --canal d --mod 4 --sem-rx --nome treino_niveis</pre></div></details>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+
+<article class="guia" id="g3">
+  <div class="g-top"><span class="g-num">Guia 3</span><span class="g-tit">Rodar um quadro completo e ler o relatório</span><span class="g-tempo">≈ 1 min</span></div>
+  <div class="g-corpo">
+    <p>Este é o guia mais usado. Ele mostra o que o RX achou do quadro. Não precisa de osciloscópio. Troque <code>--canal</code> pelo canal montado: <code>d</code> Dupont, <code>c</code> RC 16,8 nF, <code>x</code> RC 33 nF, <code>m</code> manga. E <code>--mod</code> tem que ser igual ao jumper do TX.</p>
+    <pre class="cmd">.venv/bin/python python/pam_app.py capturar --mod 4 --canal c --vref 3.297</pre>
+    <ol class="passos">
+      <li><span class="txt">Rode o comando e espere aparecer <code>#ARMADO PAM-4</code>.</span></li>
+      <li><span class="txt">Aperte <b>RESET no TX</b> uma vez. Em cerca de 6 s o relatório chega.</span></li>
+      <li><span class="txt">Olhe o fim da saída: a lista de <code>[OK]</code> e <code>[FALHOU]</code>.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Tem que aparecer:</b> 9 linhas <code>[OK]</code> e <code>0 em 100000 bits</code> nos dois detectores. O log fica em <code>entrega/logs/</code> e as figuras em <code>entrega/figuras/</code>.</div>
+    <h4>O que cada campo quer dizer</h4>
+    <div class="tw"><table style="color:var(--g-ink)">
+      <tr><th style="color:var(--g-muted)">Campo no log</th><th style="color:var(--g-muted)">Em português claro</th><th style="color:var(--g-muted)">Tem que dar</th></tr>
+      <tr><td><code>bordas_CLK</code></td><td>Quantas bordas de CLK o RX contou</td><td>50.420 (PAM-4), 100.444 (PAM-2)</td></tr>
+      <tr><td><code>amostras_processadas</code></td><td>Quantas medidas o ADC fez</td><td>8 × bordas: 403.360 ou 803.552</td></tr>
+      <tr><td><code>bordas_com_contagem_errada</code></td><td>Símbolos que não tiveram 8 amostras</td><td>0</td></tr>
+      <tr><td><code>erro_ADC_overrun</code>, <code>overrun_processamento</code></td><td>O RX não deu conta e perdeu dado</td><td>0</td></tr>
+      <tr><td><code>perda_CLK</code></td><td>CLK sumiu por mais de 5 ms no meio do quadro</td><td>0</td></tr>
+      <tr><td><code>aquisicao_valida</code></td><td>O quadro chegou inteiro</td><td>1</td></tr>
+      <tr><td><code>calibracao_ok</code></td><td>Os 4 níveis chegaram em ordem crescente</td><td>1</td></tr>
+      <tr><td><code>sincronismo_ok</code></td><td>Os 48 bits de início bateram</td><td>1</td></tr>
+      <tr><td><code>k_estrela</code>, <code>t_k_estrela_us</code></td><td>Qual das 8 medidas foi escolhida e quando</td><td>7 e 46,87 no RC</td></tr>
+      <tr><td><code>margem_u_mV_nominal</code>, <code>margem_z</code></td><td>Folga no pior par de níveis, nos dois detectores</td><td>≈ 983 mV e 0,24 (RC 16,8 nF, PAM-4)</td></tr>
+      <tr><td><code>BER_amostra</code>, <code>BER_filtro</code></td><td>Bits errados nos dois detectores</td><td>0/100000</td></tr>
+    </table></div>
+    <div class="senao"><b>Se aparecer [FALHOU]</b>
+      <ul><li><code>perda_CLK</code> ou bordas a menos: fio de CLK ou RESET no meio do quadro. Firme o fio e repita. Veja o <a href="#g11">guia 11</a>.</li>
+      <li><code>calibracao_ok = 0</code>: <code>--mod</code> diferente do jumper, ou GND solto.</li>
+      <li>Nenhum relatório: porta errada ou GP4/GP5 trocados.</li></ul></div>
+    <details class="atalho"><summary>Fazer o quadro e o olho juntos no mesmo RESET</summary><div>
+      <p>Este comando arma o RX, configura o scope e guarda tudo no caderno. Use <code>CH1 = TP3</code> e <code>CH2 = CLK</code>.</p>
+      <pre class="cmd">.venv/bin/python python/bancada.py ensaio --canal c --mod 4 --vref 3.297 --nome treino_RC16_PAM4_olho</pre></div></details>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- =================================================== TX -->
+<section class="blk" id="tx">
+<div class="cab">
+  <div class="blk-tag"><b>Base</b> Verificação do TX</div>
+  <h2>Transmissor: como um pino digital gera 4 tensões</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>Um pino digital só sabe ficar em 0 V ou 3,3 V. Para gerar 1,1 V, ele liga e desliga muito rápido, ficando ligado 1/3 do tempo. Isso é o <a class="t" href="#d-pwm">PWM</a>. Depois um filtro faz a média, como um volante pesado que ignora pequenos empurrões e fica na velocidade média.</div>
+  <div class="acontece"><span class="rot">O que acontece</span>O TX gera um PWM de 33,333 MHz com tempo ligado de 0, 1/3, 2/3 ou 100 %. O filtro de 330 Ω e 400 pF (τ = 0,132 µs, corte perto de 1,2 MHz) deixa passar a média e corta os 33 MHz. Em TP2 fica um degrau de tensão por símbolo.</div>
+  <h3>Esperado × medido</h3>
+  <div class="tw"><table>
+    <tr><th>Grandeza</th><th class="n">Esperado</th><th class="n">Medido</th><th>Por que a diferença</th></tr>
+    <tr><td>Degrau 0→1</td><td class="n">1,1 V</td><td class="n">1,028 V</td><td rowspan="3">Pulsos de 10 e 20 ns são tão curtos que as bordas lentas do pino comem parte deles. Por isso os níveis 1 e 2 ficam baixos.</td></tr>
+    <tr><td>Degrau 1→2</td><td class="n">1,1 V</td><td class="n">1,125 V</td></tr>
+    <tr><td>Degrau 2→3</td><td class="n">1,1 V</td><td class="n">1,235 V</td></tr>
+    <tr><td><a class="t" href="#d-ripple">Ripple</a> no nível 1</td><td class="n">≈ 150 mV</td><td class="n">≈ 190 mV</td><td>Mesma ordem de grandeza. É a sobra dos 33 MHz que o filtro não tirou.</td></tr>
+    <tr><td>Atraso CLK → TP2</td><td class="n">0,2–0,4 µs</td><td class="n">≈ 0,55 µs</td><td>O tempo que a interrupção do TIM3 leva para trocar o nível. Bem menor que os 3,12 µs da primeira amostra, então não atrapalha.</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">Guarde esta consequência</span>O menor degrau é o 0→1, de 1,028 V. Por isso o <b>par 0–1 é o mais próximo</b> e limita a abertura do olho em PAM-4 em todos os canais. Você vai usar isso na pergunta 3.</div>
+</div>
+
+<article class="guia" id="g4">
+  <div class="g-top"><span class="g-num">Guia 4</span><span class="g-tit">Mostrar o atraso e o ripple</span><span class="g-tempo">≈ 3 min</span></div>
+  <div class="g-corpo">
+    <h4>A) Atraso entre o CLK e TP2</h4>
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP2</div><div class="ponta c2"><b>CH2</b>CLK</div></div>
+    <div class="ajustes">
+      <div><span>CH1 e CH2 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 POSITION</span><b>3,5 div abaixo</b></div><div><span>CH2 POSITION</span><b>0,5 div acima</b></div>
+      <div><span>SEC/DIV</span><b>250 ns</b></div><div><span>M Pos</span><b>750 ns</b></div><div><span>Disparo</span><b>CH2, Subida, 1,6 V, Normal</b></div>
+      <div><span>DISPLAY</span><b>Persist. infinita</b></div>
+    </div>
+    <div class="fig-guia">
+      <ol class="passos">
+        <li><span class="txt">Ajuste e ligue a persistência. Aperte <b>RESET</b> e deixe o quadro acabar.</span></li>
+        <li><span class="txt">Veja onde o CLK sobe (t = 0) e onde o TP2 começa a mudar. Conte os quadradinhos: cada um vale 250 ns.</span></li>
+        <li><span class="txt">Ao terminar, desligue a persistência: <span class="mono">DISPLAY</span> → Persist. desligada.</span></li>
+      </ol>
+      <figure><img src="img/alinh.png" alt="Atraso entre o CLK e TP2" loading="lazy"><figcaption><b>Sua captura:</b> ≈ 0,55 µs. O pico fino em t = 0 é <a class="t" href="#d-diafonia" style="color:inherit">diafonia</a> do fio de CLK.</figcaption></figure>
+    </div>
+    <h4>B) Ripple do PWM</h4>
+    <p>Esta medida é difícil de fazer à mão, porque a ponta precisa de 50 mV/div com 1 V de nível e um atraso de 7 ms em escala de nanossegundos. <b>Use o comando:</b></p>
+    <pre class="cmd">.venv/bin/python python/bancada.py osc ripple --canal d --mod 4 --sem-rx --nome treino_ripple</pre>
+    <div class="fig-guia">
+      <div class="deve"><b class="ok">Tem que aparecer:</b> um serrilhado de ≈ 190 mV de pico a pico. Pontas como em A. Depois de armar, aperte RESET. Um ciclo de PWM são 30 ns.<br><b>Como dizer:</b> "o filtro corta, mas não elimina os 33 MHz. Sobram 190 mV, e mesmo assim são pouco perto dos cerca de 1 V entre níveis".</div>
+      <figure><img src="img/ripple.png" alt="Ripple do PWM em TP2" loading="lazy"><figcaption><b>Sua captura:</b> 50 ns/div, 50 mV/div.</figcaption></figure>
+    </div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+
+<div class="read">
+  <h3>E o ripple, chega ao ADC? (aliasing)</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span><a class="t" href="#d-aliasing">Aliasing</a> é o efeito da roda da carroça que parece girar devagar no filme. Quando você mede devagar demais algo rápido, ele aparece disfarçado de uma frequência baixa.</div>
+  <p>O ADC mede a 160 kHz, então tudo acima de 80 kHz se dobra para dentro da faixa visível. Os 33,333 MHz equivalem a 208,33 × 160 kHz. A parte quebrada, 0,333, faz o ripple cair em 160 ÷ 3 ≈ <b>53,3 kHz</b>.</p>
+  <div class="medido"><span class="rot">Esperado × medido</span>Teoria: uma linha em 53,3 kHz. Medido no Dupont PAM-4: 1,95·10⁻⁶ V²/Hz contra 1,68·10⁻⁶ dos vizinhos, ou seja, <b>não aparece linha visível</b>. Motivo: o ADC fica conectado por 0,6 µs a cada medida, tempo de cerca de 18 ciclos de ripple, e isso faz uma média. Além disso, o ripple já é pequeno.</div>
+  <h3>TP2 não é uma fonte ideal</h3>
+  <p>Com o canal RC ligado, TP2 também sobe devagar. Ele dá um salto de cerca de 15 a 20 % e depois sobe junto com TP3. Isso mostra que <b>os 330 Ω do TX fazem parte do RC do canal</b>, e é por isso que o enunciado usa R = 330 + 56 Ω. Você pode ver esse efeito na captura do guia 1.</p>
+</div>
+</section>
+
+<!-- =================================================== CANAL -->
+<section class="blk" id="canal">
+<div class="cab">
+  <div class="blk-tag"><b>Bloco A</b> Canal</div>
+  <h2>Canal, τ e ISI: por que o sinal chega atrasado</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O capacitor é como um balde e o resistor é como uma torneira estreita. Quando a tensão muda, o balde demora a encher. <a class="t" href="#d-tau">τ (tau)</a> diz o quanto ele demora: depois de 1 τ o balde está 63 % cheio; depois de 5 τ, praticamente cheio.</div>
+  <div class="acontece"><span class="rot">O que acontece</span>Se o balde ainda não encheu ou esvaziou quando chega o próximo símbolo, sobra um resto do símbolo anterior. Essa sobra é a <a class="t" href="#d-isi">ISI</a>, a interferência entre símbolos. Quanto maior o τ, maior a sobra.</div>
+  <div class="formula">
+    τ = R × C = (330 + 56) Ω × 16,8 nF ≈ 6,5 µs   <span class="c">→ o tempo de "encher"</span><br>
+    f<sub>c</sub> = 1 / (2π τ) ≈ 24,5 kHz   <span class="c">→ a partir daqui o canal corta</span><br>
+    t<sub>10–90</sub> = 2,197 τ   <span class="c">→ o tempo de subida, de 10 % a 90 %</span><br>
+    sobra após 1 símbolo = e<sup>−Ts/τ</sup>   <span class="c">→ a ISI</span>
+  </div>
+  <p class="muted">Forma completa, se pedirem: v(t) = V₀ + (V<sub>f</sub> − V₀)(1 − e<sup>−t/τ</sup>); H(f) = 1/(1 + j2πfτ); |H(f)|² = 1/(1 + (2πfτ)²). O canal é um <a class="t" href="#d-lit">sistema LIT</a> de um <a class="t" href="#d-polo">polo</a> no modelo do enunciado.</p>
+</div>
+
+<div class="lab so-teoria" id="lab">
+  <h3 style="margin-top:0">Mexa no τ e veja o que acontece</h3>
+  <p>Escolha um canal ou arraste o controle. À esquerda, um pulso isolado e as 8 medidas do RX. À direita, o <a class="t" href="#d-olho">olho</a> montado com muitos símbolos.</p>
+  <div class="acoes" id="labBotoes">
+    <button type="button" data-tau="0.25">Dupont (0,25 µs)</button>
+    <button type="button" data-tau="7.3">RC 16,8 nF (7,3 µs)</button>
+    <button type="button" data-tau="13.5">RC 33 nF (13,5 µs)</button>
+    <button type="button" data-tau="39">100 nF, exagero (39 µs)</button>
+  </div>
+  <label for="tauR" class="muted" style="font-size:15px">τ = <b id="tauV">7,3 µs</b></label>
+  <input type="range" id="tauR" min="0.2" max="60" step="0.1" value="7.3">
+  <div class="lab-tela">
+    <div><h4>Pulso: 1 símbolo em 3,3 V e depois zeros</h4><canvas id="cvPulso" aria-label="Pulso isolado passando pelo canal"></canvas></div>
+    <div><h4>Olho PAM-4: dois símbolos sobrepostos</h4><canvas id="cvOlho" aria-label="Diagrama de olho PAM-4 calculado com o τ escolhido"></canvas></div>
+  </div>
+  <div class="lab-res">
+    <div class="stat"><div class="k">Corte f<sub>c</sub></div><div class="v" id="rFc">21,8 kHz</div></div>
+    <div class="stat"><div class="k">Tempo de subida</div><div class="v" id="rTr">16,0 µs</div></div>
+    <div class="stat"><div class="k">Sobra após 1 símbolo</div><div class="v" id="rIsi">0,11 %</div></div>
+    <div class="stat"><div class="k">Olho em k = 7</div><div class="v" id="rAb">0,99 V</div></div>
+  </div>
+  <p style="margin-bottom:0"><b>Separação entre níveis em cada amostra k (volts):</b> vermelho = olho fechado ali, contorno verde = melhor k.</p>
+  <div class="kbar" id="kbar"></div>
+  <p class="muted" style="font-size:14px;margin-bottom:0">Conta do modelo de 1 polo com os níveis medidos no ADC, sem ruído. Serve para ver a tendência. Na bancada, o olho em k* mediu 0,979 V com 16,8 nF e 0,838 V com 33 nF.</p>
+</div>
+
+<div class="read">
+  <h3>Esperado × medido</h3>
+  <div class="tw"><table>
+    <tr><th>Canal</th><th class="n">τ pela conta</th><th class="n">τ com TX incluso</th><th class="n">τ medido</th><th class="n">Subida esperada</th><th class="n">Subida medida</th><th class="n">f<sub>c</sub> medido</th></tr>
+    <tr><td>Dupont</td><td class="n">0,13 µs</td><td class="n">0,14 µs</td><td class="n">0,21–0,30 µs</td><td class="n">0,3 µs</td><td class="n">0,42–0,60 µs</td><td class="n">≈ 0,6 MHz</td></tr>
+    <tr class="hl"><td>RC 16,8 nF</td><td class="n">6,48 µs</td><td class="n">7,1 µs</td><td class="n"><b>7,30 µs</b></td><td class="n">14,2–15,6 µs</td><td class="n"><b>16,2–16,7 µs</b></td><td class="n">21,8 kHz</td></tr>
+    <tr><td>RC 33 nF</td><td class="n">12,74 µs</td><td class="n">13,9 µs</td><td class="n"><b>13,0–14,1 µs</b></td><td class="n">≈ 28 µs</td><td class="n"><b>27–31 µs</b></td><td class="n">≈ 12 kHz</td></tr>
+  </table></div>
+  <h3>Por que 7,30 µs e não 6,48 µs? (pergunta 2)</h3>
+  <p>O medido ficou 13 % acima. Com os 16,5 nF realmente montados, a conta dá 6,37 µs. As causas, cada uma com um jeito de conferir:</p>
+  <ol class="steps">
+    <li><b>O filtro do TX.</b> Os 400 pF formam um segundo <a class="t" href="#d-polo">polo</a>. Ao incluí-lo com os 30 Ω do pino, a conta sobe para 7,1 µs. É a maior parte da diferença.</li>
+    <li><b>Resistência de saída do pino</b> (cerca de 30 Ω), que soma com os 330 Ω.</li>
+    <li><b>Tolerância dos capacitores</b> (±10 a 20 % nos cerâmicos comuns). Dá para conferir com um capacímetro.</li>
+    <li><b>A própria ponta do osciloscópio</b> acrescenta capacitância em TP3, cerca de 100 pF em ×1 e bem menos em ×10. O caderno de 03/11 registra a <b>ponta do CH2 em 1X</b> nas medidas do Dupont, o que ajuda a explicar 0,21–0,30 µs em vez de 0,13 µs. No RC isso pesa quase nada. Antes de medir de novo, confira a chave da ponta e o menu do canal.</li>
+  </ol>
+  <div class="say">"Pelos componentes, τ = 386 Ω × 16,8 nF ≈ 6,5 µs. No degrau em TP3, a tensão chegou a 63,2 % da variação em 7,30 µs, e o tempo de subida deu 16,2 µs, coerente com 2,197 × 7,3 = 16,0 µs. A diferença de 13 % vem principalmente do segundo polo, o filtro de 400 pF do TX, e da resistência do pino: incluindo os dois, a conta dá 7,1 µs."</div>
+</div>
+
+<article class="guia" id="g5">
+  <div class="g-top"><span class="g-num">Guia 5</span><span class="g-tit">Mostrar o degrau e medir τ com os cursores</span><span class="g-tempo">≈ 3 min</span></div>
+  <div class="g-corpo">
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP2 (entrada do canal)</div><div class="ponta c2"><b>CH2</b>TP3 (saída do canal)</div><div class="ponta c0"><b>Canal</b>RC montado, PAM-2 ou PAM-4</div></div>
+    <div class="ajustes">
+      <div><span>CH1 e CH2 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 e CH2 POSITION</span><b>3,5 div abaixo</b></div>
+      <div><span>SEC/DIV</span><b>25 µs</b></div><div><span>M Pos</span><b>80 µs</b></div>
+      <div><span>Disparo</span><b>Borda, CH1, Subida, Normal</b></div><div><span>Nível</span><b>1,6 V</b></div>
+      <div><span>Captura</span><b>SINGLE SEQ</b></div>
+    </div>
+    <div class="fig-guia">
+      <div>
+        <h4>Capturar</h4>
+        <ol class="passos">
+          <li><span class="txt">Ajuste tudo e aperte <span class="mono">SINGLE SEQ</span>. Espere <code>Ready</code>.</span></li>
+          <li><span class="txt">Aperte <b>RESET no TX</b>. O disparo pega o primeiro pulso do treinamento, que dura 1 símbolo (2 quadradinhos).</span></li>
+        </ol>
+        <h4>Medir com cursores</h4>
+        <ol class="passos">
+          <li><span class="txt"><span class="mono">CURSOR</span> → Tipo <span class="menu">Tempo</span> → Origem <span class="menu">CH2</span>.</span></li>
+          <li><span class="txt">Com <span class="mono">POSITION</span> do CH1, ponha o cursor 1 no <b>início da subida</b> (t₀). A seta do disparo não serve, porque ela fica em 1,6 V.</span></li>
+          <li><span class="txt">Com <span class="mono">POSITION</span> do CH2, leve o cursor 2 até onde o CH2 passa por <b>2,1 quadradinhos</b> acima da base (63 %). O <b>Δt é τ</b>.</span></li>
+          <li><span class="txt">Para o tempo de subida: cursor 1 em 0,33 V e cursor 2 em 2,97 V. O Δt é t<sub>10–90</sub>.</span></li>
+        </ol>
+      </div>
+      <figure><img src="img/degrau_rc16.png" alt="Degrau no canal RC 16,8 nF" loading="lazy"><figcaption><b>Sua captura, RC 16,8 nF:</b> sobe em curva, chega quase ao topo em 2 quadradinhos, depois desce em curva.</figcaption></figure>
+    </div>
+    <div class="deve"><b class="ok">Valores que você deve ler, com V₀ ≈ 0 e V<sub>f</sub> ≈ 3,3 V:</b>
+      <div class="tw" style="margin:6px 0"><table style="color:var(--g-ink)"><tr><th style="color:var(--g-muted)">Canal</th><th style="color:var(--g-muted)">τ (Δt até 2,1 V)</th><th style="color:var(--g-muted)">Subida (0,33 → 2,97 V)</th><th style="color:var(--g-muted)">Forma</th></tr>
+      <tr><td>RC 16,8 nF</td><td class="n">≈ 7,3 µs</td><td class="n">≈ 16 µs</td><td>Chega ao topo e fica plano antes do fim do símbolo</td></tr>
+      <tr><td>RC 33 nF</td><td class="n">13–14 µs</td><td class="n">27–31 µs</td><td>Ainda está subindo quando o símbolo acaba</td></tr></table></div>
+      A 25 µs/div, cada ponto na tela vale cerca de 1 µs, então a leitura é aproximada.</div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul><li>Traços quase iguais e subida reta: o RC não está montado, é o Dupont. Nele o τ é pequeno demais para esta escala. Use 250 ns/div e M Pos 750 ns.</li>
+      <li>Disparo falso antes do RESET: a ponta encostou. Aperte <span class="mono">SINGLE SEQ</span> de novo e espere ≈ 10 s, caso um quadro esteja rodando.</li></ul></div>
+    <details class="atalho"><summary>Atalho pelo terminal (calcula τ e tempo de subida pelos dados, com mais precisão)</summary><div>
+      <pre class="cmd">.venv/bin/python python/bancada.py osc degrau --canal c --mod 4 --sem-rx --nome treino_degrau_RC16</pre>
+      <p>Imprime t10, t63, t90, τ e f<sub>c</sub>, e salva tela e CSV em <code>entrega/capturas/</code>.</p></div></details>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+
+<div class="read">
+  <h3>ISI: o próprio RX mede a sobra</h3>
+  <div class="acontece"><span class="rot">O que acontece</span>O RX guarda as 8 medidas do pulso e as 8 medidas do primeiro zero depois dele. Se esse zero ainda não voltou a zero, o que sobrou é ISI. Os valores estão em <a class="t" href="#d-codigo">códigos do ADC</a>, e 1 código vale 0,805 mV.</div>
+  <div class="tw"><table>
+    <tr><th>Amostra k</th><th class="n">0</th><th class="n">1</th><th class="n">2</th><th class="n">3</th><th class="n">4</th><th class="n">5</th><th class="n">6</th><th class="n">7</th></tr>
+    <tr><td>Instante (µs)</td><td class="n">3,12</td><td class="n">9,37</td><td class="n">15,62</td><td class="n">21,87</td><td class="n">28,12</td><td class="n">34,37</td><td class="n">40,62</td><td class="n">46,87</td></tr>
+    <tr><td>Pulso, RC 16,8 nF</td><td class="n">1525</td><td class="n">3032</td><td class="n">3650</td><td class="n">3908</td><td class="n">4017</td><td class="n">4064</td><td class="n">4085</td><td class="n">4090</td></tr>
+    <tr><td>Sobra, RC 16,8 nF</td><td class="n">2585</td><td class="n">1078</td><td class="n">455</td><td class="n">195</td><td class="n">86</td><td class="n">39</td><td class="n">18</td><td class="n"><b>9</b></td></tr>
+    <tr><td>Sobra, RC 33 nF</td><td class="n">3146</td><td class="n">1990</td><td class="n">1264</td><td class="n">805</td><td class="n">515</td><td class="n">330</td><td class="n">212</td><td class="n"><b>137</b></td></tr>
+    <tr><td>Sobra, Dupont</td><td class="n">0,8</td><td class="n">−0,2</td><td class="n">−0,3</td><td class="n">0,0</td><td class="n">0,3</td><td class="n">0,2</td><td class="n">−0,1</td><td class="n">−0,2</td></tr>
+  </table></div>
+  <p class="muted">Logs: RC16n8_PAM4_20261103_154731, RC33n_PAM4_20261103_160314, Dupont_PAM4_20261103_162254. Campo no log: <code>ISI_zero_apos_A[k]</code>.</p>
+  <div class="medido"><span class="rot">Esperado × medido</span>
+    <p><b>Em k = 7:</b> sobram 9 códigos (7 mV) com 16,8 nF e <b>137 códigos (110 mV)</b> com 33 nF, cerca de 15 vezes mais. A teoria prevê isso: e<sup>−50/7,3</sup> ≈ 0,1 % e e<sup>−50/13,5</sup> ≈ 2,5 %.</p>
+    <p style="margin-bottom:0"><b>Prova de que o sistema é linear:</b> 1525 + 2585 = 4110 ≈ 4095. O que faltou subir no pulso é o que falta descer no zero seguinte.</p>
+  </div>
+</div>
+<figure style="max-width:900px"><img src="img/analise_rc16_pam4.png" alt="Análise RC 16,8 nF PAM-4 feita a partir do log" loading="lazy"><figcaption><b>Figura gerada pelo guia 3, log RC16n8_PAM4_20261103_154731.</b> Em cima, à esquerda: o pulso e a sobra no zero seguinte. Em cima, à direita: o olho montado com as medidas do ADC, com a linha em k* = 7. Embaixo, à esquerda: o valor de cada nível e os 3 limiares. Embaixo, à direita: PSD medida × teoria.</figcaption></figure>
+</section>
+
+<!-- =================================================== PSD -->
+<section class="blk" id="psd">
+<div class="cab">
+  <div class="blk-tag"><b>Bloco A</b> Domínio da frequência</div>
+  <h2>Fourier e PSD: o mesmo sinal visto de outro jeito</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O osciloscópio mostra <b>como a tensão muda no tempo</b>. A <a class="t" href="#d-fourier">transformada de Fourier</a> mostra <b>de quais frequências esse sinal é feito</b>, como separar um acorde nas notas. A <a class="t" href="#d-psd">PSD</a> diz quanta potência existe em cada uma dessas frequências.</div>
+  <div class="acontece"><span class="rot">O que acontece</span>Um canal RC deixa passar as frequências baixas e corta as altas. Então a PSD na saída é a PSD da entrada multiplicada pelo que o canal deixa passar. Comparando o canal RC com o Dupont, que quase não filtra, sobra o efeito do RC.</div>
+  <div class="formula">
+    S<sub>saída</sub>(f) = |H(f)|² × S<sub>entrada</sub>(f)   <span class="c">→ o que vale para qualquer sistema LIT</span><br>
+    S<sub>RC</sub>(f) / S<sub>Dupont</sub>(f) ≈ |H<sub>RC</sub>(f)|²   <span class="c">→ a razão mede o canal</span><br>
+    S(f) = 2σ²·T<sub>s</sub>·sinc²(π f T<sub>s</sub>)   <span class="c">→ forma da PSD de pulsos retangulares</span>
+  </div>
+  <h3>Por que a PSD tem zeros em 20, 40 e 60 kHz</h3>
+  <p>O pulso é um retângulo de 50 µs. A transformada de um retângulo é um <a class="t" href="#d-sinc">sinc</a>, que zera em múltiplos de 1/50 µs = 20 kHz. Na PSD isso vira sinc², com zeros nos mesmos lugares. É o que aparece nas figuras: vales fundos em 20, 40 e 60 kHz.</p>
+
+  <h3>Como a PSD foi calculada (decore esta tabela)</h3>
+  <div class="tw"><table>
+    <tr><th>Item</th><th>Valor</th><th>Por quê</th></tr>
+    <tr><td>Amostras</td><td>8.192 seguidas do payload, a partir do símbolo 1000</td><td>Assim os dois canais usam os mesmos bits.</td></tr>
+    <tr><td>Taxa f<sub>a</sub></td><td>160.000 amostras/s</td><td>Dá a faixa de 0 a 80 kHz.</td></tr>
+    <tr><td>Duração</td><td><b>51,2 ms</b> no total, 6,4 ms por bloco</td><td>8.192 ÷ 160.000.</td></tr>
+    <tr><td>Conversão</td><td>Códigos → volts com V<sub>ref</sub> = 3,297 V</td><td>Para o resultado sair em V²/Hz.</td></tr>
+    <tr><td>Média</td><td>Retirada</td><td>O sinal vai de 0 a 3,3 V e tem média perto de 1,65 V, que viraria um pico enorme em 0 Hz.</td></tr>
+    <tr><td>Blocos</td><td>1.024 amostras, com 50 % de sobreposição = 15 blocos</td><td>Fazer a média de vários blocos (<a class="t" href="#d-welch">Welch</a>) deixa a curva menos tremida.</td></tr>
+    <tr><td>Janela</td><td><a class="t" href="#d-janela">Hann</a></td><td>Reduz o vazamento causado por cortar o sinal em blocos.</td></tr>
+    <tr><td>Resolução</td><td><b>156,25 Hz</b> por <a class="t" href="#d-bin">bin</a></td><td>160.000 ÷ 1.024.</td></tr>
+    <tr><td>Fórmula</td><td class="mono">2·|FFT(w·x)|² / (f<sub>a</sub>·Σw²)</td><td>PSD de um lado só, média dos 15 blocos.</td></tr>
+  </table></div>
+
+  <h3>Esperado × medido (pergunta 1)</h3>
+  <p class="muted">Valores em V²/Hz, média de 5 bins em torno de cada frequência. "Razão" é RC dividido por Dupont. O "esperado" é o modelo que inclui o filtro do TX.</p>
+  <div class="tw"><table>
+    <tr><th>Canal</th><th>PAM</th><th class="n">S(5 kHz)</th><th class="n">S(10 kHz)</th><th class="n">Razão 5 kHz<br>medida / esperada</th><th class="n">Razão 10 kHz<br>medida / esperada</th></tr>
+    <tr><td>Dupont</td><td>2</td><td class="n">2,10·10⁻⁴</td><td class="n">1,06·10⁻⁴</td><td class="n">referência</td><td class="n">referência</td></tr>
+    <tr><td>Dupont</td><td>4</td><td class="n">1,19·10⁻⁴</td><td class="n">1,64·10⁻⁵</td><td class="n">referência</td><td class="n">referência</td></tr>
+    <tr class="hl"><td>RC 16,8 nF</td><td>2</td><td class="n">1,98·10⁻⁴</td><td class="n">8,62·10⁻⁵</td><td class="n">0,944 / 0,952</td><td class="n"><b>0,812</b> / 0,834</td></tr>
+    <tr class="hl"><td>RC 16,8 nF</td><td>4</td><td class="n">1,12·10⁻⁴</td><td class="n">1,32·10⁻⁵</td><td class="n">0,946 / 0,952</td><td class="n"><b>0,808</b> / 0,834</td></tr>
+    <tr><td>RC 33 nF</td><td>2</td><td class="n">1,72·10⁻⁴</td><td class="n">5,75·10⁻⁵</td><td class="n">0,821 / 0,841</td><td class="n"><b>0,542</b> / 0,569</td></tr>
+    <tr><td>RC 33 nF</td><td>4</td><td class="n">9,90·10⁻⁵</td><td class="n">9,11·10⁻⁶</td><td class="n">0,834 / 0,841</td><td class="n"><b>0,556</b> / 0,569</td></tr>
+    <tr><td>Manga</td><td>2 e 4</td><td class="n">2,03 e 1,15·10⁻⁴</td><td class="n">9,50·10⁻⁵ e 1,46·10⁻⁵</td><td class="n">0,96</td><td class="n">0,89</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">O que esses números provam</span>
+    <ol class="steps" style="margin:.3em 0">
+      <li><b>A razão quase não muda entre PAM-2 e PAM-4</b> (0,812 e 0,808). O sinal é outro, mas o canal é o mesmo. Essa é a prova direta de que a razão mede o canal.</li>
+      <li><b>Em 5 kHz o canal quase não corta</b>, porque 5 kHz está bem abaixo do corte. <b>Em 10 kHz ele tira cerca de 19 % da potência</b> com 16,8 nF e cerca de 45 % com 33 nF.</li>
+      <li>As medidas ficam 2 a 5 % abaixo da conta. É coerente com o τ real (7,3 µs) ser um pouco maior que o da conta (7,1 µs): o domínio do tempo e o da frequência contam a mesma história.</li>
+      <li>A razão é confiável porque os dois canais usam os mesmos bits, então a oscilação estatística da PSD se cancela na divisão.</li>
+    </ol>
+  </div>
+  <div class="atencao"><span class="rot">O número varia um pouco de quadro para quadro</span>Outro quadro válido do mesmo canal deu 0,944 e 0,803, em vez de 0,946 e 0,808. Com outros pares de logs, a razão em 10 kHz ficou entre 0,80 e 0,81. Na defesa, se der um valor assim, está normal.</div>
+</div>
+<div class="grid2" style="max-width:1000px">
+  <figure><img src="img/psd_rc16_pam4.png" alt="PSD Dupont e RC 16,8 nF em PAM-4" loading="lazy"><figcaption><b>PAM-4, Dupont × RC 16,8 nF.</b> À direita, a razão medida (azul) sobre |H|² da conta. Linhas pontilhadas em 5 e 10 kHz.</figcaption></figure>
+  <figure><img src="img/psd_rc33_pam4.png" alt="PSD Dupont e RC 33 nF em PAM-4" loading="lazy"><figcaption><b>PAM-4, Dupont × RC 33 nF.</b> A razão cai mais rápido porque o corte está perto de 12 kHz. O pico isolado em 20 kHz é divisão de dois zeros e deve ser ignorado.</figcaption></figure>
+</div>
+<div class="read">
+  <h3>O vale em 10 kHz no PAM-4 (pergunta difícil)</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span>Com a PRBS-15 e o Gray juntos, cada símbolo do PAM-4 fica ligado ao símbolo de 7 posições atrás. Os níveis não são tão aleatórios quanto parecem, e essa repetição escondida cava vales na PSD. O canal não tem nada com isso.</div>
+  <p>S(10 kHz) no Dupont é 6 vezes menor em PAM-4 que em PAM-2, enquanto em 5 kHz é só 1,8 vez menor. O vale aparece no Dupont também e some na razão RC/Dupont. Isso prova que ele vem do sinal.</p>
+  <p class="muted">A conta, se pedirem: b<sub>n</sub> ⊕ b<sub>n+1</sub> = b<sub>n−14</sub>. Com Gray, o nível é ℓ<sub>i</sub> = 2c<sub>i</sub> + c<sub>i−7</sub>. Isso dá o fator:</p>
+  <div class="formula">S<sub>PAM4</sub>(f) ∝ [5 + 4·cos(2π f · 7T<sub>s</sub>)] · sinc²(π f T<sub>s</sub>)   <span class="c">→ vales em 1,43; 4,29; 7,14; 10,0 kHz…</span></div>
+  <p>Em 10 kHz o cosseno vale −1 e o fator cai para 1/5 da média. Em 5 kHz o cosseno vale 0 e o fator fica na média.</p>
+  <div class="say">"Peguei 8.192 amostras do ADC a 160 kHz, ou 51,2 ms. Tirei a média e fiz 15 blocos de 1.024 com 50 % de sobreposição e janela de Hann, o que dá 156,25 Hz de resolução. Em 10 kHz, o Dupont deu 1,64·10⁻⁵ e o RC 1,32·10⁻⁵ V²/Hz, uma razão de 0,81. Como a saída de um sistema linear é |H|² vezes a entrada e os bits são os mesmos, essa razão é o |H|² do canal. A conta prevê 0,83. Em 5 kHz deu 0,95: ali o canal quase não corta."</div>
+</div>
+
+<article class="guia" id="g6">
+  <div class="g-top"><span class="g-num">Guia 6</span><span class="g-tit">Gerar a PSD e a razão entre canais</span><span class="g-tempo">≈ 1 min</span></div>
+  <div class="g-corpo">
+    <p>A PSD é calculada com as medidas do ADC que o RX manda no log, não com o osciloscópio. Você só precisa de dois logs válidos com o mesmo PAM.</p>
+    <ol class="passos">
+      <li><span class="txt">Faça um quadro válido no canal que quer analisar (<a href="#g3">guia 3</a>).</span></li>
+      <li><span class="txt">Veja o nome do log mais novo com o primeiro comando.</span></li>
+      <li><span class="txt">Compare com o log oficial do Dupont, trocando o segundo arquivo pelo seu e <code>--tau</code> pelo τ medido.</span></li>
+    </ol>
+    <pre class="cmd">ls -t entrega/logs/*.txt | head -1
+.venv/bin/python python/pam_app.py comparar entrega/logs/Dupont_PAM4_20261103_162254.txt entrega/logs/RC16n8_PAM4_20261103_154731.txt --vref 3.297 --tau 7.3</pre>
+    <div class="deve"><b class="ok">Tem que aparecer (saída real desse comando):</b>
+<pre class="cmd" style="padding-right:12px"> f (kHz) | S_Dupont | S_RC      | razão RC/Dup |   dB   | |H|² 1 polo | |H|² 2 polos | |H|² τ medido
+    5.0  | 1.187e-04 | 1.123e-04 |    0.946     |  -0.24 |    0.960    |    0.952     |    0.950
+   10.0  | 1.639e-05 | 1.325e-05 |    0.808     |  -0.92 |    0.858    |    0.834     |    0.826</pre>
+      A figura sai em <code>entrega/figuras/psd_comparacao_PAM4.png</code>. Esse arquivo é substituído a cada comparação. Abra com <code>xdg-open</code>.</div>
+    <div class="senao"><b>Se der errado</b>
+      <ul><li>Razão sem sentido: conferir se os dois logs têm o mesmo PAM e são válidos.</li>
+      <li>Para ver a PSD de um log só, com a curva de teoria: <code>pam_app.py analisar LOG.txt --vref 3.297</code>.</li></ul></div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- =================================================== AMOSTRAGEM -->
+<section class="blk" id="amostragem">
+<div class="cab">
+  <div class="blk-tag"><b>Bloco B</b> Amostragem</div>
+  <h2>As 8 medidas por símbolo e a escolha de k*</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O RX tira 8 "fotos" da tensão durante cada símbolo. Como o sinal demora a subir, as primeiras fotos saem ruins e as últimas saem boas. <a class="t" href="#d-k">k*</a> é o número da melhor foto, escolhido a partir dos dados.</div>
+  <h3>Como o RX sabe quando medir</h3>
+  <div class="acontece"><span class="rot">O que acontece</span>Pense num cronômetro que o CLK zera a cada 50 µs. Ele conta de 10 em 10 ns e dispara uma medida a cada 6,25 µs, sendo a primeira 3,12 µs depois da borda. No firmware, esse cronômetro é o <a class="t" href="#d-tim">TIM2</a>. As medidas caem na memória sozinhas por <a class="t" href="#d-dma">DMA</a>, sem ocupar o processador.</div>
+  <div class="formula">t<sub>k</sub> = 3,12 + 6,25 × k µs,  k = 0 a 7     8 medidas ÷ 50 µs = 160.000 medidas/s</div>
+  <div class="tw"><table>
+    <tr><th>k</th><th class="n">0</th><th class="n">1</th><th class="n">2</th><th class="n">3</th><th class="n">4</th><th class="n">5</th><th class="n">6</th><th class="n">7</th></tr>
+    <tr><td>Instante (µs)</td><td class="n">3,12</td><td class="n">9,37</td><td class="n">15,62</td><td class="n">21,87</td><td class="n">28,12</td><td class="n">34,37</td><td class="n">40,62</td><td class="n">46,87</td></tr>
+  </table></div>
+  <p class="muted">Detalhes de firmware, se perguntarem: Slave Reset Mode no TIM2, 100 MHz, ARR = 624 (625 × 10 ns = 6,25 µs); TIM2_CC2 com CCR2 = 312 dispara o ADC; DMA circular de 512 posições, processando 256 por vez (32 símbolos). A conversão leva 15 + 12 ciclos a 25 MHz = 1,08 µs, menos que os 6,25 µs entre medidas.</p>
+  <div class="medido"><span class="rot">Esperado × medido</span>Esperado: 8 × 50.420 = 403.360 amostras em PAM-4. Medido, em todos os logs válidos: <b>403.360 amostras em 50.420 bordas</b>, <b>0 símbolos com contagem errada</b>. Em PAM-2: 803.552 em 100.444. Essa é a prova das 8 amostras por símbolo.</div>
+
+  <h3>Como escolher a melhor medida</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span>Para cada um dos 8 instantes, o RX pergunta: <b>neste instante, qual é o par de níveis vizinhos mais apertado?</b> Depois escolhe o instante em que o pior par tem <b>mais folga</b>. É o melhor dos piores casos.</div>
+  <ol class="steps">
+    <li>Pegue os 256 símbolos de calibração, em que o RX sabe qual nível foi enviado.</li>
+    <li>Para cada k e cada par de vizinhos: menor valor do nível de cima − maior valor do nível de baixo.</li>
+    <li>Fique com a menor dessas folgas para cada k. <b>Se for negativa, os níveis se cruzaram</b> e o olho está fechado ali.</li>
+    <li>k* é o k com a maior folga. Em empate, o menor k.</li>
+  </ol>
+  <div class="formula">d<sub>k,ℓ</sub> = min(a[k] | nível ℓ+1) − max(a[k] | nível ℓ)     k* = argmax<sub>k</sub> min<sub>ℓ</sub> d<sub>k,ℓ</sub></div>
+  <h4>Menor folga em cada k, em códigos do ADC (PAM-4)</h4>
+  <div class="tw"><table>
+    <tr><th>Canal</th><th class="n">k=0</th><th class="n">1</th><th class="n">2</th><th class="n">3</th><th class="n">4</th><th class="n">5</th><th class="n">6</th><th class="n">7</th><th>k*</th></tr>
+    <tr><td>Dupont</td><td class="n">1209</td><td class="n">1210</td><td class="n">1206</td><td class="n">1207</td><td class="n">1208</td><td class="n">1208</td><td class="n">1207</td><td class="n"><b>1212</b></td><td>7</td></tr>
+    <tr><td>RC 16,8 nF</td><td class="n neg">−2086</td><td class="n neg">−16</td><td class="n">794</td><td class="n">1043</td><td class="n">1148</td><td class="n">1193</td><td class="n">1212</td><td class="n"><b>1220</b></td><td>7</td></tr>
+    <tr><td>RC 33 nF</td><td class="n neg">−2843</td><td class="n neg">−1259</td><td class="n neg">−267</td><td class="n">357</td><td class="n">734</td><td class="n">915</td><td class="n">1025</td><td class="n"><b>1099</b></td><td>7</td></tr>
+    <tr><td>Manga</td><td class="n neg">−844</td><td class="n">819</td><td class="n">1104</td><td class="n">1171</td><td class="n">1193</td><td class="n">1208</td><td class="n">1206</td><td class="n"><b>1214</b></td><td>7</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">Como ler essa tabela</span>
+    <p><b>RC:</b> a folga cresce com k porque o sinal vai se acomodando. O melhor instante é o último, 46,87 µs, logo antes do próximo símbolo. <b>Isso era o esperado.</b></p>
+    <p style="margin-bottom:0"><b>Dupont:</b> o sinal já está pronto em menos de 1 µs, então todos os k são praticamente iguais e o ruído é quem desempata. Em PAM-2 deu 4087, <b>4089</b>, 4088, 4088, 4088, 4087, <b>4089</b>, 4085, empate entre k = 1 e k = 6, e a regra pegou k* = 1. Em PAM-4, o k* foi 7 no quadro oficial de 03/11 e foi 0 e 1 nos dois quadros de 04/11. <b>Isso não é erro:</b> qualquer k serve no Dupont.</p>
+  </div>
+  <h3>O olho</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span>O <a class="t" href="#d-olho">diagrama de olho</a> desenha todos os símbolos um por cima do outro, sempre começando na borda do CLK. O vão entre as faixas é a folga para decidir. Olho aberto = fácil de decidir. Olho fechado = níveis misturados.</div>
+</div>
+<div class="grid2">
+  <figure><img src="img/olho_Dupont_PAM2.png" alt="Olho Dupont PAM-2" loading="lazy"><figcaption><b>Dupont, PAM-2.</b> Olho quadrado, k* = 1 (9,37 µs), abertura 3,291 V. Os picos finos nas bordas do CLK são <a class="t" href="#d-diafonia">diafonia</a>.</figcaption></figure>
+  <figure><img src="img/olho_Dupont_PAM4.png" alt="Olho Dupont PAM-4" loading="lazy"><figcaption><b>Dupont, PAM-4.</b> 4 níveis retos, k* = 7, menor abertura 0,965 V, no par 0–1.</figcaption></figure>
+  <figure><img src="img/olho_RC16n8_PAM2.png" alt="Olho RC 16,8 nF PAM-2" loading="lazy"><figcaption><b>RC 16,8 nF, PAM-2.</b> k* = 7, abertura 3,273 V.</figcaption></figure>
+  <figure><img src="img/olho_RC33n_PAM2.png" alt="Olho RC 33 nF PAM-2" loading="lazy"><figcaption><b>RC 33 nF, PAM-2.</b> k* = 7, abertura 2,989 V.</figcaption></figure>
+</div>
+<div class="read">
+  <h3>Abertura e o par mais próximo (pergunta 3)</h3>
+  <div class="tw"><table>
+    <tr><th>Canal</th><th>PAM</th><th>k* (instante)</th><th class="n">Menor abertura</th><th>Par mais próximo</th><th>Bits Gray</th></tr>
+    <tr><td>Dupont</td><td>2</td><td>1 (9,37 µs)</td><td class="n">3,291 V</td><td>0–1</td><td class="mono">0 / 1</td></tr>
+    <tr><td>Dupont</td><td>4</td><td>7 (46,87 µs)</td><td class="n">0,965 V</td><td>0–1</td><td class="mono">00 / 01</td></tr>
+    <tr><td>RC 16,8 nF</td><td>2</td><td>7 (46,87 µs)</td><td class="n">3,273 V</td><td>0–1</td><td class="mono">0 / 1</td></tr>
+    <tr class="hl"><td>RC 16,8 nF</td><td>4</td><td>7 (46,87 µs)</td><td class="n">0,979 V</td><td>0–1</td><td class="mono">00 / 01</td></tr>
+    <tr><td>RC 33 nF</td><td>2</td><td>7 (46,87 µs)</td><td class="n">2,989 V</td><td>0–1</td><td class="mono">0 / 1</td></tr>
+    <tr><td>RC 33 nF</td><td>4</td><td>7 (46,87 µs)</td><td class="n">0,838 V</td><td>0–1 (amostra) · 2–3 (filtro)</td><td class="mono">00/01 · 11/10</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">Esperado × medido</span><b>Esperado pelo plano inicial:</b> cerca de 1,08 V no RC 16,8 nF e cerca de 0,95 V com 33 nF, considerando degraus iguais de 1,1 V. <b>Medido:</b> 0,979 V e 0,838 V. A abertura é menor porque o degrau 0–1 real é de 1,03 V, como visto no <a href="#tx">TX</a>. A queda entre os dois, de −13 a −14 %, é a mesma da previsão.</div>
+  <p>Note que o Dupont (0,965 V) e o RC 16,8 nF (0,979 V) têm quase a mesma abertura. Ou seja, <b>quem limita ali é o TX, não a ISI</b>. Só com 33 nF a ISI passa a pesar.</p>
+  <div class="atencao"><span class="rot">O professor pode perguntar: por que o nível 3 lê sempre 4095?</span>O nível 3 em TP2 é 3,377 V, acima da referência de 3,297 V. O ADC bate no máximo (<a class="t" href="#d-saturacao">saturação</a>) e lê 4095, e o diodo D+ começa a conduzir. Isso não causa erro, porque o nível 3 é o mais alto e nenhum limiar fica acima dele. O motivo é que o TX e o RX têm alimentações de 3,3 V separadas.</div>
+</div>
+
+<article class="guia" id="g7">
+  <div class="g-top"><span class="g-num">Guia 7</span><span class="g-tit">Mostrar o olho e apontar k*</span><span class="g-tempo">≈ 2 min</span></div>
+  <div class="g-corpo">
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP3</div><div class="ponta c2"><b>CH2</b>CLK</div><div class="ponta c0"><b>Canal e PAM</b>o que estiver montado</div></div>
+    <div class="ajustes">
+      <div><span>CH1 VOLTS/DIV</span><b>1 V</b></div><div><span>CH1 POSITION</span><b>3,5 div abaixo</b></div>
+      <div><span>CH2 VOLTS/DIV</span><b>1 V</b></div><div><span>CH2 POSITION</span><b>no centro</b></div>
+      <div><span>SEC/DIV</span><b>10 µs</b></div><div><span>M Pos</span><b>40 µs</b></div>
+      <div><span>Disparo</span><b>Borda, CH2, Subida, Normal</b></div><div><span>Nível</span><b>1,6 V</b></div>
+      <div><span>DISPLAY</span><b>Persist. infinita</b></div>
+    </div>
+    <h4>Passos</h4>
+    <ol class="passos">
+      <li><span class="txt">Ajuste tudo. Para limpar a tela, desligue e religue a persistência. Confira <code>Ready</code>.</span></li>
+      <li><span class="txt">Aperte <b>RESET no TX</b>. O olho se forma em 2,5 s (PAM-4) ou 5 s (PAM-2).</span></li>
+      <li><span class="txt">Quando parar de mudar, aperte <span class="mono">RUN/STOP</span>.</span></li>
+      <li><span class="txt"><span class="mono">CURSOR</span> → Tipo <span class="menu">Tempo</span>. Leve o cursor 1 até <b>46,87 µs</b>, ou seja, 4,7 quadradinhos depois da seta do disparo e logo antes da próxima subida do CLK. Esse é o instante de k = 7.</span></li>
+      <li><span class="txt">Mude para Tipo <span class="menu">Amplitude</span> e meça o vão entre as faixas no olho de baixo (níveis 0 e 1), nesse mesmo instante.</span></li>
+      <li><span class="txt">Para comparar, olhe a posição 0,3 quadradinho depois da seta: é k = 0, em 3,12 µs. No RC o olho está fechado ali.</span></li>
+      <li><span class="txt">Ao terminar, desligue a persistência.</span></li>
+    </ol>
+    <h4>O que tem que aparecer</h4>
+    <div class="grid2" style="margin:8px 0">
+      <figure style="margin:0"><img src="img/tela_olho_rc16.png" alt="Olho RC 16,8 nF PAM-4 na tela do osciloscópio" loading="lazy"><figcaption><b>RC 16,8 nF, PAM-4.</b> Curvas que se acomodam antes do fim do símbolo. Três olhos abertos no final.</figcaption></figure>
+      <figure style="margin:0"><img src="img/tela_olho_rc33.png" alt="Olho RC 33 nF PAM-4 na tela do osciloscópio" loading="lazy"><figcaption><b>RC 33 nF, PAM-4.</b> Curvas mais lentas: os olhos encolhem e só abrem bem no final.</figcaption></figure>
+    </div>
+    <div class="fig-guia">
+      <figure style="margin:0"><img src="img/tela_olho_dupont.png" alt="Olho Dupont PAM-4 na tela do osciloscópio" loading="lazy"><figcaption><b>Dupont, PAM-4 (teste de 04/11).</b> Transições quase verticais e 4 faixas retas.</figcaption></figure>
+      <div class="deve"><b class="ok">O que dizer:</b> "Cada faixa é um nível. O vão é a folga para decidir. O RX mediu <b>0,979 V</b> de menor abertura aqui. A linha marca k = 7: é onde o olho está mais aberto, e foi esse o instante que a regra escolheu a partir dos dados."
+      <br><br><b class="ok">Ponto importante:</b> a medida oficial da abertura vem do log, feita pelas amostras do ADC em TP4. A tela serve para mostrar a forma do olho.</div>
+    </div>
+    <div class="senao"><b>Se não aparecer</b>
+      <ul><li>Só 2 faixas com PAM-4 esperado: jumper PB0 fora do GND ou colocado depois do RESET.</li>
+      <li>Olho borrado, com muitos picos: mau contato. Confira GND da ponta e fios. O teste de 04/11 mostrou esses picos justamente no quadro em que o CLK falhou.</li>
+      <li>Nada na tela: a ponta do CH2 não está no CLK, ou o nível de disparo está fora.</li></ul></div>
+    <details class="atalho"><summary>Atalho pelo terminal (arma o RX e o olho juntos)</summary><div>
+      <pre class="cmd">.venv/bin/python python/bancada.py ensaio --canal c --mod 4 --vref 3.297 --nome treino_RC16_PAM4_olho</pre></div></details>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+
+<article class="guia" id="g8">
+  <div class="g-top"><span class="g-num">Guia 8</span><span class="g-tit">Provar as 8 amostras por símbolo e os 160 mil por segundo</span><span class="g-tempo">≈ 1 min</span></div>
+  <div class="g-corpo">
+    <ol class="passos">
+      <li><span class="txt">Mostre o CLK de 50 µs no osciloscópio (<a href="#g1">guia 1</a>).</span></li>
+      <li><span class="txt">Mostre as contagens do último quadro com este comando:</span></li>
+    </ol>
+    <pre class="cmd">grep -E "^(bordas_CLK|simbolos_esperados|amostras_processadas|bordas_com_contagem_errada|erro_ADC_overrun|separacao_k|k_estrela|t_k_estrela_us)" "$(ls -t entrega/logs/*.txt | head -1)"</pre>
+    <div class="deve"><b class="ok">Tem que aparecer em PAM-4:</b> <code>bordas_CLK=50420</code>, <code>simbolos_esperados=50420</code>, <code>amostras_processadas=403360</code>, <code>bordas_com_contagem_errada=0</code>, as 8 separações e o k*.</div>
+    <div class="say" style="background:var(--g-panel);color:var(--g-ink);border-color:var(--g-rule)">"O CLK mede 50 µs no osciloscópio. O RX contou 50.420 bordas e 403.360 amostras, que é 8 vezes as bordas, e nenhum símbolo com contagem errada. Então são 8 amostras a cada 50 µs: 160.000 por segundo."</div>
+    <p class="muted" style="color:var(--g-muted)">Extra do roteiro, ainda não testado na bancada: CH1 no CLK e CH2 em TP4, com bastante zoom, podem mostrar um pequeno degrau a cada 6,25 µs, causado pelo capacitor interno do ADC carregando.</p>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- =================================================== CASADO -->
+<section class="blk" id="casado">
+<div class="cab">
+  <div class="blk-tag"><b>Bloco B</b> Detecção</div>
+  <h2>Filtro casado: comparar com um gabarito</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>A <a class="t" href="#d-amostra-unica">amostra única</a> olha só uma foto para decidir. O <a class="t" href="#d-filtro">filtro casado</a> olha as 8 fotos e compara o formato com um gabarito: o pulso que foi medido no início do quadro. Medidas que normalmente têm mais sinal ganham mais peso.</div>
+  <div class="acontece"><span class="rot">O que acontece</span>O RX multiplica cada medida pelo peso correspondente e soma. O resultado é dividido para dar uma nota <a class="t" href="#d-z">z</a>: <b>z ≈ 0</b> parece nível 0, <b>z ≈ 1</b> parece o pulso de nível máximo. Essa conta é um produto interno, a mesma da correlação entre dois sinais.</div>
+  <h3>Montar o gabarito, passo a passo</h3>
+  <ol class="steps">
+    <li><b>Medir o zero (<a class="t" href="#d-bc">b<sub>c</sub></a>):</b> média de 160 medidas (8 × 20) do último zero antes de cada pulso. É o erro de zero do conjunto.</li>
+    <li><b>Medir os pesos (<a class="t" href="#d-pc">p<sub>c</sub>[k]</a>):</b> média das 20 medidas do pulso em cada posição k, menos b<sub>c</sub>.</li>
+    <li><b>Limpar a medida:</b> para cada símbolo, x[k] = a[k] − b<sub>c</sub>.</li>
+    <li><b>Dar a nota:</b> z = soma de p<sub>c</sub>[k] × x[k], dividida por <a class="t" href="#d-ec">E<sub>c</sub></a>.</li>
+  </ol>
+  <div class="formula">E<sub>c</sub> = Σ p<sub>c</sub>[k]²      z = Σ p<sub>c</sub>[k]·x[k] / E<sub>c</sub>   <span class="c">(k de 0 a 7)</span></div>
+  <h3>Os 8 pesos medidos (RC 16,8 nF, PAM-4)</h3>
+  <div class="tw"><table>
+    <tr><th>k</th><th class="n">0</th><th class="n">1</th><th class="n">2</th><th class="n">3</th><th class="n">4</th><th class="n">5</th><th class="n">6</th><th class="n">7</th></tr>
+    <tr><td>p<sub>c</sub>[k]</td><td class="n">1524,90</td><td class="n">3031,55</td><td class="n">3650,15</td><td class="n">3908,40</td><td class="n">4016,55</td><td class="n">4063,95</td><td class="n">4084,50</td><td class="n">4090,45</td></tr>
+  </table></div>
+  <p>b<sub>c</sub> = 4,45 códigos e E<sub>c</sub> = 106.178.096 (log <code>RC16n8_PAM4_20261103_154731</code>). <b>Os pesos são a própria subida do RC medida em 8 pontos</b>: k = 0 pesa pouco porque o sinal ainda está subindo, e k = 7 pesa mais.</p>
+  <p class="muted">Outros canais. Dupont: 8 pesos iguais (cerca de 4091), porque o pulso é quadrado, e então z vira uma média simples. RC 33 nF: 878, 2064, 2809, 3279, 3576, 3765, 3887, 3963. Manga: 2437, 3674, 3959, 4034, 4059, 4071, 4077, 4081.</p>
+  <h3>Conta à mão (pergunta 4): símbolo j = 427, nível 3 enviado</h3>
+  <div class="tw"><table>
+    <tr><th>k</th><th class="n">a[k], medido</th><th class="n">x = a − 4,45</th><th class="n">p<sub>c</sub>[k], peso</th><th class="n">p × x</th></tr>
+    <tr><td>0</td><td class="n">3188</td><td class="n">3183,55</td><td class="n">1524,90</td><td class="n">4.854.595</td></tr>
+    <tr><td>1</td><td class="n">3718</td><td class="n">3713,55</td><td class="n">3031,55</td><td class="n">11.257.813</td></tr>
+    <tr><td>2</td><td class="n">3947</td><td class="n">3942,55</td><td class="n">3650,15</td><td class="n">14.390.899</td></tr>
+    <tr><td>3</td><td class="n">4038</td><td class="n">4033,55</td><td class="n">3908,40</td><td class="n">15.764.727</td></tr>
+    <tr><td>4</td><td class="n">4063</td><td class="n">4058,55</td><td class="n">4016,55</td><td class="n">16.301.369</td></tr>
+    <tr><td>5</td><td class="n">4095</td><td class="n">4090,55</td><td class="n">4063,95</td><td class="n">16.623.791</td></tr>
+    <tr><td>6</td><td class="n">4095</td><td class="n">4090,55</td><td class="n">4084,50</td><td class="n">16.707.851</td></tr>
+    <tr><td>7</td><td class="n">4095</td><td class="n">4090,55</td><td class="n">4090,45</td><td class="n">16.732.190</td></tr>
+    <tr><td colspan="4"><b>Soma</b></td><td class="n"><b>112.633.235</b></td></tr>
+  </table></div>
+  <div class="formula">z = 112.633.235 / 106.178.096 = <b>1,0608</b>   <span class="c">(o firmware imprimiu janela_z = 1,06080)</span><br>Limiares: 0,199 · 0,528 · <b>0,867</b>. Como 1,061 &gt; 0,867 ⇒ nível 3 ⇒ bits <b>10</b>. Acertou.</div>
+  <p><b>Por que 1,06 e não 1,00?</b> Esse símbolo veio depois de um nível alto. A primeira medida é 3188, contra 1525 no pulso de referência, que vinha de zero. O símbolo anterior deixou tensão sobrando, ou seja, ISI. A amostra única em k* = 7 lê 4095 e nem percebe.</p>
+  <h3>Qual detector foi melhor? Aqui, a amostra única</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span>O filtro casado é o melhor quando o problema é ruído. Aqui o ruído é minúsculo e o problema é a sobra do símbolo anterior. Como o filtro usa as primeiras fotos, justamente as mais contaminadas, ele sofre mais que a foto do fim do símbolo.</div>
+  <div class="medido"><span class="rot">Evidência: dois símbolos de nível 1, RC 16,8 nF, PAM-4</span>
+    <div class="tw"><table>
+      <tr><th>Símbolo</th><th>Veio depois de</th><th class="n">8 medidas</th><th class="n">u = a[7]</th><th class="n">z</th></tr>
+      <tr><td>j = 141</td><td>nível 0</td><td class="n">458 917 1123 1187 1224 1258 1255 1243</td><td class="n">1243</td><td class="n">0,304</td></tr>
+      <tr><td>j = 146</td><td>nível 3</td><td class="n">3071 2033 1581 1402 1318 1300 1278 1276</td><td class="n">1276</td><td class="n">0,405</td></tr>
+    </table></div>
+    <p>Na amostra única a diferença é de 33 códigos, ou <b>2,4 %</b> da distância entre os centros 1 e 2. No filtro é de 0,10, ou <b>29 %</b> dessa distância. Por isso a <a class="t" href="#d-margem">margem relativa</a> é <b>0,90 na amostra única e 0,73 no filtro</b>.</p>
+  </div>
+</div>
+<div class="grid2">
+  <figure><img src="img/z_rc16_pam4.png" alt="Saída z do filtro casado na calibração RC 16,8 nF" loading="lazy"><figcaption><b>z na calibração, RC 16,8 nF, PAM-4.</b> Cada nível se abre em faixas conforme o símbolo anterior. É a ISI vista pelo filtro. Margem 0,240.</figcaption></figure>
+  <figure><img src="img/z_manga_anom.png" alt="Saída z no quadro anômalo do cabo manga" loading="lazy"><figcaption><b>Caso extremo: quadro anômalo do manga.</b> As faixas chegam a encostar nos limiares. Margem 0,0895 → 14 erros no filtro casado e 0 na amostra única.</figcaption></figure>
+</div>
+<div class="read">
+  <h3>Centros, limiares e margens (RC 16,8 nF, PAM-4)</h3>
+  <div class="tw"><table>
+    <tr><th>Detector</th><th>Unidade</th><th class="n">Centro 0</th><th class="n">Centro 1</th><th class="n">Centro 2</th><th class="n">Centro 3</th><th class="n">Limiares</th><th class="n">Margem</th></tr>
+    <tr><td>Amostra única</td><td>código ADC</td><td class="n">8,7</td><td class="n">1259,1</td><td class="n">2630,9</td><td class="n">4094,8</td><td class="n">633,9 · 1945,0 · 3362,8</td><td class="n">1220 (983 mV)</td></tr>
+    <tr><td>Filtro casado</td><td>sem unidade</td><td class="n">0,045</td><td class="n">0,354</td><td class="n">0,703</td><td class="n">1,030</td><td class="n">0,199 · 0,528 · 0,867</td><td class="n">0,240</td></tr>
+  </table></div>
+  <ul>
+    <li><a class="t" href="#d-centro"><b>Centro</b></a>: valor médio de cada nível nos 256 símbolos da calibração. Têm que crescer na ordem 0 &lt; 1 &lt; 2 &lt; 3 (<code>calibracao_ok = 1</code>).</li>
+    <li><a class="t" href="#d-limiar"><b>Limiar</b></a>: a metade do caminho entre dois centros vizinhos, a linha que separa um nível do outro. São 3 em PAM-4 e 1 em PAM-2.</li>
+    <li><a class="t" href="#d-margem"><b>Margem</b></a>: no pior par, o menor valor do nível de cima menos o maior valor do nível de baixo. É a folga real.</li>
+    <li><b>Não compare 1220 com 0,240.</b> São escalas diferentes. Para comparar, divida cada uma pela distância média entre centros (0,90 × 0,73).</li>
+    <li>Tudo é <b>congelado antes do payload</b>. O payload só é decidido e nunca é usado para recalibrar, o que evita enviesar a contagem de erros.</li>
+  </ul>
+  <p class="muted">A média simples das 8 medidas é pedida só como cálculo intermediário. O firmware imprime, por exemplo, m = 1078,7 para o nível 1 (j = 141). No Dupont ela coincide com o filtro casado, porque os pesos são iguais.</p>
+  <div class="say">"Os 8 pesos são o pulso medido, menos a linha de base. Peguei a janela 427, que é nível 3: somando peso vezes medida dá 112.633.235, e dividindo pela energia dá z = 1,061. Como é maior que o limiar de 0,867, decide nível 3, bits 10. Acertou. Deu mais que 1 por causa da ISI do símbolo anterior. Na amostra única, a margem relativa foi 0,90; no filtro, 0,73. O filtro é ótimo contra ruído branco, mas aqui o que domina é ISI. Os dois deram 0 erros."</div>
+</div>
+
+<article class="guia" id="g9">
+  <div class="g-top"><span class="g-num">Guia 9</span><span class="g-tit">Fazer a conta do filtro à mão com uma janela real</span><span class="g-tempo">≈ 5 min</span></div>
+  <div class="g-corpo">
+    <p>O roteiro da equipe pede que <b>cada integrante faça a sua conta</b>. Use uma janela diferente de j = 427 para a sua.</p>
+    <pre class="cmd">L=entrega/logs/RC16n8_PAM4_20261103_154731.txt
+grep -E "^(b_c|E_c|p_c\[|limiar_z|centro_z|margem_z)" $L
+grep -m1 "^146," $L</pre>
+    <ol class="passos">
+      <li><span class="txt">A última linha mostra o símbolo pedido: <code>j, nível enviado, a0…a7, z</code>. Dá para trocar 146 por qualquer valor de 140 a 395.</span></li>
+      <li><span class="txt">Para cada k: <b>x = a − b<sub>c</sub></b>.</span></li>
+      <li><span class="txt">Para cada k: <b>multiplique x pelo peso p<sub>c</sub>[k]</b> e some tudo.</span></li>
+      <li><span class="txt">Divida a soma por <b>E<sub>c</sub></b>. Esse é o z.</span></li>
+      <li><span class="txt">Confira com o último número da linha, que é o z do firmware.</span></li>
+      <li><span class="txt">Compare com os limiares e diga o nível e os bits Gray.</span></li>
+    </ol>
+    <div class="deve"><b class="ok">Para conferir com j = 146:</b> nível enviado 1 e z = 0,405. Fica entre 0,199 e 0,528, então decide <b>nível 1, bits 01</b>. O z é maior que o centro (0,354) porque o símbolo anterior era nível 3: ISI de novo.</div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- =================================================== BER -->
+<section class="blk" id="ber">
+<div class="cab">
+  <div class="blk-tag"><b>Bloco B</b> Desempenho</div>
+  <h2>BER, SER e sincronismo: contar os erros sem se enganar</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span><a class="t" href="#d-ber">BER</a> é a fração de bits errados. <a class="t" href="#d-ser">SER</a> é a fração de símbolos errados. Como o RX sabe qual PRBS deveria chegar, ele compara bit a bit. Mas antes ele confere se o quadro está inteiro e alinhado, porque contar erro em quadro quebrado não faz sentido.</div>
+  <div class="formula">BER = N<sub>e</sub> / 100.000      SER = N<sub>s</sub> / N<sub>símbolos</sub>   <span class="c">(100.000 em PAM-2, 50.000 em PAM-4)</span></div>
+  <h3>Como o RX conta</h3>
+  <ol class="steps">
+    <li>Depois dos 396 símbolos de treinamento, o RX decide a senha de 48 bits com os dois detectores. Se bater, <code>sincronismo_ok = 1</code>.</li>
+    <li>O bit seguinte é o primeiro da PRBS-15. O RX reinicia a sua cópia e compara os próximos 100.000 bits.</li>
+    <li>Os dois detectores decidem <b>as mesmas amostras</b> e têm contadores separados. Em PAM-4, cada nível decidido vira 2 bits Gray antes da comparação.</li>
+    <li>Treinamento e senha ficam fora da conta.</li>
+  </ol>
+  <h3>Esperado × medido</h3>
+  <div class="tw"><table>
+    <tr><th>Canal</th><th>PAM</th><th class="n">Abertura</th><th class="n">τ</th><th>Amostra única</th><th>Filtro casado</th></tr>
+    <tr><td>Dupont</td><td>2</td><td class="n">3,291 V</td><td class="n">≈ 0,2 µs</td><td>0 em 100.000</td><td>0 em 100.000</td></tr>
+    <tr><td>Dupont</td><td>4</td><td class="n">0,965 V</td><td class="n">≈ 0,2 µs</td><td>0 em 100.000; SER 0/50.000</td><td>0 em 100.000; SER 0/50.000</td></tr>
+    <tr><td>RC 16,8 nF</td><td>2</td><td class="n">3,273 V</td><td class="n">7,30 µs</td><td>0 em 100.000</td><td>0 em 100.000</td></tr>
+    <tr><td>RC 16,8 nF</td><td>4</td><td class="n">0,979 V</td><td class="n">7,30 µs</td><td>0 em 100.000</td><td>0 em 100.000</td></tr>
+    <tr><td>RC 33 nF</td><td>2</td><td class="n">2,989 V</td><td class="n">13–14 µs</td><td>0 em 100.000</td><td>0 em 100.000</td></tr>
+    <tr><td>RC 33 nF</td><td>4</td><td class="n">0,838 V</td><td class="n">13–14 µs</td><td>0 em 100.000</td><td>0 em 100.000</td></tr>
+    <tr><td>Manga</td><td>2</td><td class="n">3,262 V</td><td class="n">≈ 7 µs*</td><td>0 em 100.000</td><td>0 em 100.000</td></tr>
+    <tr><td>Manga</td><td>4</td><td class="n">0,970 V</td><td class="n">não medido</td><td>0 em 100.000</td><td>0 em 100.000</td></tr>
+  </table></div>
+  <p class="muted">* No manga a subida não é uma curva simples de RC, e esse valor é só indicativo.</p>
+  <div class="medido"><span class="rot">Por que era esperado dar 0 erros</span>O <a class="t" href="#d-ruido">ruído</a> do ADC é de 1 a 2 códigos, ou 1 a 2 mV. No pior caso (RC 33 nF, PAM-4), metade da abertura é 0,42 V. A folga é de cerca de 260 vezes o ruído. A chance de erro, dada pela função <a class="t" href="#d-q">Q</a>, é praticamente zero. Erro só apareceria com interferência forte, ISI que feche o olho ou falha de montagem.</div>
+  <h3>Por que 0 erros não prova BER zero (pergunta 5)</h3>
+  <div class="simples"><span class="rot">Em palavras simples</span>Jogar uma moeda 10 vezes e não ver coroa não prova que a moeda não tem coroa. Você olhou 100.000 bits. O erro poderia ser raro demais para aparecer nessa amostra.</div>
+  <p>Se a BER real fosse p, a chance de ver zero erros seria aproximadamente e<sup>−pN</sup>. Para essa chance ser de pelo menos 5 %:</p>
+  <div class="formula">e<sup>−pN</sup> ≥ 0,05 ⇒ p ≤ 3,0 / N = 3 / 100.000 = <b>3·10⁻⁵</b>   <span class="c">("regra dos três", limite de 95 %)</span></div>
+  <div class="say">"Deu 0 erros em 100.000 bits. A BER observada é zero, mas isso não prova que a BER real é zero. Com 95 % de confiança, ela é menor que 3·10⁻⁵. Para dizer menor que 10⁻⁹, eu precisaria de cerca de 3 bilhões de bits."</div>
+  <h3>Erro de bit, falha de sincronismo e quadro incompleto</h3>
+  <p>São três problemas diferentes. Só o primeiro vira BER.</p>
+  <div class="tw"><table>
+    <tr><th>Situação</th><th>O que aconteceu</th><th>Como o RX percebe</th><th>O que fazer</th></tr>
+    <tr><td><b>Erro de decisão</b></td><td>O quadro está certo, mas um símbolo caiu do lado errado do limiar</td><td>Comparação com a PRBS</td><td>Conta em N<sub>e</sub> e N<sub>s</sub>. <b>É BER.</b></td></tr>
+    <tr><td><b>Falha de sincronismo</b></td><td>O RX não sabe onde o payload começa</td><td><code>sincronismo_ok = 0</code>. Com o quadro deslocado, a "BER" daria cerca de 0,5, sem sentido</td><td>Não dar BER. Repetir.</td></tr>
+    <tr><td><b>Quadro incompleto</b></td><td>Faltou CLK ou amostra</td><td><code>perda_CLK = 1</code> (5 ms sem borda), bordas diferentes de símbolos, overrun</td><td>Não dar BER. Repetir.</td></tr>
+  </table></div>
+  <div class="medido"><span class="rot">Evidência da sua bancada</span>
+    <p><b>O RX recusou 12 quadros e não inventou BER em nenhum:</b> 11 em 03/11 e 1 em 04/11, todos em <code>logs/invalidos/</code>, com <code>aquisicao_valida = 0</code> ou <code>sincronismo_ok = 0</code>. Exemplos: 27.446 de 100.444 bordas (RESET no meio do quadro); 50.442 bordas para 50.420 símbolos (fio de CLK mexido com o RX armado); 20.922 de 50.420 bordas no teste de 04/11. Um 13º log foi aceito pelo RX, mas descartado por vocês porque os níveis vieram puxados para a média.</p>
+    <p style="margin-bottom:0"><b>Gray confirmado por um erro real:</b> no quadro anômalo do manga, N<sub>e</sub> = 14 e N<sub>s</sub> = 14. Cada símbolo errado custou exatamente 1 bit, como o Gray promete.</p>
+  </div>
+</div>
+</section>
+
+<!-- =================================================== 33 nF -->
+<section class="blk" id="vivo">
+<div class="cab">
+  <div class="blk-tag"><b>Ao vivo</b> Verificação individual</div>
+  <h2>A troca de 16,8 nF por 33 nF</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>O capacitor dobra, então o "balde" demora o dobro para encher. Isso aparece em todas as medidas: subida mais lenta, menos alta frequência, mais sobra de um símbolo para o outro e olho mais fechado. Mesmo assim, ainda não dá erro.</div>
+  <h3>Esperado × medido, com espaço para anotar na hora</h3>
+  <div class="tw anota"><table>
+    <tr><th>Grandeza</th><th class="n">16,8 nF</th><th class="n">33 nF (medido em 03/11)</th><th class="n">Esperado para 33 nF</th><th>Na defesa</th></tr>
+    <tr><td>τ</td><td class="n">7,30 µs</td><td class="n">13,0–14,1 µs</td><td class="n">12,7–13,9 µs</td><td><input id="an-tau" aria-label="τ medido na defesa"></td></tr>
+    <tr><td>Tempo de subida</td><td class="n">16,2 µs</td><td class="n">27–31 µs</td><td class="n">≈ 28 µs</td><td><input id="an-tr" aria-label="Tempo de subida medido na defesa"></td></tr>
+    <tr><td>Corte f<sub>c</sub></td><td class="n">21,8 kHz</td><td class="n">≈ 12 kHz</td><td class="n">12,5 kHz</td><td><input id="an-fc" aria-label="Corte calculado na defesa"></td></tr>
+    <tr><td>Abertura PAM-4 em k*</td><td class="n">0,979 V</td><td class="n">0,838 V</td><td class="n">queda de ≈ 13 %</td><td><input id="an-ab4" aria-label="Abertura PAM-4 medida na defesa"></td></tr>
+    <tr><td>Abertura PAM-2 em k*</td><td class="n">3,273 V</td><td class="n">2,989 V</td><td class="n">≈ 3,07 V</td><td><input id="an-ab2" aria-label="Abertura PAM-2 medida na defesa"></td></tr>
+    <tr><td>Abertura PAM-4 em k = 3</td><td class="n">0,78 V</td><td class="n">0,11 V</td><td class="n">quase fecha</td><td><input id="an-k3" aria-label="Abertura em k igual a 3 na defesa"></td></tr>
+    <tr><td>Sobra (ISI) em k*</td><td class="n">7 mV</td><td class="n">110 mV</td><td class="n">0,1 % → 2,5 %</td><td><input id="an-isi" aria-label="Sobra medida na defesa"></td></tr>
+    <tr><td>Razão PSD 5 kHz</td><td class="n">0,95</td><td class="n">0,82–0,83</td><td class="n">0,84</td><td><input id="an-r5" aria-label="Razão em 5 kHz na defesa"></td></tr>
+    <tr><td>Razão PSD 10 kHz</td><td class="n">0,81</td><td class="n">0,54–0,56</td><td class="n">0,57</td><td><input id="an-r10" aria-label="Razão em 10 kHz na defesa"></td></tr>
+    <tr><td>k*</td><td class="n">7</td><td class="n">7</td><td class="n">7</td><td><input id="an-k" aria-label="k estrela na defesa"></td></tr>
+    <tr><td>Erros (os 2 detectores)</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td><input id="an-err" aria-label="Erros na defesa"></td></tr>
+  </table></div>
+  <p class="muted">O que você digitar fica salvo só neste navegador.</p>
+  <div class="say">"C dobrou, então τ quase dobrou: de 7,3 para cerca de 13,5 µs, e o tempo de subida foi de 16 para cerca de 28 µs. Na frequência, o corte caiu de cerca de 22 para 12 kHz, e a potência em 10 kHz, que era 0,81 da do Dupont, caiu para 0,55. No tempo, a subida não termina mais em 50 µs: sobram 2,5 % no símbolo seguinte, que é ISI. O RX mediu 110 mV contra 7 mV antes. Isso fecha o olho PAM-4 em 14 %, de 0,98 para 0,84 V. Mesmo assim deu 0 erros, porque 0,84 V é muito maior que o ruído de 1 a 2 mV. E o 33 nF é uma alteração didática, não o modelo de 300 m de cabo."</div>
+</div>
+<div class="grid2">
+  <figure><img src="img/olho_RC16n8_PAM4.png" alt="Olho RC 16,8 nF PAM-4 com k*" loading="lazy"><figcaption><b>RC 16,8 nF, PAM-4.</b> Olho em TP3. Linha tracejada em k* = 7 (46,87 µs). As marcas no topo são os 8 instantes de medida.</figcaption></figure>
+  <figure><img src="img/olho_RC33n_PAM4.png" alt="Olho RC 33 nF PAM-4 com k*" loading="lazy"><figcaption><b>RC 33 nF, PAM-4.</b> Transições mais lentas e olhos menores. Em k* a menor abertura cai de 0,979 para 0,838 V.</figcaption></figure>
+</div>
+
+<article class="guia" id="g10">
+  <div class="g-top"><span class="g-num">Guia 10</span><span class="g-tit">Fazer a troca e medir tudo na frente do professor</span><span class="g-tempo">≈ 5 min</span></div>
+  <div class="g-corpo">
+    <div class="acontece" style="background:var(--g-panel);border-color:var(--g-rule);color:var(--g-ink)"><b>Antes de começar:</b> RC 16,8 nF montado, TX em PAM-4 (jumper PB0 no GND), <a href="#g0">guia 0</a> feito e terminal aberto na pasta do projeto.</div>
+    <h4>1. Fazer a troca</h4>
+    <ol class="passos">
+      <li><span class="txt">O professor troca o capacitor, ou você coloca um <b>jumper do ponto N ao GND</b>. Isso curto-circuita um dos 33 nF e sobra um só. Veja o desenho do <a href="#ideia">esquema</a>.</span></li>
+    </ol>
+    <h4>2. Tempo de subida e τ</h4>
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP2</div><div class="ponta c2"><b>CH2</b>TP3</div></div>
+    <ol class="passos">
+      <li><span class="txt">Rode o comando abaixo, ou ajuste à mão como no <a href="#g5">guia 5</a>.</span></li>
+      <li><span class="txt">Quando aparecer <code>APERTE RESET NO TX</code>, aperte <b>RESET</b>.</span></li>
+      <li><span class="txt">Anote <b>τ</b> e <b>t10-90</b> na tabela acima.</span></li>
+    </ol>
+    <pre class="cmd">.venv/bin/python python/bancada.py osc degrau --canal x --mod 4 --sem-rx --nome defesa_33nF_degrau</pre>
+    <div class="deve"><b class="ok">Esperado:</b> τ entre 13 e 14 µs, subida de 27 a 31 µs. Na tela, a curva ainda está subindo quando o símbolo acaba.</div>
+    <h4>3. Olho, abertura e erros</h4>
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>TP3</div><div class="ponta c2"><b>CH2</b>CLK</div></div>
+    <ol class="passos">
+      <li><span class="txt">Mude as pontas. Mexa no fio de CLK com cuidado e não encoste nele durante o quadro.</span></li>
+      <li><span class="txt">Rode o comando e aperte <b>RESET</b> quando ele pedir. O comando arma o RX primeiro e o scope depois.</span></li>
+      <li><span class="txt">Anote <b>k*</b>, <b>abertura</b> e <b>erros</b>. Confira se todas as linhas dão <code>[OK]</code>.</span></li>
+    </ol>
+    <pre class="cmd">.venv/bin/python python/bancada.py ensaio --canal x --mod 4 --vref 3.297 --nome defesa_33nF_PAM4_olho</pre>
+    <div class="deve"><b class="ok">Esperado:</b> k* = 7, abertura perto de 0,84 V, 0 erros nos dois detectores. O olho fica como na captura do RC 33 nF do <a href="#g7">guia 7</a>.</div>
+    <h4>4. PSD</h4>
+    <ol class="passos">
+      <li><span class="txt">O primeiro comando mostra o log que acabou de ser gravado. Se ele fosse inválido, repita a etapa 3 antes.</span></li>
+      <li><span class="txt">O segundo compara com o Dupont oficial e usa o log mais novo automaticamente.</span></li>
+      <li><span class="txt">Anote as razões em 5 e 10 kHz.</span></li>
+    </ol>
+    <pre class="cmd">ls -t entrega/logs/*.txt | head -1
+.venv/bin/python python/pam_app.py comparar entrega/logs/Dupont_PAM4_20261103_162254.txt "$(ls -t entrega/logs/*.txt | head -1)" --vref 3.297 --tau 13.5</pre>
+    <div class="deve"><b class="ok">Esperado:</b> perto de 0,83 em 5 kHz e 0,55 em 10 kHz.</div>
+    <div class="senao"><b>Se der problema</b>
+      <ul><li><b>Quadro inválido por perda de CLK:</b> não é falha do capacitor. Explique isso, firme o fio e repita. Está no <a href="#g11">guia 11</a>.</li>
+      <li><b>Abertura muito menor ou níveis puxados para o meio:</b> mau contato no caminho do ADC (1 kΩ, TP4, fio de PA1). Reencaixe.</li>
+      <li><b>τ igual ao de antes:</b> o jumper não foi para o ponto N certo.</li>
+      <li><b>O professor pediu PAM-2:</b> tire o jumper de PB0, use <code>--mod 2</code>. O quadro leva 5 s, e no comparar use o log <code>Dupont_PAM2_20261103_162110.txt</code>.</li></ul></div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- =================================================== MANGA -->
+<section class="blk" id="manga">
+<div class="cab">
+  <div class="blk-tag"><b>Exploratório</b> Canal 3</div>
+  <h2>Cabo manga de 200 m</h2>
+</div>
+<div class="read">
+  <div class="simples"><span class="rot">Em palavras simples</span>Em vez de imitar um cabo com um RC, aqui os dados passam por um cabo longo de verdade. A resistência e a capacitância ficam espalhadas pelos 200 m, e por isso a curva tem outro formato: sobe rápido no início e se arrasta no fim.</div>
+  <div class="atencao"><span class="rot">Frase pedida pelo enunciado</span>"O ensaio representa principalmente um condutor longo de dados com referência próxima, não um enlace isolado de 200 m para sinal e retorno." O motivo: além do segundo condutor do cabo, o GND também volta por um Dupont curto (necessário para o CLK de 20 cm), pelos USBs no mesmo PC e pelo terra do osciloscópio.</div>
+</div>
+<div class="grid2">
+  <figure><img src="img/degrau_manga.png" alt="Degrau no cabo manga" loading="lazy"><figcaption><b>Degrau no manga, PAM-2.</b> Assinatura de uma <b>linha RC distribuída</b>, não de um RC de 1 polo. TP3 chega a 94 % do degrau em k*.</figcaption></figure>
+  <figure><img src="img/olho_Manga_PAM4.png" alt="Olho do cabo manga PAM-4" loading="lazy"><figcaption><b>Olho PAM-4 no manga.</b> Traços mais grossos que nos outros canais: o cabo longo capta interferência e muda o retorno de GND. Abertura 0,970 V, 0 erros.</figcaption></figure>
+</div>
+<div class="read">
+  <ul>
+    <li><b>PSD:</b> razão manga/Dupont = 0,96 em 5 kHz e 0,89 em 10 kHz. Em 10 kHz filtra <b>menos</b> que o RC 16,8 nF.</li>
+    <li><b>Abertura por k (PAM-4):</b> −0,81; 0,53; 0,84; 0,92; 0,94; 0,96; 0,96; 0,97 V. Abre mais cedo que o RC 16,8 nF.</li>
+    <li><b>Quadro anômalo</b> (<code>Manga_PAM4_20261103_165336</code>): b<sub>c</sub> = 136 códigos (normal ≈ 5), centro do nível 3 = 3555 (normal ≈ 4093), abertura 0,589 V, 14 erros no filtro e 0 na amostra única. Não se repetiu. O sintoma é o mesmo do mau contato no caminho do ADC.</li>
+    <li><b>CLK:</b> quadros foram perdidos por <code>perda_CLK</code> nesse canal, mas não culpe o cabo, porque o CLK percorreu só 20 cm de Dupont.</li>
+  </ul>
+  <p>Para repetir: <a href="#g3">guia 3</a> e <a href="#g7">guia 7</a>, com <code>--canal m</code>.</p>
+</div>
+</section>
+
+<!-- =================================================== FALHAS -->
+<section class="blk" id="falhas">
+<div class="cab">
+  <div class="blk-tag"><b>Crédito extra</b> Falha bem diagnosticada conta ponto</div>
+  <h2>Falhas e pedidos do professor</h2>
+</div>
+<div class="read">
+  <h3>Falhas que vocês já diagnosticaram</h3>
+  <div class="tw"><table>
+    <tr><th>O que apareceu</th><th>Causa</th><th>Evidência</th></tr>
+    <tr><td><code>perda_CLK = 1</code>, RX para no meio</td><td>CLK some no caminho PB4 → PA0. A causa mais provável é mau contato, mas não foi provada em todos os casos.</td><td>Manga PAM-4: 242 aquisições vistas no scope em PB4, e o RX parou em 24.070 bordas. <b>04/11:</b> Dupont PAM-4 parou em 20.922 de 50.420. Na tentativa seguinte, 50.420 de 50.420.</td></tr>
+    <tr><td>Bordas a mais (50.442 e 50.428 para 50.420)</td><td>Repique ao reencaixar o fio com o RX armado; bordas rápidas do fio de dados induzindo no fio de CLK (<a class="t" href="#d-diafonia">diafonia</a>)</td><td>Refeito o fio: 50.420 de 50.420, sem a ponta no CLK.</td></tr>
+    <tr><td>Níveis do ADC puxados para o meio (553/3293 e depois 1186/1336), com TP3 normal no scope</td><td>Resistência de contato no caminho até o ADC (1 kΩ, TP4, fio de PA1). O capacitor interno não carrega nos 0,6 µs da medida.</td><td>RC33n_PAM2 160502 e 161314. Após reencaixar: 131/3978 códigos e 0 erros.</td></tr>
+    <tr><td>Olho "PAM-4" com só dois níveis</td><td>O TX transmitiu PAM-2: jumper PB0 sem contato ou colocado depois do RESET</td><td>Desde então, conferido no log em cada RESET.</td></tr>
+    <tr><td><code>/dev/usbtmc</code> não existe e o <code>lsusb</code> mostra <code>0699:036b</code></td><td>Modo USB do scope errado</td><td>03/11 e 04/11. Corrigido com o scope aparecendo como <code>0699:0364</code>. Ver <a href="#g0">guia 0</a>.</td></tr>
+  </table></div>
+  <div class="say">"O firmware não atribui BER a quadro incompleto. Todas as falhas foram detectadas pelos contadores do RX, como bordas, amostras, perda de CLK e sincronismo, e o ensaio foi repetido."</div>
+  <h3>Se o professor fizer isto, é isto que você vê</h3>
+  <div class="tw"><table>
+    <tr><th>Pedido ou alteração</th><th>O que acontece</th><th>O que dizer</th></tr>
+    <tr><td>Troca 16,8 → 33 nF</td><td>τ, olho e PSD mudam. <a href="#g10">Guia 10</a></td><td>O treinamento se refaz sozinho em cada quadro: k*, pesos e limiares.</td></tr>
+    <tr><td>Tira o fio de CLK no meio</td><td><code>perda_CLK = 1</code>, quadro inválido, sem BER</td><td>A sincronização assistida depende do CLK. O RX não inventa resultado.</td></tr>
+    <tr><td>Tira o GND comum ou inverte ligações</td><td>Níveis errados, <code>calibracao_ok = 0</code></td><td>Sem referência comum, a tensão medida não significa nada.</td></tr>
+    <tr><td>Pede PAM-2 × PAM-4</td><td>Abertura cerca de 3× menor no PAM-4</td><td>Mesma taxa de símbolos, mesma banda. O PAM-4 dobra os bits, mas exige mais folga.</td></tr>
+    <tr><td>"Qual k* sem o RC?"</td><td>Todos os k ficam quase empatados</td><td>O sinal fica pronto em menos de 1 µs. Quem desempata é o ruído, e qualquer k serviria.</td></tr>
+    <tr><td>"Mude o limiar à mão"</td><td>Não tem opção para isso</td><td>Os parâmetros são congelados antes do payload, para não enviesar a contagem.</td></tr>
+    <tr><td>Pergunta sobre aliasing</td><td>f<sub>a</sub>/2 = 80 kHz, sem filtro antes do ADC</td><td>O ripple de 33 MHz cairia em 53,3 kHz, e o sinal tem energia acima de 80 kHz que também se dobra.</td></tr>
+  </table></div>
+</div>
+
+<article class="guia" id="g11">
+  <div class="g-top"><span class="g-num">Guia 11</span><span class="g-tit">Caçar a falha de CLK: fio ou TX?</span><span class="g-tempo">≈ 2 min</span></div>
+  <div class="g-corpo">
+    <p>Use quando o quadro dá <code>perda_CLK = 1</code> mais de uma vez. As duas pontas olham o mesmo fio, uma em cada extremidade. O scope dispara apenas se o CLK no RX sumir e voltar.</p>
+    <div class="pontas"><div class="ponta c1"><b>CH1</b>PB4 (saída do TX)</div><div class="ponta c2"><b>CH2</b>PA0 (entrada do RX)</div></div>
+    <ol class="passos">
+      <li><span class="txt">Primeiro tente o simples: firme o fio nas duas pontas e confira o GND comum.</span></li>
+      <li><span class="txt">Se continuar, ponha as pontas como acima e rode o comando. Ele usa um disparo de pulso difícil de ajustar à mão.</span></li>
+      <li><span class="txt">Aperte <b>RESET</b> quando ele pedir. Repita se nada falhar nesse quadro.</span></li>
+    </ol>
+    <pre class="cmd">.venv/bin/python python/bancada.py osc diag_clk --canal d --mod 4 --nome treino_diag_CLK</pre>
+    <div class="deve"><b class="ok">Como interpretar:</b>
+      <ul style="margin:.2em 0;padding-left:18px"><li><b>CH1 continuou pulsando enquanto o CH2 parou:</b> o CLK se perdeu no caminho. Fio, contato ou GND.</li>
+      <li><b>Os dois pararam:</b> o próprio TX parou de gerar o CLK.</li>
+      <li><b>"Nenhuma falha de CLK":</b> o disparo não ocorreu e o quadro foi bom.</li></ul></div>
+    <div class="atencao" style="background:var(--g-panel);color:var(--g-ink)"><b>Situação atual:</b> a causa da falha de CLK ainda não foi provada com este guia. Em 04/11, a primeira tentativa falhou e a segunda foi boa. Se perguntarem, fale que é intermitente e aponta para o fio, mas que falta esta medida para fechar.</div>
+    <button type="button" class="limpar">Desmarcar passos</button>
+  </div>
+</article>
+</section>
+
+<!-- =================================================== PERGUNTAS -->
+<section class="blk" id="perguntas">
+<div class="cab">
+  <div class="blk-tag"><b>Treino</b> Tente responder antes de abrir</div>
+  <h2>Perguntas e respostas</h2>
+</div>
+<div class="read">
+  <div class="acoes">
+    <button type="button" id="abrir">Abrir todas</button>
+    <button type="button" id="fechar">Fechar todas</button>
+  </div>
+  <h3>Básico</h3>
+  <details class="q"><summary>O que é PAM e o que é payload?</summary><div class="a"><p>PAM é representar bits pela altura do pulso: em PAM-4 são 4 níveis e 2 bits por símbolo, 40 kbit/s a 20 mil símbolos/s. O payload é a parte do quadro com os dados: 100.000 bits de uma PRBS-15, em que contamos BER e SER com os parâmetros congelados antes dele.</p></div></details>
+  <details class="q"><summary>Por que o CLK vai por um fio separado?</summary><div class="a"><p>É a sincronização assistida. O sinal PAM pode ter longos trechos sem mudar (a PRBS-15 tem 15 "1" seguidos no início do payload), o que dificultaria extrair o relógio do próprio sinal. Como o cronômetro do RX é zerado a cada borda, as diferenças entre os cristais de TX e RX não se acumulam.</p></div></details>
+  <details class="q"><summary>Para a mesma taxa de 20 kbit/s, qual seria a taxa de símbolos?</summary><div class="a"><p>PAM-2: 20 mil símbolos/s. PAM-4: 10 mil símbolos/s, porque leva 2 bits por símbolo. O símbolo teria 100 µs, ocuparia metade da banda e daria mais tempo para o RC assentar. No ensaio obrigatório o PAM-4 roda a 20 mil símbolos/s e entrega 40 kbit/s, ao custo de níveis 3× mais próximos.</p></div></details>
+  <h3>Bloco A · Fourier, PSD e canal</h3>
+  <details class="q"><summary>Compare a potência em 5 e 10 kHz nos dois canais e explique a razão.</summary><div class="a"><p>PAM-4: Dupont 1,19·10⁻⁴ e 1,64·10⁻⁵ V²/Hz; RC 16,8 nF 1,12·10⁻⁴ e 1,32·10⁻⁵. Razões 0,946 e 0,808. Como a saída é |H|² vezes a entrada e os bits são os mesmos, a razão estima |H(f)|². A conta com o filtro do TX dá 0,952 e 0,834. Em 5 kHz quase não corta; em 10 kHz tira cerca de 20 %. Método: 160 kHz, 8.192 amostras (51,2 ms), Hann, N = 1.024, 50 %, 15 blocos, 156,25 Hz.</p></div></details>
+  <details class="q"><summary>Por que retirar a média antes da PSD?</summary><div class="a"><p>O sinal vai de 0 a 3,3 V e tem média perto de 1,65 V, o que cria um pico enorme em 0 Hz. Com a janela, esse pico vazaria para os bins baixos. Tirar a média remove o pico e deixa o que interessa.</p></div></details>
+  <details class="q"><summary>Por que janela de Hann e média de blocos?</summary><div class="a"><p>Cortar o sinal em blocos é o mesmo que multiplicar por uma janela retangular, que espalha energia para os bins vizinhos (vazamento). A Hann reduz muito esse efeito. A média de 15 blocos (Welch) deixa a estimativa mais estável: um único bloco flutua cerca de 100 %; a média de 15, cerca de 25 a 35 %.</p></div></details>
+  <details class="q"><summary>De onde vem a resolução de 156,25 Hz?</summary><div class="a"><p>160.000 ÷ 1.024. Cada bloco dura 6,4 ms, e a resolução é o inverso da duração do bloco.</p></div></details>
+  <details class="q"><summary>Por que o valor absoluto difere da teoria em até 30 %?</summary><div class="a"><p>A PSD é uma estimativa com poucas médias (15), então ela oscila. Por isso se usa a média de 5 bins e, principalmente, a razão entre canais, em que a oscilação se cancela porque os bits são os mesmos.</p></div></details>
+  <details class="q"><summary>Por que a PSD tem zeros em 20, 40 e 60 kHz?</summary><div class="a"><p>O pulso é um retângulo de 50 µs. A transformada dele é um sinc, que zera em múltiplos de 1/50 µs = 20 kHz. A PSD herda isso ao quadrado.</p></div></details>
+  <details class="q"><summary>Estime τ pelos componentes e pelo degrau. Por que diferem?</summary><div class="a"><p>386 Ω × 16,8 nF = 6,48 µs. Medido: 7,30 µs, o tempo até 63,2 % da subida. Confirmado pelo tempo de subida: 16,2 ÷ 2,197 = 7,37 µs. Causas: o filtro de 400 pF do TX (com ele a conta dá 7,1 µs), a resistência do pino (cerca de 30 Ω) e a tolerância dos capacitores. O t₀ é o início da subida, não o ponto de 10 %.</p></div></details>
+  <details class="q"><summary>Relacione tempo de subida, banda e ISI.</summary><div class="a"><p>São a mesma coisa vista de dois lados. Menos banda ⇒ τ maior ⇒ subida mais lenta ⇒ o símbolo não chega ao nível final antes do próximo ⇒ a tensão depende do símbolo anterior (ISI) ⇒ o olho fecha. Números de 16,8 para 33 nF: corte de 22 para 12 kHz, subida de 16 para 28 µs, ISI em k* de 7 para 110 mV, abertura de 0,98 para 0,84 V.</p></div></details>
+  <details class="q"><summary>Por que a PSD do PAM-4 tem um vale em 10 kHz?</summary><div class="a"><p>A PRBS-15 com o Gray faz cada nível depender do nível de 7 posições atrás: ℓ<sub>i</sub> = 2c<sub>i</sub> + c<sub>i−7</sub>. A PSD ganha o fator 5 + 4cos(2πf·7T<sub>s</sub>), com vales em (2m+1)·R<sub>s</sub>/14, incluindo 10 kHz. O vale aparece nos dois canais e some na razão, então não é o canal.</p></div></details>
+  <details class="q"><summary>O RC de 56 Ω + 16,8 nF é um cabo de 300 m?</summary><div class="a"><p>Reproduz só R e C em baixa frequência de um par CAT5e (2 × 0,3 km × 95 Ω/km ≈ 57 Ω; 300 m × 56 pF/m = 16,8 nF). Não reproduz impedância característica, atraso de propagação, reflexões nem perdas distribuídas. E o 33 nF da defesa é uma alteração didática.</p></div></details>
+  <h3>Bloco B · Amostragem, filtro casado, olho e BER</h3>
+  <details class="q"><summary>Como você garante 8 amostras por símbolo?</summary><div class="a"><p>A borda do CLK zera o TIM2. O evento TIM2_CC2 dispara o ADC 3,12 µs depois e a cada 6,25 µs. O firmware conta bordas e amostras: 50.420 bordas e 403.360 amostras = 8 × 50.420, contagem errada 0, overrun 0. 8 amostras em 50 µs dão 160 mil por segundo.</p></div></details>
+  <details class="q"><summary>Por que k* = 7 no RC e k* = 1 no Dupont PAM-2?</summary><div class="a"><p>No RC, a menor separação entre níveis cresce com k porque o sinal ainda está se acomodando: −2086, −16, 794 … 1220 códigos em PAM-4, com o máximo em k = 7 (46,87 µs). No Dupont o pulso é quadrado: todas as separações ficam entre 4085 e 4089 em PAM-2. Houve empate entre k = 1 e 6, e a regra pega o menor.</p></div></details>
+  <details class="q"><summary>O que significa uma separação negativa?</summary><div class="a"><p>A menor leitura do nível de cima ficou abaixo da maior leitura do nível de baixo. As faixas se cruzaram e nenhum limiar separa os dois naquele instante: o olho está fechado ali. Exemplo: RC 33 nF, k = 0, 1 e 2.</p></div></details>
+  <details class="q"><summary>Qual par PAM-4 ficou mais próximo e quais os bits?</summary><div class="a"><p>O par 0–1, Gray 00/01, em todos os canais na amostra única: menor abertura 0,979 V no RC 16,8 nF. Causa: o TX gera o menor degrau entre esses níveis (1,028 V, contra 1,125 e 1,235 V). No filtro casado do RC 33 nF o pior par foi 2–3 (11/10).</p></div></details>
+  <details class="q"><summary>Monte o filtro casado e calcule uma saída.</summary><div class="a"><p>b<sub>c</sub> = 4,45. Pesos: 1525, 3032, 3650, 3908, 4017, 4064, 4085, 4090. E<sub>c</sub> = 106.178.096. Símbolo j = 427, nível 3: soma = 112.633.235 ⇒ z = 1,061 &gt; 0,867 ⇒ nível 3 ⇒ bits 10.</p></div></details>
+  <details class="q"><summary>O filtro casado foi melhor que a amostra única?</summary><div class="a"><p>Não aqui. Os dois deram 0 erros nos canais principais, mas a margem relativa do filtro foi menor (0,73 contra 0,90 no RC 16,8 nF), e no quadro anômalo do manga o filtro errou 14 vezes e a amostra única nenhuma. O filtro é ótimo contra ruído branco sem ISI. Aqui o ruído é de cerca de 1 mV, e o que domina é ISI, que contamina as primeiras medidas usadas por ele. Margem maior não garante BER menor: a conclusão vem da contagem.</p></div></details>
+  <details class="q"><summary>Por que não comparar a margem 1220 com a margem 0,240?</summary><div class="a"><p>As unidades são diferentes: códigos do ADC × escala z. Para comparar, divida cada uma pela distância média entre centros do próprio detector (0,90 × 0,73).</p></div></details>
+  <details class="q"><summary>O que significa 0 erros em 100.000 bits?</summary><div class="a"><p>BER observada = 0, não BER física nula. Com 95 % de confiança, BER &lt; 3/N = 3·10⁻⁵. Para afirmar uma BER menor, seria preciso transmitir mais bits.</p></div></details>
+  <details class="q"><summary>Erro de bit × falha de sincronismo: como separa?</summary><div class="a"><p>Erro de bit: quadro íntegro, 48 bits de início corretos e um símbolo do payload decidido errado. Entra em N<sub>e</sub>. Falha de sincronismo: os 48 bits não batem, e com o quadro deslocado a "BER" seria cerca de 0,5, sem sentido, então não se atribui BER. Perda de CLK ou amostras: quadro incompleto, e se repete o ensaio.</p></div></details>
+  <details class="q"><summary>Por que o nível 3 lê sempre 4095?</summary><div class="a"><p>O nível 3 chega em 3,377 V em TP2, acima da referência de 3,297 V do ADC, que satura. Não causa erro, porque nenhum limiar fica acima do nível 3. A diferença vem do 3V3 do TX ser maior que o do RX.</p></div></details>
+</div>
+</section>
+
+<!-- =================================================== DICIONÁRIO -->
+<section class="blk" id="dicionario">
+<div class="cab">
+  <div class="blk-tag"><b>Consulta</b> Em ordem alfabética</div>
+  <h2>Dicionário dos nomes difíceis</h2>
+</div>
+<dl class="dic">
+  <div id="d-adc"><dt>ADC</dt><dd>Conversor analógico-digital. Mede uma tensão e devolve um número de 0 a 4095 (12 bits). É o "voltímetro" do RX, no pino PA1.</dd></div>
+  <div id="d-aliasing"><dt>Aliasing</dt><dd>Quando uma frequência alta, medida devagar demais, aparece disfarçada de frequência baixa. Como a roda da carroça que parece girar ao contrário no filme.</dd></div>
+  <div id="d-amostra-unica"><dt>Amostra única (u)</dt><dd>Detector simples: decide o nível olhando só uma das 8 medidas, a de k*. u = a[k*].</dd></div>
+  <div id="d-ber"><dt>BER</dt><dd>Taxa de erro de bit. Bits errados ÷ bits enviados. Aqui, N<sub>e</sub> / 100.000.</dd></div>
+  <div id="d-bc"><dt>b<sub>c</sub> (linha de base)</dt><dd>A leitura média do ADC quando o sinal deveria ser zero. É descontada de todas as medidas. Vale 4,45 códigos no RC 16,8 nF.</dd></div>
+  <div id="d-bin"><dt>Bin</dt><dd>Cada "degrau" do eixo de frequência da PSD. Aqui cada bin tem 156,25 Hz de largura.</dd></div>
+  <div id="d-canal"><dt>Canal</dt><dd>O caminho do sinal entre o TX e o RX. Pode ser um fio Dupont, um circuito RC ou um cabo longo.</dd></div>
+  <div id="d-centro"><dt>Centro</dt><dd>O valor médio com que um nível chega ao RX, calculado nos 256 símbolos da calibração.</dd></div>
+  <div id="d-clk"><dt>CLK</dt><dd>Relógio de símbolo: onda quadrada de 20 kHz que marca o início de cada símbolo. Sai do PB4 do TX e entra no PA0 do RX.</dd></div>
+  <div id="d-codigo"><dt>Código do ADC</dt><dd>O número que o ADC devolve. 0 = 0 V e 4095 = 3,297 V. Um código vale 0,805 mV.</dd></div>
+  <div id="d-disparo"><dt>Disparo (trigger)</dt><dd>A regra que diz ao osciloscópio quando começar a desenhar, por exemplo "quando o CH2 subir e passar de 1,6 V". Sem isso, a imagem fica correndo.</dd></div>
+  <div id="d-diafonia"><dt>Diafonia</dt><dd>Um fio induzindo sinal em outro ao lado. Aparece como picos finos no instante em que o fio vizinho muda de nível.</dd></div>
+  <div id="d-dma"><dt>DMA</dt><dd>Mecanismo que copia dados do ADC para a memória sozinho, sem ocupar o processador em cada medida.</dd></div>
+  <div id="d-ec"><dt>E<sub>c</sub> (energia do pulso)</dt><dd>Soma dos quadrados dos 8 pesos do filtro casado. Serve para normalizar a nota, de modo que o pulso de referência dê z = 1.</dd></div>
+  <div id="d-filtro"><dt>Filtro casado</dt><dd>Detector que compara as 8 medidas com o formato do pulso esperado, multiplicando por pesos e somando. É o melhor contra ruído branco quando não há ISI.</dd></div>
+  <div id="d-fourier"><dt>Fourier (transformada)</dt><dd>Conta que mostra de quais frequências um sinal é feito. A FFT é o jeito rápido de fazê-la no computador.</dd></div>
+  <div id="d-fc"><dt>f<sub>c</sub> (frequência de corte)</dt><dd>Frequência a partir da qual o RC passa a cortar. Nela, a potência cai à metade. f<sub>c</sub> = 1/(2πτ).</dd></div>
+  <div id="d-q"><dt>Função Q</dt><dd>Dá a chance de um ruído ultrapassar uma certa folga. Quanto maior a folga comparada ao ruído, menor a chance.</dd></div>
+  <div id="d-gray"><dt>Gray (código)</dt><dd>Ordem dos bits em que vizinhos diferem em um só bit: 00, 01, 11, 10. Um erro entre níveis vizinhos custa só 1 bit.</dd></div>
+  <div id="d-isi"><dt>ISI</dt><dd>Interferência entre símbolos. É a sobra do símbolo anterior que atrapalha o atual, quando o canal é lento demais.</dd></div>
+  <div id="d-janela"><dt>Janela de Hann</dt><dd>Curva que suaviza as pontas de cada bloco antes da FFT. Sem ela, cortar o sinal espalha energia para frequências vizinhas (vazamento).</dd></div>
+  <div id="d-k"><dt>k e k*</dt><dd>k é o número de cada uma das 8 medidas do símbolo, de 0 a 7. k* é a melhor delas, escolhida a partir da calibração. No RC é k = 7, em 46,87 µs.</dd></div>
+  <div id="d-limiar"><dt>Limiar</dt><dd>A linha de decisão entre dois níveis, na metade do caminho entre os centros vizinhos.</dd></div>
+  <div id="d-lit"><dt>LIT (sistema)</dt><dd>Linear e invariante no tempo. Na prática: o que ele faz com um pulso vale para qualquer soma de pulsos, e não muda com o tempo. Por isso vale S<sub>saída</sub> = |H|² · S<sub>entrada</sub>.</dd></div>
+  <div id="d-margem"><dt>Margem e margem relativa</dt><dd>Margem: a folga real no pior par, entre o menor valor do nível de cima e o maior do de baixo. Relativa: margem ÷ distância média entre centros, para comparar detectores com unidades diferentes.</dd></div>
+  <div id="d-olho"><dt>Olho (diagrama de)</dt><dd>Todos os símbolos desenhados um sobre o outro, a partir da borda do CLK. O vão entre as faixas é a folga para decidir o nível.</dd></div>
+  <div id="d-overrun"><dt>Overrun</dt><dd>O dado novo chegou antes de o anterior ser processado, e algo se perdeu. Precisa ser 0.</dd></div>
+  <div id="d-pam"><dt>PAM</dt><dd>Modulação por amplitude de pulso. Os bits são representados pela altura do pulso. PAM-2 tem 2 alturas e PAM-4 tem 4.</dd></div>
+  <div id="d-payload"><dt>Payload</dt><dd>A carga útil: a parte do quadro com os dados. Aqui, 100.000 bits, onde os erros são contados.</dd></div>
+  <div id="d-pc"><dt>p<sub>c</sub>[k] (pesos)</dt><dd>Os 8 pesos do filtro casado. São o pulso medido, descontada a linha de base, em cada uma das 8 posições.</dd></div>
+  <div id="d-persist"><dt>Persistência</dt><dd>Faz o osciloscópio manter os traços antigos na tela, sem apagar. Com ela, os símbolos se acumulam e formam o olho.</dd></div>
+  <div id="d-polo"><dt>Polo</dt><dd>Cada "RC" independente de um circuito é um polo. Quanto mais polos, mais a saída demora e mais rápido ela corta altas frequências.</dd></div>
+  <div id="d-prbs"><dt>PRBS-15</dt><dd>Sequência de bits que parece aleatória, mas é calculada por fórmula, com período de 32.767 bits. Como o RX consegue gerar a mesma, ele sabe o que deveria chegar.</dd></div>
+  <div id="d-psd"><dt>PSD</dt><dd>Densidade espectral de potência. Diz quanta potência há em cada frequência, em V²/Hz.</dd></div>
+  <div id="d-pwm"><dt>PWM</dt><dd>Ligar e desligar um pino muito rápido, variando o tempo ligado. Filtrando, a média vira uma tensão intermediária.</dd></div>
+  <div id="d-quadro"><dt>Quadro</dt><dd>Tudo o que é transmitido em um RESET: pulso, calibração, início e payload. 50.420 símbolos em PAM-4.</dd></div>
+  <div id="d-rc"><dt>RC</dt><dd>Circuito com resistor e capacitor. Faz a tensão mudar devagar e corta altas frequências. É um filtro passa-baixas.</dd></div>
+  <div id="d-ripple"><dt>Ripple</dt><dd>A ondulação que sobra numa tensão filtrada. Aqui, o resto dos 33 MHz do PWM, cerca de 190 mV.</dd></div>
+  <div id="d-ruido"><dt>Ruído</dt><dd>A variação aleatória nas medidas. Aqui, de 1 a 2 códigos do ADC, ou 1 a 2 mV.</dd></div>
+  <div id="d-saturacao"><dt>Saturação</dt><dd>O sinal passou do máximo que o ADC mede, e a leitura fica presa em 4095.</dd></div>
+  <div id="d-ser"><dt>SER</dt><dd>Taxa de erro de símbolo. Símbolos errados ÷ símbolos enviados. Em PAM-4 com Gray, costuma valer o dobro da BER.</dd></div>
+  <div id="d-simbolo"><dt>Símbolo</dt><dd>Um pulso de 50 µs. Carrega 1 bit em PAM-2 e 2 bits em PAM-4.</dd></div>
+  <div id="d-sinc"><dt>Sinc</dt><dd>A forma, sin(x)/x, da transformada de um pulso retangular. Tem zeros em intervalos regulares.</dd></div>
+  <div id="d-sync"><dt>Sincronismo</dt><dd>Saber quando cada símbolo começa (CLK) e onde o payload começa (senha de 48 bits). Sincronização assistida quer dizer que o relógio vem por um fio próprio.</dd></div>
+  <div id="d-tau"><dt>τ (tau)</dt><dd>Constante de tempo do RC: τ = R × C. É o tempo para a tensão fazer 63,2 % da mudança. Em 5 τ, praticamente acabou.</dd></div>
+  <div id="d-subida"><dt>Tempo de subida (t<sub>10–90</sub>)</dt><dd>Quanto o sinal leva para ir de 10 % a 90 % da mudança. Em um RC, vale 2,197 × τ.</dd></div>
+  <div id="d-vref"><dt>V<sub>ref</sub></dt><dd>A tensão que corresponde ao máximo do ADC. É o 3V3 do RX, medido em 3,297 V.</dd></div>
+  <div id="d-tim"><dt>TIM2, TIM3, TIM1</dt><dd>Temporizadores da placa. TIM1 gera o PWM, TIM3 gera o CLK no TX, e TIM2 é o cronômetro que dispara o ADC no RX.</dd></div>
+  <div id="d-tp"><dt>TP1 a TP4</dt><dd>Pontos de teste, onde a ponta encosta. TP1: PWM bruto. TP2: entrada do canal. TP3: saída do canal. TP4: entrada do ADC.</dd></div>
+  <div id="d-welch"><dt>Welch</dt><dd>Método de calcular a PSD em vários blocos sobrepostos e fazer a média, para a curva ficar menos tremida.</dd></div>
+  <div id="d-z"><dt>z (nota do filtro)</dt><dd>O resultado do filtro casado. z ≈ 0 parece nível 0 e z ≈ 1 parece o nível máximo. Não tem unidade.</dd></div>
+</dl>
+</section>
+
+<!-- =================================================== COLA -->
+<section class="blk" id="cola">
+<div class="cab">
+  <div class="blk-tag"><b>Cola</b> Para revisar em 5 minutos</div>
+  <h2>Números, fórmulas e ajustes</h2>
+</div>
+<div class="read">
+  <div class="formula">
+    T<sub>s</sub> = 1/R<sub>s</sub> = 50 µs    R<sub>b</sub> = R<sub>s</sub>·log₂M = 20 / 40 kbit/s<br>
+    t<sub>k</sub> = 3,12 + 6,25k µs    f<sub>a</sub> = 8R<sub>s</sub> = 160 kS/s    f<sub>a</sub>/2 = 80 kHz<br>
+    τ = RC    f<sub>c</sub> = 1/(2πτ)    t<sub>10–90</sub> = 2,197τ    sobra = e<sup>−Ts/τ</sup><br>
+    |H(f)|² = 1/(1 + (2πfτ)²)    S<sub>y</sub> = |H|²·S<sub>x</sub><br>
+    S(f) = 2σ²T<sub>s</sub>sinc²(πfT<sub>s</sub>)    Δf = f<sub>a</sub>/N = 156,25 Hz<br>
+    d<sub>k,ℓ</sub> = min(a[k]|ℓ+1) − max(a[k]|ℓ)    k* = argmax<sub>k</sub> min<sub>ℓ</sub> d<sub>k,ℓ</sub><br>
+    E<sub>c</sub> = Σp<sub>c</sub>[k]²    z = Σp<sub>c</sub>[k]·(a[k] − b<sub>c</sub>) / E<sub>c</sub><br>
+    BER = N<sub>e</sub>/10⁵    SER = N<sub>s</sub>/N<sub>símb</sub>    0 erros ⇒ BER &lt; 3/N (95 %)<br>
+    V = código·V<sub>ref</sub>/4095, V<sub>ref</sub> = 3,297 V (1 código = 0,805 mV)
+  </div>
+  <div class="tw"><table>
+    <tr><th>Número</th><th class="n">Valor da sua bancada</th></tr>
+    <tr><td>CLK</td><td class="n">20,0008 kHz · 49,998 µs · 50,0 %</td></tr>
+    <tr><td>Níveis PAM-4 em TP2</td><td class="n">−0,011 · 1,017 · 2,142 · 3,377 V</td></tr>
+    <tr><td>τ RC 16,8 / 33 nF</td><td class="n">7,30 µs / 13,0–14,1 µs</td></tr>
+    <tr><td>Abertura PAM-4 (Dupont · 16,8 · 33 · manga)</td><td class="n">0,965 · 0,979 · 0,838 · 0,970 V</td></tr>
+    <tr><td>Razão PSD 10 kHz (16,8 · 33 · manga)</td><td class="n">≈ 0,81 · 0,54–0,56 · 0,89</td></tr>
+    <tr><td>k*</td><td class="n">7 (46,87 µs) no RC; qualquer um no Dupont</td></tr>
+    <tr><td>Margem relativa, amostra × filtro (RC 16,8 PAM-4)</td><td class="n">0,90 × 0,73</td></tr>
+    <tr><td>Erros nos 4 ensaios obrigatórios</td><td class="n">0 em 100.000 (os 2 detectores)</td></tr>
+  </table></div>
+</div>
+<article class="guia" id="gcola">
+  <div class="g-top"><span class="g-num">Referência</span><span class="g-tit">Todos os ajustes do osciloscópio em uma tabela</span></div>
+  <div class="g-corpo">
+    <p>Valores usados pelo <code>python/bancada.py</code>. POSITION: div acima (+) ou abaixo (−) do centro.</p>
+    <div class="tw"><table style="color:var(--g-ink)">
+      <tr><th style="color:var(--g-muted)">Medida</th><th style="color:var(--g-ch1)">CH1</th><th style="color:var(--g-ch2)">CH2</th><th style="color:var(--g-muted)">V/div e POSITION</th><th style="color:var(--g-muted)">SEC/DIV e M Pos</th><th style="color:var(--g-muted)">Disparo</th><th style="color:var(--g-muted)">Modo</th></tr>
+      <tr><td><a href="#g1">CLK</a></td><td>TP2</td><td>CLK</td><td>1 V, −3,5 · 1 V, +0,5</td><td>10 µs, 40 µs</td><td>CH2 ↑ 1,6 V</td><td>Normal</td></tr>
+      <tr><td><a href="#g2">Níveis</a></td><td>TP2</td><td>CLK</td><td>1 V, −3,5 · 2 V, +1</td><td>50 µs, 7,225 ms</td><td>CH2 ↑ 1,6 V</td><td>SINGLE SEQ</td></tr>
+      <tr><td><a href="#g4">Atraso</a></td><td>TP2</td><td>CLK</td><td>1 V, −3,5 · 1 V, +0,5</td><td>250 ns, 750 ns</td><td>CH2 ↑ 1,6 V</td><td>Persist.</td></tr>
+      <tr><td><a href="#g4">Ripple</a></td><td>TP2</td><td>CLK</td><td>50 mV, −22 · 2 V, +1</td><td>50 ns, 7,075 ms</td><td>CH2 ↑ 1,6 V</td><td>SINGLE SEQ</td></tr>
+      <tr><td><a href="#g5">Degrau RC</a></td><td>TP2</td><td>TP3</td><td>1 V, −3,5 · 1 V, −3,5</td><td>25 µs, 80 µs</td><td>CH1 ↑ 1,6 V</td><td>SINGLE SEQ</td></tr>
+      <tr><td>Degrau Dupont</td><td>TP2</td><td>TP3</td><td>1 V, −3,5 · 1 V, −3,5</td><td>250 ns, 750 ns</td><td>CH1 ↑ 1,6 V</td><td>SINGLE SEQ</td></tr>
+      <tr><td><a href="#g7">Olho</a></td><td>TP3</td><td>CLK</td><td>1 V, −3,5 · 1 V, 0</td><td>10 µs, 40 µs</td><td>CH2 ↑ 1,6 V</td><td>Persist.</td></tr>
+    </table></div>
+    <p>Sempre: acoplamento CC, ponta 10X, aquisição em amostra, disparo em Modo Normal.</p>
+    <h4>Comandos, sempre a partir da pasta do projeto</h4>
+    <pre class="cmd">.venv/bin/python python/bancada.py osc {clk|niveis|alinhamento|ripple|degrau|degrau_zoom|diag_clk} --canal {d|c|x|m} --mod {2|4} [--sem-rx] --nome NOME
+.venv/bin/python python/bancada.py ensaio --canal {d|c|x|m} --mod {2|4} --vref 3.297 --nome NOME
+.venv/bin/python python/pam_app.py capturar --mod {2|4} --canal {d|c|x|m} --vref 3.297
+.venv/bin/python python/pam_app.py analisar LOG.txt --vref 3.297
+.venv/bin/python python/pam_app.py comparar DUPONT.txt RC.txt --vref 3.297 --tau 7.3</pre>
+  </div>
+</article>
+</section>
+</main>
+</div>
+
+<aside id="dica" hidden aria-live="polite">
+  <div class="in">
+    <div><b id="dicaT"></b><p id="dicaD"></p></div>
+    <button type="button" id="dicaX">Fechar</button>
+  </div>
+</aside>
+
+<script>
+(function(){
+  function ler(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function gravar(k,v){try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
+
+  /* perguntas */
+  var qs=document.querySelectorAll('details.q');
+  var ab=document.getElementById('abrir'),fe=document.getElementById('fechar');
+  if(ab)ab.addEventListener('click',function(){qs.forEach(function(d){d.open=true})});
+  if(fe)fe.addEventListener('click',function(){qs.forEach(function(d){d.open=false})});
+
+  /* dicionário: janela inferior */
+  var dica=document.getElementById('dica'),dT=document.getElementById('dicaT'),dD=document.getElementById('dicaD'),ultimo=null;
+  function fecharDica(){dica.hidden=true;if(ultimo){ultimo.focus();ultimo=null}}
+  document.getElementById('dicaX').addEventListener('click',fecharDica);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!dica.hidden)fecharDica()});
+  document.addEventListener('click',function(e){
+    var a=e.target.closest?e.target.closest('a.t'):null;if(!a)return;
+    var alvo=document.getElementById(a.getAttribute('href').slice(1));if(!alvo)return;
+    e.preventDefault();
+    dT.innerHTML=alvo.querySelector('dt').innerHTML;
+    dD.innerHTML=alvo.querySelector('dd').innerHTML;
+    dica.hidden=false;ultimo=a;document.getElementById('dicaX').focus({preventScroll:true});
+  });
+
+  /* passos marcáveis */
+  document.querySelectorAll('.guia').forEach(function(g){
+    var boxes=[];
+    g.querySelectorAll('ol.passos').forEach(function(ol,oi){
+      ol.querySelectorAll(':scope > li').forEach(function(li,i){
+        var id=g.id+'-p'+oi+'-'+i,inp=document.createElement('input');
+        inp.type='checkbox';inp.id=id;inp.setAttribute('aria-label','Marcar passo '+(i+1));
+        inp.checked=ler('pam-'+id)==='1';
+        inp.addEventListener('change',function(){gravar('pam-'+id,inp.checked?'1':null)});
+        li.insertBefore(inp,li.firstChild);boxes.push(inp);
+      });
+    });
+    var b=g.querySelector('.limpar');
+    if(b)b.addEventListener('click',function(){boxes.forEach(function(x){x.checked=false;gravar('pam-'+x.id,null)})});
+  });
+
+  /* copiar comandos */
+  document.querySelectorAll('pre.cmd').forEach(function(p){
+    if(p.hasAttribute('style'))return;
+    var texto=p.textContent,b=document.createElement('button');
+    b.type='button';b.textContent='Copiar';
+    b.addEventListener('click',function(){
+      function ok(){b.textContent='Copiado';setTimeout(function(){b.textContent='Copiar'},1500)}
+      function sel(){var r=document.createRange();r.selectNodeContents(p);var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selecionado'}
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(texto).then(ok,sel)}else{sel()}
+    });
+    p.appendChild(b);
+  });
+
+  /* anotações */
+  document.querySelectorAll('.anota input').forEach(function(i){
+    var v=ler('pam-'+i.id);if(v!==null)i.value=v;
+    i.addEventListener('input',function(){gravar('pam-'+i.id,i.value||null)});
+  });
+
+  /* modo só guias */
+  var modo=document.getElementById('modo');
+  function aplicarModo(on){document.body.classList.toggle('so-guias',on);modo.setAttribute('aria-pressed',on?'true':'false');modo.textContent=on?'Voltar a mostrar tudo':'Só os guias de bancada';if(!on)desenhar()}
+  modo.addEventListener('click',function(){var on=!document.body.classList.contains('so-guias');aplicarModo(on);gravar('pam-modo',on?'1':null);window.scrollTo(0,0)});
+
+  /* laboratório de tau */
+  var NIV=[0.002,1.011,2.120,3.297],TS=50,TK=[0,1,2,3,4,5,6,7].map(function(k){return 3.12+6.25*k});
+  var SEQ=(function(){var s=[],x=12345;for(var i=0;i<420;i++){x=(x*1103515245+12345)&0x7fffffff;s.push((x>>16)&3)}return s})();
+  var tau=7.3,cvP=document.getElementById('cvPulso'),cvO=document.getElementById('cvOlho'),rng=document.getElementById('tauR');
+  function nf(v,d){return v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+  function cor(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+  function prepara(c){
+    var w=c.clientWidth,h=c.clientHeight;if(!w||!h)return null;
+    var r=window.devicePixelRatio||1;c.width=Math.round(w*r);c.height=Math.round(h*r);
+    var g=c.getContext('2d');g.setTransform(r,0,0,r,0,0);g.clearRect(0,0,w,h);
+    return {g:g,w:w,h:h};
+  }
+  function eixos(o,xmax,passo){
+    var g=o.g,L=30,R=10,T=10,B=24,W=o.w-L-R,H=o.h-T-B,ymin=-0.2,ymax=3.7;
+    var X=function(t){return L+t/xmax*W},Y=function(v){return T+(ymax-v)/(ymax-ymin)*H};
+    g.font='12px "JetBrains Mono",monospace';g.lineWidth=1;
+    [0,1,2,3].forEach(function(v){g.strokeStyle=cor('--rule');g.beginPath();g.moveTo(L,Y(v));g.lineTo(L+W,Y(v));g.stroke();g.fillStyle=cor('--muted');g.textAlign='right';g.textBaseline='middle';g.fillText(v+' V',L-4,Y(v))});
+    for(var t=0;t<=xmax;t+=passo){g.strokeStyle=cor('--rule');g.beginPath();g.moveTo(X(t),T);g.lineTo(X(t),T+H);g.stroke();g.fillStyle=cor('--muted');g.textAlign=t===xmax?'right':(t===0?'left':'center');g.textBaseline='top';g.fillText(t+(t===xmax?' µs':''),X(t),T+H+5)}
+    return {X:X,Y:Y,T:T,H:H};
+  }
+  function simula(){
+    var v=0,faixas=[],k,i;for(k=0;k<8;k++)faixas.push(NIV.map(function(){return{min:1e9,max:-1e9}}));
+    var tr=[];
+    SEQ.forEach(function(l,i){
+      var L=NIV[l],v0=v;
+      if(i>20){TK.forEach(function(t,k){var a=L+(v0-L)*Math.exp(-t/tau),f=faixas[k][l];if(a<f.min)f.min=a;if(a>f.max)f.max=a});tr.push({L:L,v0:v0})}
+      v=L+(v0-L)*Math.exp(-TS/tau);
+    });
+    var sep=faixas.map(function(f){var m=1e9;for(var l=0;l<3;l++){m=Math.min(m,f[l+1].min-f[l].max)}return m});
+    return {sep:sep,tr:tr};
+  }
+  function desenhar(){
+    if(!cvP||!cvO)return;
+    var sim=simula(),amostra=cor('--bad'),traco=cor('--ch1'),ideal=cor('--muted'),bom=cor('--good');
+    var o=prepara(cvP);
+    if(o){
+      var e=eixos(o,150,50),g=o.g,A=NIV[3],fim=A*(1-Math.exp(-TS/tau));
+      var val=function(t){return t<=TS?A*(1-Math.exp(-t/tau)):fim*Math.exp(-(t-TS)/tau)};
+      g.strokeStyle=ideal;g.setLineDash([4,4]);g.lineWidth=1.2;g.beginPath();g.moveTo(e.X(0),e.Y(0));g.lineTo(e.X(0),e.Y(A));g.lineTo(e.X(50),e.Y(A));g.lineTo(e.X(50),e.Y(0));g.lineTo(e.X(150),e.Y(0));g.stroke();g.setLineDash([]);
+      g.strokeStyle=traco;g.lineWidth=2.2;g.beginPath();for(var t=0;t<=150;t+=0.25){var px=e.X(t),py=e.Y(val(t));if(t===0)g.moveTo(px,py);else g.lineTo(px,py)}g.stroke();
+      g.fillStyle=amostra;[0,50].forEach(function(of){TK.forEach(function(tk){g.beginPath();g.arc(e.X(of+tk),e.Y(val(of+tk)),2.8,0,6.3);g.fill()})});
+    }
+    o=prepara(cvO);
+    if(o){
+      var e2=eixos(o,100,25),h=o.g;
+      h.strokeStyle=traco;h.globalAlpha=0.28;h.lineWidth=1;
+      sim.tr.slice(0,240).forEach(function(s){
+        [0,50].forEach(function(of){h.beginPath();for(var t=0;t<=TS;t+=1){var v=s.L+(s.v0-s.L)*Math.exp(-t/tau),px=e2.X(of+t),py=e2.Y(v);if(t===0)h.moveTo(px,py);else h.lineTo(px,py)}h.stroke()});
+      });
+      h.globalAlpha=1;h.strokeStyle=bom;h.lineWidth=1.6;h.setLineDash([5,4]);
+      [46.87,96.87].forEach(function(t){h.beginPath();h.moveTo(e2.X(t),e2.T);h.lineTo(e2.X(t),e2.T+e2.H);h.stroke()});h.setLineDash([]);
+      h.fillStyle=bom;h.font='600 12px "JetBrains Mono",monospace';h.textAlign='right';h.textBaseline='top';h.fillText('k=7',e2.X(46.87)-3,e2.T+1);
+    }
+    var fc=1/(2*Math.PI*tau*1e-6);
+    document.getElementById('tauV').textContent=nf(tau,tau<1?2:1)+' µs';
+    document.getElementById('rFc').textContent=fc>=1e6?nf(fc/1e6,2)+' MHz':(fc>=1e5?nf(fc/1e3,0):nf(fc/1e3,1))+' kHz';
+    document.getElementById('rTr').textContent=nf(2.197*tau,tau<1?2:1)+' µs';
+    var so=100*Math.exp(-TS/tau);document.getElementById('rIsi').textContent=(so<0.01?'< 0,01':nf(so,so<1?2:1))+' %';
+    document.getElementById('rAb').textContent=nf(sim.sep[7],2)+' V';
+    var melhor=0;sim.sep.forEach(function(v,i){if(v>sim.sep[melhor]+1e-3)melhor=i});
+    document.getElementById('kbar').innerHTML=sim.sep.map(function(v,i){return '<div class="'+(v<0?'ruim':'bom')+(i===melhor?' melhor':'')+'">k='+i+'<br>'+nf(v,2)+'</div>'}).join('');
+    document.querySelectorAll('#labBotoes button').forEach(function(b){b.setAttribute('aria-pressed',Math.abs(parseFloat(b.dataset.tau)-tau)<0.03?'true':'false')});
+  }
+  if(rng){
+    rng.addEventListener('input',function(){tau=parseFloat(rng.value);desenhar()});
+    document.querySelectorAll('#labBotoes button').forEach(function(b){b.addEventListener('click',function(){tau=parseFloat(b.dataset.tau);rng.value=tau;desenhar()})});
+    var espera;window.addEventListener('resize',function(){clearTimeout(espera);espera=setTimeout(desenhar,120)});
+    try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',desenhar)}catch(e){}
+    new MutationObserver(desenhar).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(desenhar);
+  }
+  aplicarModo(ler('pam-modo')==='1');
+  desenhar();
+})();
+</script>

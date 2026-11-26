@@ -43,7 +43,7 @@ Valores que você deve ter na cabeça (previsões):
 ✅ Pronto: os dois projetos compilam; prints salvos.
 
 ### Dia 2 — Montagem e verificação do TX (Etapas 1 e 2)
-1. Monte **só o TX**: PA8 → 330 Ω → TP2, 390 pF para GND. Grave o TX.
+1. Monte **só o TX**: PA8 → 330 Ω → TP2, 4 × 100 pF em paralelo (400 pF, no lugar dos 390 pF) para GND. Grave o TX.
 2. Osciloscópio CH1 = PB4 (CLK), CH2 = TP2. Aperte RESET do TX.
 3. **Meça e salve** (`capturas/`):
    - período do CLK = **50,0 µs** (20 kHz), duty 50 %. Use os cursores. → `TX_CLK_50us.png`
@@ -59,7 +59,7 @@ Valores que você deve ter na cabeça (previsões):
 ### Dia 3 — RX e canal 1 (Etapa 3)
 1. Monte a proteção (1 kΩ + D+ + D−) e os fios Dupont de dados, CLK e GND (canal 1).
 2. **Antes de ligar PA1**: §4 de `04_HARDWARE...` (GND comum, TP3 entre 0 e 3,3 V). **Meça Vref** (3V3 do RX) com o multímetro e anote.
-3. Grave o RX, abra a serial (460800). No MATLAB: `captura_serial('/dev/ttyUSB0','Dupont_PAM2','d','2')`, depois RESET no TX.
+3. Grave o RX, abra a serial do Pico (`/dev/ttyACM1`, 460800). No MATLAB: `captura_serial('/dev/ttyACM1','Dupont_PAM2','d','2')`, depois RESET no TX.
 4. Confira no log: `bordas_CLK = simbolos_esperados` (100 444 / 50 420), `amostras_processadas = 8 × símbolos`, `bordas_com_contagem_errada=0`, `aquisicao_valida=1`. → isto é a prova de **8 amostras/símbolo e 160 000 amostras/s sem perdas** (checklist).
 5. Argumento para os 160 000 amostras/s: o TIM2 é zerado a cada borda do CLK (50 µs medidos no osciloscópio) e dispara a cada 625 ciclos de 10 ns = 6,25 µs; a contagem `amostras = 8 × bordas` sem erro em 100 444 bordas fecha a conta (8 / 50 µs = 160 kHz). Opcional: CH1 = CLK e CH2 = TP4 com zoom podem mostrar o pequeno "degrau" de carga do capacitor de amostragem do ADC a cada 6,25 µs.
 
@@ -76,7 +76,7 @@ Para **PAM-2** e depois **PAM-4** (`2`/`4` no RX + jumper PB0 no TX):
 ✅ Pronto: 2 logs válidos (PAM-2, PAM-4) + capturas + figuras do Dupont.
 
 ### Dia 5 — Canal 2 (RC) completo
-1. Insira **56 Ω em série** e **10 nF ∥ 6,8 nF** de TP3 para GND (antes do 1 kΩ). Meça os capacitores com o multímetro (capacímetro) se puder: o valor real explica diferenças no τ.
+1. Insira **56 Ω em série** e **33 nF em série com 33 nF** (= 16,5 nF) de TP3 para GND (antes do 1 kΩ): TP3 ─[33n]─ N ─[33n]─ GND. Meça o par com o capacímetro se puder: o valor real explica diferenças no τ (nominal com 16,5 nF: 6,37 µs).
 2. Repita o Dia 4 com `c` no RX.
 3. **τ medido** (PAM-4, transição 0→3 do treinamento): CH1 = CLK, CH2 = TP3, 5 µs/div, trigger na borda do símbolo A.
    - V0 antes da subida, Vf no fim do símbolo, t0 = início da subida, t63 em V0 + 0,632(Vf − V0) → τ = t63 − t0.
@@ -106,7 +106,7 @@ Para **PAM-2** e depois **PAM-4** (`2`/`4` no RX + jumper PB0 no TX):
 
 ### Dia 8 — Ensaio da defesa ao vivo (33 nF)
 Simule a troca que o professor fará:
-1. Troque **só o capacitor** 16,8 nF → 33 nF. Rótulo `x` no RX.
+1. Passe de 16,5 nF para 33 nF: **jumper de N ao GND** (curto-circuita um dos 33 nF) ou troque o par por um 33 nF. Rótulo `x` no RX.
 2. Meça **t₁₀₋₉₀**, **abertura do olho** e **PSD** (e τ). Previstos: τ ≈ 12,7–13,9 µs; t₁₀₋₉₀ ≈ 27–28 µs; abertura PAM-4 ≈ 0,95 V (cai ~13 %); razão PSD 10 kHz ≈ 0,57.
 3. Treine a explicação em 1 minuto (ver `05_DEFESA_PERGUNTAS.md`, P1–P3).
 4. Cronometre: troca de capacitor + quadro + análise deve caber em ~5 min. Deixe o MATLAB aberto com os comandos prontos.
@@ -161,7 +161,7 @@ Use o checklist do enunciado (pág. 8) e:
 **Comandos prontos no MATLAB:**
 ```matlab
 Vref = 3.297;                                       % o SEU valor medido
-f = captura_serial('/dev/ttyUSB0','RC33_PAM4','x','4');   % depois RESET no TX
+f = captura_serial('/dev/ttyACM1','RC33_PAM4','x','4');   % depois RESET no TX
 T = analisa_ensaio(f, Vref);
 compara_psd_canais('logs/<Dupont_PAM4>.txt', f, Vref, 13);
 tau_osciloscopio('F0002CH2.CSV');                   % CSV salvo no pendrive do TDS

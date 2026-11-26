@@ -25,10 +25,10 @@
 ### P2. "Estime τ por R e C, extraia do degrau capturado. Se divergir, dê uma causa física ou instrumental verificável."
 1. Previsão: "(330 + 56) Ω × 16,8 nF = 6,48 µs; f_c = 24,5 kHz; t_r previsto = 2,197τ = 14,2 µs."
 2. Medida: "Transição 0→3 do treinamento PAM-4 em TP3 (captura [nome]): V0 = [ ], Vf = [ ], V63 = [ ], t0 = [ ], t63 = [ ] ⇒ τ = [ ] µs. t10 = [ ], t90 = [ ] ⇒ t_r = [ ] µs ⇒ τ = t_r/2,197 = [ ] µs."
-3. Divergência (previsto pelo modelo completo ≈ 7,1 µs): "O modelo de 1 polo ignora (a) o 390 pF do TX (+0,13 µs), (b) a resistência de saída do PA8 (~30 Ω × 16,8 nF ≈ +0,5 µs) e (c) a tolerância do capacitor — medi o 10 nF ∥ 6,8 nF = [ ] nF." Escolha UMA causa e mostre como verificaria (medir o capacitor; medir τ com ponta ×1 e ×10; medir só o filtro do TX no canal 1).
+3. Divergência (previsto pelo modelo completo ≈ 7,1 µs): "O modelo de 1 polo ignora (a) o 390 pF do TX (+0,13 µs), (b) a resistência de saída do PA8 (~30 Ω × 16,8 nF ≈ +0,5 µs) e (c) a tolerância do capacitor — o canal foi montado com 33 nF em série com 33 nF (16,5 nF nominal, τ = 6,37 µs) e medi o par = [ ] nF." Escolha UMA causa e mostre como verificaria (medir o capacitor; medir τ com ponta ×1 e ×10; medir só o filtro do TX no canal 1).
 
 ### P3 (ao vivo). "Troquei 16,8 nF por 33 nF. Meça tempo de subida, abertura do olho e PSD e explique."
-| Grandeza | 16,8 nF (seu) | 33 nF previsto | 33 nF medido |
+| Grandeza | 16,8 nF (seu: 33n série 33n = 16,5 nF) | 33 nF previsto | 33 nF medido |
 |---|---|---|---|
 | τ | [ ] | 12,7 (1 polo) – 13,9 µs (2 polos) | |
 | t₁₀₋₉₀ | [ ] | 27–28 µs | |
